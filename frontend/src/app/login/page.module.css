@@ -1,0 +1,136 @@
+/* ============================================
+   AUTH PAGES (Login / Register)
+   Shared styles for authentication forms
+   ============================================ */
+
+.page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 200px);
+  padding: var(--space-6) var(--space-4);
+  background: var(--gradient-hero);
+}
+
+.formContainer {
+  width: 100%;
+  max-width: 440px;
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-2xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-xl);
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.formHeader {
+  text-align: center;
+  margin-bottom: var(--space-5);
+}
+
+.formTitle {
+  font-family: var(--font-family-headline);
+  font-size: var(--text-headline-md);
+  font-weight: var(--weight-bold);
+  color: var(--on-surface);
+}
+
+.formSubtitle {
+  font-size: var(--text-body-md);
+  color: var(--on-surface-variant);
+  margin-top: var(--space-2);
+}
+
+/* --- Form --- */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.formOptions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-body-sm);
+  color: var(--on-surface-variant);
+  cursor: pointer;
+}
+
+.checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.forgotLink {
+  font-size: var(--text-body-sm);
+  color: var(--primary);
+  text-decoration: none;
+  font-weight: var(--weight-medium);
+  transition: opacity var(--transition-fast);
+}
+
+.forgotLink:hover { opacity: 0.7; }
+
+/* --- Divider --- */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(195, 198, 214, 0.2);
+}
+
+.divider span {
+  font-size: var(--text-body-sm);
+  color: var(--outline);
+  white-space: nowrap;
+}
+
+/* --- Switch Auth --- */
+.switchAuth {
+  text-align: center;
+  font-size: var(--text-body-md);
+  color: var(--on-surface-variant);
+  margin-top: var(--space-4);
+}
+
+.switchLink {
+  color: var(--primary);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+  transition: opacity var(--transition-fast);
+}
+
+.switchLink:hover { opacity: 0.7; }
+
+/* --- Responsive --- */
+@media (max-width: 480px) {
+  .formContainer {
+    padding: var(--space-5);
+    border-radius: var(--radius-xl);
+  }
+
+  .formTitle {
+    font-size: var(--text-headline-sm);
+  }
+}
