@@ -1,0 +1,44 @@
+/* ============================================
+   BADGE COMPONENT
+   Design: Compact labels with refined colors
+   label-md in secondary for attention tags
+   ============================================ */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-2);
+  font-family: var(--font-family-label);
+  font-size: var(--text-label-sm);
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.default {
+  background-color: var(--surface-container-high);
+  color: var(--on-surface-variant);
+}
+
+.sale {
+  background-color: var(--secondary-container);
+  color: var(--on-secondary);
+}
+
+.new {
+  background-color: var(--primary-fixed);
+  color: var(--on-primary-fixed);
+}
+
+.hot {
+  background-color: var(--secondary);
+  color: var(--on-secondary);
+}
+
+.out-of-stock {
+  background-color: var(--error-container);
+  color: var(--on-error-container);
+}
