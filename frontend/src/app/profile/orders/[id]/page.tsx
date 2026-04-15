@@ -1,6 +1,6 @@
 'use client';
 
-import React, { use } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import styles from './page.module.css';
@@ -32,8 +32,8 @@ const paymentStatusMap: Record<string, string> = {
 
 const steps = ['PENDING', 'CONFIRMED', 'SHIPPING', 'DELIVERED'];
 
-export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
+export default function OrderDetailPage({ params }: { params: { id: string } }) {
+  const { id } = params;
   const order = mockOrders.find(o => o.id === id);
 
   if (!order) {

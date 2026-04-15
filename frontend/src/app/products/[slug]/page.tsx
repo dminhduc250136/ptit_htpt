@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, use } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import styles from './page.module.css';
@@ -10,8 +10,8 @@ import ProductCard from '@/components/ui/ProductCard/ProductCard';
 import { mockProducts } from '@/mock-data/products';
 import { formatPrice } from '@/services/api';
 
-export default function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params);
+export default function ProductDetailPage({ params }: { params: { slug: string } }) {
+  const { slug } = params;
   const product = mockProducts.find(p => p.slug === slug);
 
   const [selectedImage, setSelectedImage] = useState(0);

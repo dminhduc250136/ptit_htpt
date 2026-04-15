@@ -78,10 +78,10 @@
   /* ============================================
      TYPOGRAPHY TOKENS
      ============================================ */
-  --font-family-primary: 'Be Vietnam Pro', sans-serif;
-  --font-family-headline: 'Be Vietnam Pro', sans-serif;
-  --font-family-body: 'Be Vietnam Pro', sans-serif;
-  --font-family-label: 'Be Vietnam Pro', sans-serif;
+  --font-family-primary: var(--font-be-vietnam-pro), sans-serif;
+  --font-family-headline: var(--font-be-vietnam-pro), sans-serif;
+  --font-family-body: var(--font-be-vietnam-pro), sans-serif;
+  --font-family-label: var(--font-be-vietnam-pro), sans-serif;
 
   /* Font Sizes - 8px base scale */
   --text-display-lg: 3.5rem;     /* 56px */
