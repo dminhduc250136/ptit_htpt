@@ -4,14 +4,13 @@ import React, { useState } from 'react';
 import styles from '../products/page.module.css';
 import Button from '@/components/ui/Button/Button';
 import Badge from '@/components/ui/Badge/Badge';
-import Input from '@/components/ui/Input/Input';
 import { mockOrders, mockUsers } from '@/mock-data/orders';
 import { formatPrice } from '@/services/api';
 import type { Order } from '@/types';
 
 const statusOptions = ['PENDING', 'CONFIRMED', 'SHIPPING', 'DELIVERED', 'CANCELLED'] as const;
 const statusLabels: Record<string, string> = { PENDING: 'Chờ xác nhận', CONFIRMED: 'Đã xác nhận', SHIPPING: 'Đang giao', DELIVERED: 'Đã giao', CANCELLED: 'Đã hủy' };
-const statusVariants: Record<string, 'default' | 'new' | 'hot' | 'sale' | 'outOfStock'> = { PENDING: 'default', CONFIRMED: 'new', SHIPPING: 'hot', DELIVERED: 'sale', CANCELLED: 'outOfStock' };
+const statusVariants: Record<string, 'default' | 'new' | 'hot' | 'sale' | 'out-of-stock'> = { PENDING: 'default', CONFIRMED: 'new', SHIPPING: 'hot', DELIVERED: 'sale', CANCELLED: 'out-of-stock' };
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState(mockOrders);

@@ -12,13 +12,13 @@ import { formatPrice } from '@/services/api';
 
 type Tab = 'profile' | 'orders' | 'addresses';
 
-const statusMap: Record<string, { label: string; variant: 'default' | 'new' | 'hot' | 'sale' | 'outOfStock' }> = {
+const statusMap: Record<string, { label: string; variant: 'default' | 'new' | 'hot' | 'sale' | 'out-of-stock' }> = {
   PENDING: { label: 'Chờ xác nhận', variant: 'default' },
   CONFIRMED: { label: 'Đã xác nhận', variant: 'new' },
   SHIPPING: { label: 'Đang giao', variant: 'hot' },
   DELIVERED: { label: 'Đã giao', variant: 'sale' },
-  CANCELLED: { label: 'Đã hủy', variant: 'outOfStock' },
-  RETURNED: { label: 'Đã trả', variant: 'outOfStock' },
+  CANCELLED: { label: 'Đã hủy', variant: 'out-of-stock' },
+  RETURNED: { label: 'Đã trả', variant: 'out-of-stock' },
 };
 
 export default function ProfilePage() {
