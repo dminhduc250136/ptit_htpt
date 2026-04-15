@@ -63,7 +63,7 @@ export default function AdminProductsPage() {
                 <td>{p.category.name}</td>
                 <td className={styles.price}>{formatPrice(p.price)}</td>
                 <td><span className={p.stock < 10 ? styles.lowStock : ''}>{p.stock}</span></td>
-                <td><Badge variant={p.status === 'ACTIVE' ? 'new' : p.status === 'OUT_OF_STOCK' ? 'outOfStock' : 'default'}>{p.status === 'ACTIVE' ? 'Đang bán' : p.status === 'OUT_OF_STOCK' ? 'Hết hàng' : 'Ẩn'}</Badge></td>
+                <td><Badge variant={p.status === 'ACTIVE' ? 'new' : p.status === 'OUT_OF_STOCK' ? 'out-of-stock' : 'default'}>{p.status === 'ACTIVE' ? 'Đang bán' : p.status === 'OUT_OF_STOCK' ? 'Hết hàng' : 'Ẩn'}</Badge></td>
                 <td>
                   <div className={styles.actions}>
                     <button className={styles.actionBtn} title="Chỉnh sửa">✏️</button>
