@@ -23,7 +23,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ slug: 
       <div className={styles.notFound}>
         <h2>Sản phẩm không tồn tại</h2>
         <p>Sản phẩm bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.</p>
-        <Link href="/products"><Button>Quay lại cửa hàng</Button></Link>
+        <Button href="/products">Quay lại cửa hàng</Button>
       </div>
     );
   }

@@ -22,6 +22,8 @@
   position: relative;
   overflow: hidden;
   user-select: none;
+  text-decoration: none;
+  color: inherit;
 }
 
 .button:disabled {

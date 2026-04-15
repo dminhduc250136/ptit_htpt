@@ -27,14 +27,10 @@ export default function Home() {
             thiết kế tinh xảo từ những nghệ nhân hàng đầu.
           </p>
           <div className={styles.heroActions}>
-            <Link href="/products">
-              <Button size="lg">Khám phá ngay</Button>
-            </Link>
-            <Link href="/collections">
-              <Button variant="secondary" size="lg">
-                Xem bộ sưu tập
-              </Button>
-            </Link>
+            <Button href="/products" size="lg">Khám phá ngay</Button>
+            <Button href="/collections" variant="secondary" size="lg">
+              Xem bộ sưu tập
+            </Button>
           </div>
         </div>
         <div className={styles.heroVisual}>
@@ -103,11 +99,9 @@ export default function Home() {
                 Những sản phẩm được yêu thích nhất bởi khách hàng
               </p>
             </div>
-            <Link href="/products">
-              <Button variant="tertiary">
-                Xem tất cả →
-              </Button>
-            </Link>
+            <Button href="/products" variant="tertiary">
+              Xem tất cả →
+            </Button>
           </div>
           <div className={styles.productsGrid}>
             {featuredProducts.map((product) => (
@@ -175,11 +169,9 @@ export default function Home() {
                 Khám phá toàn bộ bộ sưu tập của chúng tôi
               </p>
             </div>
-            <Link href="/products">
-              <Button variant="tertiary">
-                Xem tất cả →
-              </Button>
-            </Link>
+            <Button href="/products" variant="tertiary">
+              Xem tất cả →
+            </Button>
           </div>
           <div className={styles.productsGrid}>
             {allProducts.map((product) => (

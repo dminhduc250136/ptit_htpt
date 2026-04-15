@@ -60,8 +60,8 @@ export default function CheckoutPage() {
               Cảm ơn bạn đã mua sắm tại The Digital Atélier.
             </p>
             <div className={styles.successActions}>
-              <Link href="/profile"><Button>Xem đơn hàng</Button></Link>
-              <Link href="/products"><Button variant="secondary">Tiếp tục mua sắm</Button></Link>
+              <Button href="/profile">Xem đơn hàng</Button>
+              <Button href="/products" variant="secondary">Tiếp tục mua sắm</Button>
             </div>
           </div>
         </div>
