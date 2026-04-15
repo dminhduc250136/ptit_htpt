@@ -1,0 +1,118 @@
+/* ============================================
+   FOOTER COMPONENT
+   Design: surface-container-low background
+   No-Line Rule: use surface tiers, no borders
+   ============================================ */
+
+.footer {
+  background-color: var(--surface-container-low);
+  margin-top: auto;
+}
+
+.container {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: var(--space-6);
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4) var(--space-6);
+}
+
+/* --- Brand --- */
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.logo {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-1);
+}
+
+.logoText {
+  font-family: var(--font-family-headline);
+  font-size: var(--text-title-lg);
+  font-weight: var(--weight-light);
+  color: var(--on-surface);
+}
+
+.logoAccent {
+  font-family: var(--font-family-headline);
+  font-size: var(--text-title-lg);
+  font-weight: var(--weight-bold);
+  color: var(--primary-container);
+}
+
+.tagline {
+  font-size: var(--text-body-md);
+  color: var(--on-surface-variant);
+  line-height: var(--leading-relaxed);
+  max-width: 320px;
+}
+
+/* --- Link Groups --- */
+.linksGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.groupTitle {
+  font-family: var(--font-family-label);
+  font-size: var(--text-label-md);
+  font-weight: var(--weight-semibold);
+  color: var(--on-surface);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+  margin-bottom: var(--space-2);
+}
+
+.link {
+  font-size: var(--text-body-md);
+  color: var(--on-surface-variant);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+  padding: var(--space-1) 0;
+}
+
+.link:hover {
+  color: var(--primary);
+}
+
+/* --- Bottom Bar --- */
+.bottomBar {
+  background-color: var(--surface-container);
+}
+
+.bottomContainer {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--space-4);
+  text-align: center;
+}
+
+.copyright {
+  font-size: var(--text-body-sm);
+  color: var(--outline);
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .container {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-5);
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .brand {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    grid-template-columns: 1fr;
+  }
+}

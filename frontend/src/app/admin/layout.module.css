@@ -1,0 +1,34 @@
+.adminLayout { display: flex; min-height: 100vh; }
+
+/* Sidebar */
+.sidebar { width: 250px; background: var(--surface-container-lowest); display: flex; flex-direction: column; transition: width var(--transition-base); flex-shrink: 0; border-right: 1px solid rgba(195,198,214,0.1); }
+.collapsed { width: 72px; }
+.sidebarHeader { display: flex; align-items: center; justify-content: space-between; padding: var(--space-4); height: 64px; }
+.logo { text-decoration: none; font-size: var(--text-title-md); white-space: nowrap; }
+.logoLight { color: var(--on-surface-variant); font-weight: var(--weight-regular); }
+.logoBold { color: var(--primary); font-weight: var(--weight-bold); }
+.collapseBtn { background: none; border: none; cursor: pointer; color: var(--outline); padding: var(--space-1); border-radius: var(--radius-md); transition: background var(--transition-fast); }
+.collapseBtn:hover { background: var(--surface-container-low); }
+
+/* Nav */
+.nav { flex: 1; display: flex; flex-direction: column; gap: var(--space-1); padding: var(--space-2); }
+.navLink { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-3); border-radius: var(--radius-lg); text-decoration: none; color: var(--on-surface-variant); font-size: var(--text-body-md); transition: all var(--transition-fast); white-space: nowrap; }
+.navLink:hover { background: var(--surface-container-low); color: var(--on-surface); }
+.navActive { background: var(--primary-fixed) !important; color: var(--primary) !important; font-weight: var(--weight-medium); }
+.collapsed .navLink { justify-content: center; padding: var(--space-3); }
+.sidebarFooter { padding: var(--space-2); border-top: 1px solid rgba(195,198,214,0.1); }
+
+/* Main */
+.mainArea { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--surface-container-low); }
+.topbar { display: flex; justify-content: space-between; align-items: center; padding: var(--space-3) var(--space-5); background: var(--surface-container-lowest); height: 64px; border-bottom: 1px solid rgba(195,198,214,0.1); flex-shrink: 0; }
+.topbarTitle { font-size: var(--text-title-md); font-weight: var(--weight-semibold); color: var(--on-surface); }
+.topbarRight { display: flex; align-items: center; gap: var(--space-3); }
+.adminAvatar { width: 36px; height: 36px; border-radius: var(--radius-full); background: var(--primary-container); color: var(--on-primary); display: flex; align-items: center; justify-content: center; font-weight: var(--weight-bold); font-size: var(--text-body-sm); }
+.adminName { font-size: var(--text-body-md); font-weight: var(--weight-medium); }
+.mainContent { flex: 1; padding: var(--space-5); overflow-y: auto; }
+
+@media (max-width: 768px) {
+  .sidebar { width: 72px; }
+  .sidebar .navLink span, .sidebar .logo span, .sidebarFooter .navLink span { display: none; }
+  .sidebar .navLink { justify-content: center; }
+}
