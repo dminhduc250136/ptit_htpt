@@ -1,0 +1,80 @@
+/* ============================================
+   INPUT COMPONENT
+   Design: Bottom-only highlight, ghost border
+   Focus: outline-variant → secondary transition
+   Error: error-container at 30% opacity
+   ============================================ */
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.fullWidth {
+  width: 100%;
+}
+
+.label {
+  font-family: var(--font-family-label);
+  font-size: var(--text-label-lg);
+  font-weight: var(--weight-medium);
+  color: var(--on-surface-variant);
+}
+
+.inputContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background-color: var(--surface-container-lowest);
+  border: none;
+  border-bottom: 2px solid var(--outline-variant);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+  transition: all var(--transition-base);
+}
+
+.inputContainer:focus-within {
+  border-bottom-color: var(--secondary);
+  background-color: var(--surface-container-low);
+}
+
+.inputContainer.hasError {
+  border-bottom-color: var(--error);
+  background-color: rgba(255, 218, 214, 0.30);
+}
+
+.icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: var(--space-3);
+  color: var(--on-surface-variant);
+  flex-shrink: 0;
+}
+
+.input {
+  width: 100%;
+  padding: var(--space-3);
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: var(--text-body-lg);
+  font-family: var(--font-family-body);
+  color: var(--on-surface);
+  line-height: var(--leading-relaxed);
+}
+
+.input::placeholder {
+  color: var(--outline);
+}
+
+.error {
+  font-size: var(--text-body-sm);
+  color: var(--error);
+  font-weight: var(--weight-medium);
+}
+
+.helper {
+  font-size: var(--text-body-sm);
+  color: var(--on-surface-variant);
+}
