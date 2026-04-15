@@ -54,7 +54,7 @@ export default function CartPage() {
             </svg>
             <h2>Giỏ hàng trống</h2>
             <p>Bạn chưa có sản phẩm nào trong giỏ hàng</p>
-            <Link href="/products"><Button size="lg">Tiếp tục mua sắm</Button></Link>
+            <Button href="/products" size="lg">Tiếp tục mua sắm</Button>
           </div>
         ) : (
           <div className={styles.layout}>

@@ -1,17 +1,31 @@
 import React from 'react';
+import Link from 'next/link';
 import styles from './Button.module.css';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'tertiary' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
 
-interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+type ButtonBaseProps = {
   variant?: ButtonVariant;
   size?: ButtonSize;
   fullWidth?: boolean;
   loading?: boolean;
   icon?: React.ReactNode;
   iconPosition?: 'left' | 'right';
-}
+};
+
+type ButtonAsButton = ButtonBaseProps &
+  Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, keyof ButtonBaseProps> & {
+    href?: undefined;
+  };
+
+type ButtonAsLink = ButtonBaseProps &
+  Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, keyof ButtonBaseProps> & {
+    href: string;
+    disabled?: boolean;
+  };
+
+type ButtonProps = ButtonAsButton | ButtonAsLink;
 
 export default function Button({
   children,
@@ -23,6 +37,7 @@ export default function Button({
   iconPosition = 'left',
   className = '',
   disabled,
+  href,
   ...props
 }: ButtonProps) {
   const classNames = [
@@ -34,12 +49,8 @@ export default function Button({
     className,
   ].filter(Boolean).join(' ');
 
-  return (
-    <button
-      className={classNames}
-      disabled={disabled || loading}
-      {...props}
-    >
+  const content = (
+    <>
       {loading && <span className={styles.spinner} />}
       {!loading && icon && iconPosition === 'left' && (
         <span className={styles.icon}>{icon}</span>
@@ -48,6 +59,29 @@ export default function Button({
       {!loading && icon && iconPosition === 'right' && (
         <span className={styles.icon}>{icon}</span>
       )}
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className={classNames}
+        aria-disabled={disabled || loading || undefined}
+        {...(props as Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, 'href'>)}
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <button
+      className={classNames}
+      disabled={disabled || loading}
+      {...(props as React.ButtonHTMLAttributes<HTMLButtonElement>)}
+    >
+      {content}
     </button>
   );
 }

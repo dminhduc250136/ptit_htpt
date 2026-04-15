@@ -40,7 +40,7 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     return (
       <div className={styles.notFound}>
         <h2>Đơn hàng không tồn tại</h2>
-        <Link href="/profile"><Button>Quay lại tài khoản</Button></Link>
+        <Button href="/profile">Quay lại tài khoản</Button>
       </div>
     );
   }

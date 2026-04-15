@@ -1,17 +1,23 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
 import ProductCard from '@/components/ui/ProductCard/ProductCard';
 import Button from '@/components/ui/Button/Button';
 import Input from '@/components/ui/Input/Input';
 import { mockProducts, mockCategories } from '@/mock-data/products';
-import { formatPrice } from '@/services/api';
 
 type SortOption = 'newest' | 'price_asc' | 'price_desc' | 'popular' | 'rating';
 
 export default function ProductsPage() {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const searchParams = useSearchParams();
+  const categorySlug = searchParams.get('category');
+  const initialCategory = categorySlug
+    ? mockCategories.find(c => c.slug === categorySlug)?.id ?? null
+    : null;
+
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategory);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
