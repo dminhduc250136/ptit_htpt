@@ -9,7 +9,6 @@ export default function Home() {
   const featuredProducts = mockProducts.filter(
     (p) => p.tags?.includes("Bán chạy") || p.tags?.includes("Best Seller")
   );
-  const newProducts = mockProducts.filter((p) => p.tags?.includes("Mới"));
   const allProducts = mockProducts.slice(0, 8);
 
   return (
