@@ -1,4 +1,4 @@
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useId } from 'react';
 import styles from './Input.module.css';
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -19,7 +19,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({
   id,
   ...props
 }, ref) => {
-  const inputId = id || `input-${label?.toLowerCase().replace(/\s/g, '-')}`;
+  const generatedId = useId();
+  const inputId = id || (label ? `input-${label.toLowerCase().replace(/\s/g, '-')}` : generatedId);
 
   return (
     <div className={`${styles.wrapper} ${fullWidth ? styles.fullWidth : ''} ${className}`}>
