@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
 import ProductCard from '@/components/ui/ProductCard/ProductCard';
@@ -10,7 +10,7 @@ import { mockProducts, mockCategories } from '@/mock-data/products';
 
 type SortOption = 'newest' | 'price_asc' | 'price_desc' | 'popular' | 'rating';
 
-export default function ProductsPage() {
+function ProductsPageContent() {
   const searchParams = useSearchParams();
   const categorySlug = searchParams.get('category');
   const initialCategory = categorySlug
@@ -223,5 +223,13 @@ export default function ProductsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={<div className={styles.page} />}>
+      <ProductsPageContent />
+    </Suspense>
   );
 }
