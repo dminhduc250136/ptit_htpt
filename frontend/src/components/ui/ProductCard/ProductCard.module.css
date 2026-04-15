@@ -8,15 +8,21 @@
    ============================================ */
 
 .card {
+  position: relative;
   display: flex;
   flex-direction: column;
   background-color: var(--surface-container-lowest);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  text-decoration: none;
   color: inherit;
   transition: all var(--transition-base);
   cursor: pointer;
+}
+
+.cardLink {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
 }
 
 .card:hover {

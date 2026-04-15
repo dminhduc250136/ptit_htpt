@@ -25,7 +25,10 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
   const hasDiscount = product.originalPrice && product.discount;
 
   return (
-    <Link href={`/products/${product.slug}`} className={`${styles.card} ${className}`}>
+    <div className={`${styles.card} ${className}`}>
+      {/* Stretched link for card navigation */}
+      <Link href={`/products/${product.slug}`} className={styles.cardLink} aria-label={product.name} />
+
       {/* Image Section */}
       <div className={styles.imageWrapper}>
         <Image
@@ -100,6 +103,6 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
           <span className={styles.reviewCount}>({product.reviewCount})</span>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
