@@ -1,0 +1,140 @@
+{
+  "version": "1.0",
+  "project": "ecommerce-tech-store",
+  "description": "B2C single-vendor tech store (phones, watches, laptops) — microservices architecture",
+  "language": {
+    "docs": "vi",
+    "code": "en",
+    "commit": "en"
+  },
+  "architecture": {
+    "overview": "architecture/00-overview.md",
+    "techStack": "architecture/01-tech-stack.md",
+    "sequenceDiagrams": "architecture/02-sequence-diagrams.md",
+    "classDiagrams": "architecture/03-class-diagrams.md",
+    "frontend": "architecture/frontend.md",
+    "services": {
+      "user": "architecture/services/user-service.md",
+      "product": "architecture/services/product-service.md",
+      "order": "architecture/services/order-service.md"
+    }
+  },
+  "strategy": {
+    "businessOverview": "strategy/00-business-overview.md",
+    "userJourneys": "strategy/01-user-journeys.md",
+    "businessRules": "strategy/02-business-rules.md",
+    "services": {
+      "user": "strategy/services/user-business.md",
+      "product": "strategy/services/product-business.md",
+      "order": "strategy/services/order-business.md"
+    }
+  },
+  "useCases": [
+    {
+      "id": "UC-AUTH",
+      "name": "Xác thực người dùng (Register/Login/Logout/Reset)",
+      "actor": "Customer, Guest",
+      "services": ["user"],
+      "ba": "ba/uc-auth.md",
+      "ts": "technical-spec/ts-auth.md"
+    },
+    {
+      "id": "UC-USER-PROFILE",
+      "name": "Quản lý hồ sơ và sổ địa chỉ",
+      "actor": "Customer",
+      "services": ["user"],
+      "ba": "ba/uc-user-profile.md",
+      "ts": "technical-spec/ts-user-profile.md"
+    },
+    {
+      "id": "UC-PRODUCT-BROWSE",
+      "name": "Duyệt/Tìm kiếm/Lọc/Xem chi tiết sản phẩm",
+      "actor": "Customer, Guest",
+      "services": ["product"],
+      "ba": "ba/uc-product-browse.md",
+      "ts": "technical-spec/ts-product-browse.md"
+    },
+    {
+      "id": "UC-PRODUCT-REVIEW",
+      "name": "Viết và xem review/rating sản phẩm",
+      "actor": "Customer",
+      "services": ["product", "order"],
+      "ba": "ba/uc-product-review.md",
+      "ts": "technical-spec/ts-product-review.md"
+    },
+    {
+      "id": "UC-CART",
+      "name": "Quản lý giỏ hàng",
+      "actor": "Customer",
+      "services": ["order", "product"],
+      "ba": "ba/uc-cart.md",
+      "ts": "technical-spec/ts-cart.md"
+    },
+    {
+      "id": "UC-CHECKOUT-PAYMENT",
+      "name": "Đặt hàng và thanh toán (VNPay/COD)",
+      "actor": "Customer",
+      "services": ["order", "product", "user"],
+      "ba": "ba/uc-checkout-payment.md",
+      "ts": "technical-spec/ts-checkout-payment.md"
+    },
+    {
+      "id": "UC-ORDER-TRACKING",
+      "name": "Lịch sử/Chi tiết/Tracking/Hủy đơn",
+      "actor": "Customer",
+      "services": ["order"],
+      "ba": "ba/uc-order-tracking.md",
+      "ts": "technical-spec/ts-order-tracking.md"
+    },
+    {
+      "id": "UC-ADMIN-PRODUCT",
+      "name": "Admin quản lý sản phẩm, tồn kho, danh mục",
+      "actor": "Admin",
+      "services": ["product"],
+      "ba": "ba/uc-admin-product.md",
+      "ts": "technical-spec/ts-admin-product.md"
+    },
+    {
+      "id": "UC-ADMIN-ORDER",
+      "name": "Admin duyệt/cập nhật trạng thái đơn",
+      "actor": "Admin",
+      "services": ["order", "product"],
+      "ba": "ba/uc-admin-order.md",
+      "ts": "technical-spec/ts-admin-order.md"
+    },
+    {
+      "id": "UC-ADMIN-USER",
+      "name": "Admin xem/khoá tài khoản người dùng",
+      "actor": "Admin",
+      "services": ["user"],
+      "ba": "ba/uc-admin-user.md",
+      "ts": "technical-spec/ts-admin-user.md"
+    }
+  ],
+  "businessRules": "strategy/02-business-rules.md",
+  "orderStates": [
+    "PENDING",
+    "PAID",
+    "CONFIRMED",
+    "PROCESSING",
+    "SHIPPED",
+    "DELIVERED",
+    "COMPLETED",
+    "CANCELLED",
+    "REFUNDED"
+  ],
+  "userRoles": ["CUSTOMER", "ADMIN"],
+  "paymentMethods": ["VNPAY", "COD"],
+  "categories": ["phone", "laptop", "smartwatch", "accessory"],
+  "events": {
+    "user": ["UserRegistered", "UserBlocked"],
+    "product": ["ProductCreated", "ProductUpdated", "StockReserved", "StockReleased", "StockCommitted"],
+    "order": ["OrderPlaced", "OrderPaid", "OrderCancelled", "OrderShipped", "OrderDelivered"]
+  },
+  "apiVersionPrefix": "/api/v1",
+  "conventions": {
+    "branch": "feat/{ticket-id}-{short-desc}",
+    "commit": "{ticket-id} {type}: {desc}",
+    "ticketTypes": ["feat", "fix", "hotfix", "chore", "docs", "refactor"]
+  }
+}
