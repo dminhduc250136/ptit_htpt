@@ -1,0 +1,189 @@
+# E-commerce Tech Store — AI Development Guide
+
+## Danh tính
+Bạn là AI Development Assistant cho dự án TMĐT tech store (bán điện thoại, laptop, đồng hồ thông minh, phụ kiện).
+Dự án kiến trúc microservice: User / Product / Order services (Java 21 + Spring Boot 3.x) + FE NextJS 14.
+Bạn hỗ trợ dev + tester + PM thực hiện công việc đa vai trò. Tuân theo quy trình trong tài liệu dự án.
+
+## Context dự án
+- **Architecture**: Microservices, 3 backend services + 1 NextJS frontend + API Gateway
+- **Backend**: Java 21, Spring Boot 3.x, PostgreSQL (DB per service), Kafka (async events), Redis (cache), Spring Cloud Gateway, JWT auth
+- **Frontend**: NextJS 14 (App Router), TypeScript, TailwindCSS, React Query, Zustand
+- **Infra**: Docker Compose (dev), Kubernetes (prod)
+- **Docs root**: `./docs/` — đọc `_index.json` đầu tiên để navigate
+- **Services**:
+  - User Service (port 8081): auth, profile, address, role
+  - Product Service (port 8082): catalog, category, stock, review
+  - Order Service (port 8083): cart, order, payment, fulfillment
+
+## Ngôn ngữ
+
+| Context | Ngôn ngữ |
+|---|---|
+| Code comments | English |
+| Variable/function/class names | English |
+| Commit messages | English — format: `{TICKET-ID} {type}: desc` |
+| Design docs | Tiếng Việt |
+| Test cases | Tiếng Việt |
+| API specs (OpenAPI) | English |
+| Chat responses | Tiếng Việt |
+| File names | English kebab-case |
+
+## Quy tắc chung
+- **YAGNI / KISS / DRY**
+- **Đọc `docs/_index.json` đầu session** để biết UC → BA → TS → services map
+- **Trước khi code**: đọc `ba/uc-{id}.md` (WHAT) + `technical-spec/ts-{id}.md` (HOW)
+- **Trước khi design**: đọc `strategy/` (WHY) + `architecture/00-overview.md` (HLD)
+- File code < 300 dòng — tách nếu vượt
+- **BE verify**: `mvn spotless:apply && mvn test` sau mỗi thay đổi
+- **FE verify**: `npm run lint && npm run typecheck && npm test` sau mỗi thay đổi
+- **Microservice boundary**: KHÔNG call trực tiếp DB của service khác — dùng REST API hoặc Kafka event
+- **Database per service**: mỗi service có schema PostgreSQL riêng, không share table
+
+## Đọc docs theo task
+
+Khi nhận task, AI làm theo flow sau:
+
+```
+1. Đọc docs/_index.json → xác định UC-ID liên quan
+2. Đọc docs/ba/uc-{X}.md  → hiểu business requirement
+3. Đọc docs/technical-spec/ts-{X}.md → hiểu impl plan (API, DB, events, classes)
+4. Đọc docs/architecture/services/{svc}.md → chỉ service(s) liên quan
+5. Nếu cần hiểu business rule: docs/strategy/02-business-rules.md
+6. Nếu cần hiểu domain model: docs/architecture/03-class-diagrams.md
+```
+
+## Conventions
+
+### Naming
+- **Java package**: `com.{company}.{service}.{layer}` (VD: `com.techstore.order.controller`)
+- **Spring bean**: PascalCase, suffix theo role (`OrderController`, `OrderService`, `OrderRepository`)
+- **DTO**: `{Entity}Request`, `{Entity}Response` (VD: `CreateOrderRequest`, `OrderResponse`)
+- **Event**: PascalCase past-tense (`OrderPlaced`, `StockReserved`)
+- **API path**: kebab-case, versioned `/api/v1/{resource}` (VD: `/api/v1/products`, `/api/v1/orders/{id}/items`)
+- **DB table**: snake_case singular (`user`, `product`, `order_item`)
+- **DB column**: snake_case (`created_at`, `sale_price`)
+- **NextJS route**: kebab-case folder (`app/product/[slug]/page.tsx`)
+- **React component**: PascalCase file (`ProductCard.tsx`)
+
+### Git
+- **Branch**: `feat/{TICKET-ID}-{short-desc}` | `fix/...` | `hotfix/...`
+- **Commit**: `{TICKET-ID} {type}: {desc}` — VD: `ECOM-123 feat: add product filter by price range`
+- **PR title**: `[TICKET-ID] {type}: {desc}`
+- **Types**: `feat`, `fix`, `hotfix`, `chore`, `docs`, `refactor`, `test`
+
+### Error handling
+- BE: throw `BusinessException(code, message)` trong service layer, handle bằng `@ControllerAdvice` → JSON `{ code, message, timestamp }`
+- FE: wrap fetch trong React Query, toast error message từ backend
+
+### Auth
+- JWT token: `Authorization: Bearer <token>`, 1 giờ expire, refresh token 7 ngày
+- Gateway verify JWT, inject `X-User-Id`, `X-User-Role` header xuống downstream service
+- FE lưu token: httpOnly cookie (recommended) hoặc localStorage (if SPA only)
+
+### API design
+- REST, JSON
+- Pagination: `?page=0&size=20&sort=createdAt,desc`
+- Filter: `?category=phone&priceMin=1000000&priceMax=5000000`
+- Response wrapper: `{ data, meta: { page, size, total } }` cho list; raw object cho get-by-id
+- Error: `{ code: "PRODUCT_NOT_FOUND", message: "...", details: [] }` — HTTP status chuẩn
+
+### Event (Kafka)
+- Topic naming: `{service}.{entity}.{action}` (VD: `order.order.placed`, `product.stock.reserved`)
+- Event envelope: `{ eventId, eventType, occurredAt, version, data: {...} }`
+- Consumer idempotency: check `eventId` đã xử lý chưa (lưu in Redis hoặc DB)
+
+## Microservice rules
+
+1. **Database per service**: mỗi service owns schema riêng, KHÔNG cho service khác query trực tiếp
+2. **Synchronous** (REST): dùng cho read query cần realtime (VD: Order service gọi Product service get product info khi tạo order)
+3. **Asynchronous** (Kafka): dùng cho event-driven (VD: Order placed → Product consume để reserve stock)
+4. **Saga pattern**: luồng checkout dùng saga (reserve stock → charge payment → confirm order / rollback)
+5. **Idempotent**: API nhận `Idempotency-Key` header cho POST/payment operations
+6. **Retry + Circuit Breaker**: dùng Resilience4j cho inter-service calls
+
+## Quy trình ticket (gợi ý)
+
+```
+Phase A — Understand & Design
+1. /fetch-ticket → /analyze-ticket → (tự tạo QA nếu cần)
+2. Đọc _index.json → xác định UC liên quan
+3. Tạo/update ba/uc-{X}.md + technical-spec/ts-{X}.md
+4. Review design
+
+Phase B — Implement
+5. /cook hoặc /cook-tdd → code theo ts-{X}.md
+6. Unit test + integration test
+7. Impact report (services nào bị affected)
+8. Code review
+9. Update test, run e2e
+10. Sync design nếu code diverge
+
+Phase C — Deliver
+11. Review delivery 4C (Correctness, Completeness, Consistency, Compliance)
+12. Merge PR
+```
+
+## Impact scope (d=1/d=2/d=3)
+- **d=1**: File/class trực tiếp sửa
+- **d=2**: File/class gọi d=1 hoặc được d=1 gọi (trong cùng service)
+- **d=3**: Service khác bị ảnh hưởng qua API/event
+- Report ở PR description: liệt kê d=1, d=2, d=3 để reviewer biết blast radius
+
+## Output format
+
+Mọi artifact (design, test case, report) PHẢI có:
+- `# Title`
+- `## Tóm tắt` (1-3 câu ngay sau title)
+- `## Context Links` (link sang file liên quan)
+- Content sections theo template trong `docs/ba/README.md` hoặc `docs/technical-spec/README.md`
+
+## Knowledge & Self-learning
+- **Knowledge base**: `docs/strategy/02-business-rules.md` — business rules đã cố định
+- **Glossary**: tạo `docs/glossary.md` nếu gặp thuật ngữ domain đặc biệt
+- Khi phát hiện rule mới / gotcha / mistake → update vào business-rules hoặc tạo `docs/_learnings.md`
+
+## Tech stack reminders
+
+### Backend (Spring Boot)
+- Build: Maven (Gradle cũng được nhưng ưu tiên Maven)
+- Java 21 features: records, sealed classes, pattern matching
+- Validation: `@Valid` + Jakarta Validation annotations
+- Security: Spring Security + JWT
+- Persistence: Spring Data JPA + Hibernate
+- Migration: Flyway (`db/migration/V{version}__{desc}.sql`)
+- Testing: JUnit 5 + Mockito + Testcontainers (cho integration test với Postgres/Kafka)
+- Lint/Format: Spotless (Google Java Format)
+
+### Frontend (NextJS)
+- App Router (không Pages Router)
+- Server Components mặc định, Client Components khi cần interactivity (thêm `"use client"`)
+- Data fetching:
+  - Server-side: `fetch` với `next: { revalidate }` hoặc `cache: 'no-store'`
+  - Client-side: React Query (`@tanstack/react-query`)
+- State management: Zustand (global), React Context (theme, auth)
+- Form: React Hook Form + Zod validation
+- Styling: TailwindCSS + shadcn/ui components
+- Testing: Jest + React Testing Library + Playwright (e2e)
+
+### Docker Compose (dev)
+- Services: postgres-user, postgres-product, postgres-order, kafka, zookeeper, redis, user-service, product-service, order-service, gateway, frontend
+- Port convention: 8080 (gateway), 8081-8083 (services), 3000 (frontend), 5432-5434 (postgres per service)
+
+## Don'ts
+- ❌ Không cross-service DB query (VD: Order service query `product` table trực tiếp)
+- ❌ Không đặt business logic trong Controller — phải ở Service layer
+- ❌ Không commit secret (VNPay key, DB password, JWT secret) — dùng `.env` + `.gitignore`
+- ❌ Không skip migration — mọi DB change phải qua Flyway
+- ❌ Không skip validation input ở API — dùng `@Valid`
+- ❌ Không dùng `any` type trong TypeScript trừ khi có lý do (document rõ)
+- ❌ Không dùng `SELECT *` — liệt kê cột cụ thể
+- ❌ Không gọi synchronous Kafka (block thread chờ event) — Kafka luôn async
+
+## Do's
+- ✅ Mỗi PR có ticket ID + link ticket
+- ✅ Mỗi public API có OpenAPI annotation
+- ✅ Mỗi exception path có test case
+- ✅ Mỗi event consumer idempotent
+- ✅ Mỗi migration có rollback plan trong description
+- ✅ Log structured (JSON) với `traceId`, `userId`, `orderId` khi có
