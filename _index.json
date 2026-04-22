@@ -42,80 +42,90 @@
       "name": "Xác thực người dùng (Register/Login/Logout/Reset)",
       "actor": "Customer, Guest",
       "services": ["user", "notification"],
-      "ba": "ba/uc-auth.md",
-      "ts": "technical-spec/ts-auth.md"
+      "service": "user-service",
+      "ba": "ba/user-service/uc-auth.md",
+      "ts": "technical-spec/user-service/ts-auth.md"
     },
     {
       "id": "UC-USER-PROFILE",
       "name": "Quản lý hồ sơ và sổ địa chỉ",
       "actor": "Customer",
       "services": ["user"],
-      "ba": "ba/uc-user-profile.md",
-      "ts": "technical-spec/ts-user-profile.md"
-    },
-    {
-      "id": "UC-PRODUCT-BROWSE",
-      "name": "Duyệt/Tìm kiếm/Lọc/Xem chi tiết sản phẩm",
-      "actor": "Customer, Guest",
-      "services": ["product", "inventory"],
-      "ba": "ba/uc-product-browse.md",
-      "ts": "technical-spec/ts-product-browse.md"
-    },
-    {
-      "id": "UC-PRODUCT-REVIEW",
-      "name": "Viết và xem review/rating sản phẩm",
-      "actor": "Customer",
-      "services": ["product", "order"],
-      "ba": "ba/uc-product-review.md",
-      "ts": "technical-spec/ts-product-review.md"
-    },
-    {
-      "id": "UC-CART",
-      "name": "Quản lý giỏ hàng",
-      "actor": "Customer",
-      "services": ["order", "inventory", "product"],
-      "ba": "ba/uc-cart.md",
-      "ts": "technical-spec/ts-cart.md"
-    },
-    {
-      "id": "UC-CHECKOUT-PAYMENT",
-      "name": "Đặt hàng và thanh toán (VNPay/COD)",
-      "actor": "Customer",
-      "services": ["order", "payment", "inventory", "user", "notification"],
-      "ba": "ba/uc-checkout-payment.md",
-      "ts": "technical-spec/ts-checkout-payment.md"
-    },
-    {
-      "id": "UC-ORDER-TRACKING",
-      "name": "Lịch sử/Chi tiết/Tracking/Hủy đơn",
-      "actor": "Customer",
-      "services": ["order", "payment", "notification"],
-      "ba": "ba/uc-order-tracking.md",
-      "ts": "technical-spec/ts-order-tracking.md"
-    },
-    {
-      "id": "UC-ADMIN-PRODUCT",
-      "name": "Admin quản lý product + category + inventory",
-      "actor": "Admin",
-      "services": ["product", "inventory"],
-      "ba": "ba/uc-admin-product.md",
-      "ts": "technical-spec/ts-admin-product.md"
-    },
-    {
-      "id": "UC-ADMIN-ORDER",
-      "name": "Admin duyệt/cập nhật trạng thái đơn",
-      "actor": "Admin",
-      "services": ["order", "payment", "inventory", "notification"],
-      "ba": "ba/uc-admin-order.md",
-      "ts": "technical-spec/ts-admin-order.md"
+      "service": "user-service",
+      "ba": "ba/user-service/uc-user-profile.md",
+      "ts": "technical-spec/user-service/ts-user-profile.md"
     },
     {
       "id": "UC-ADMIN-USER",
       "name": "Admin xem/khoá tài khoản người dùng",
       "actor": "Admin",
       "services": ["user", "notification"],
-      "ba": "ba/uc-admin-user.md",
-      "ts": "technical-spec/ts-admin-user.md"
+      "service": "user-service",
+      "ba": "ba/user-service/uc-admin-user.md",
+      "ts": "technical-spec/user-service/ts-admin-user.md"
+    },
+    {
+      "id": "UC-PRODUCT-BROWSE",
+      "name": "Duyệt/Tìm kiếm/Lọc/Xem chi tiết sản phẩm",
+      "actor": "Customer, Guest",
+      "services": ["product", "inventory"],
+      "service": "product-service",
+      "ba": "ba/product-service/uc-product-browse.md",
+      "ts": "technical-spec/product-service/ts-product-browse.md"
+    },
+    {
+      "id": "UC-PRODUCT-REVIEW",
+      "name": "Viết và xem review/rating sản phẩm",
+      "actor": "Customer",
+      "services": ["product", "order"],
+      "service": "product-service",
+      "ba": "ba/product-service/uc-product-review.md",
+      "ts": "technical-spec/product-service/ts-product-review.md"
+    },
+    {
+      "id": "UC-ADMIN-PRODUCT",
+      "name": "Admin quản lý product + category + inventory",
+      "actor": "Admin",
+      "services": ["product", "inventory"],
+      "service": "product-service",
+      "ba": "ba/product-service/uc-admin-product.md",
+      "ts": "technical-spec/product-service/ts-admin-product.md"
+    },
+    {
+      "id": "UC-CART",
+      "name": "Quản lý giỏ hàng",
+      "actor": "Customer",
+      "services": ["order", "inventory", "product"],
+      "service": "order-service",
+      "ba": "ba/order-service/uc-cart.md",
+      "ts": "technical-spec/order-service/ts-cart.md"
+    },
+    {
+      "id": "UC-CHECKOUT-PAYMENT",
+      "name": "Đặt hàng và thanh toán (VNPay/COD)",
+      "actor": "Customer",
+      "services": ["order", "payment", "inventory", "user", "notification"],
+      "service": "order-service",
+      "ba": "ba/order-service/uc-checkout-payment.md",
+      "ts": "technical-spec/order-service/ts-checkout-payment.md"
+    },
+    {
+      "id": "UC-ORDER-TRACKING",
+      "name": "Lịch sử/Chi tiết/Tracking/Hủy đơn",
+      "actor": "Customer",
+      "services": ["order", "payment", "notification"],
+      "service": "order-service",
+      "ba": "ba/order-service/uc-order-tracking.md",
+      "ts": "technical-spec/order-service/ts-order-tracking.md"
+    },
+    {
+      "id": "UC-ADMIN-ORDER",
+      "name": "Admin duyệt/cập nhật trạng thái đơn",
+      "actor": "Admin",
+      "services": ["order", "payment", "inventory", "notification"],
+      "service": "order-service",
+      "ba": "ba/order-service/uc-admin-order.md",
+      "ts": "technical-spec/order-service/ts-admin-order.md"
     }
   ],
   "orderStates": [
