@@ -2,41 +2,41 @@
 
 ## 1. Tổng quan
 - Lĩnh vực: Thương mại điện tử (single-vendor tech store).
-- Kiến trúc mục tiêu: FE + API Gateway + 6 backend services.
-- Mục tiêu tài liệu: giúp AI map đúng service ownership trước khi đề xuất code.
+- Kiến trúc: FE + API Gateway + 6 backend services.
+- Mục tiêu: Giúp AI map đúng service ownership trước khi đề xuất code.
 
-## 2. Kiến trúc hệ thống hiện tại
-### Frontend
-- 1 ứng dụng NextJS (TypeScript) cho customer và admin.
-- Tất cả API call đi qua API Gateway.
+## 2. Kiến trúc chi tiết
+👉 Xem [architecture/00-overview.md](architecture/00-overview.md) để hiểu:
+- Container diagram + service boundaries
+- Integration pattern (sync REST + async events)
+- Cross-cutting concerns (JWT, rate-limit, trace, audit)
 
-### Backend
-- `api-gateway`: edge routing, CORS, auth/rate-limit (target design).
-- `user-service`: auth, profile, address, user admin.
-- `product-service`: catalog, category, review.
-- `order-service`: cart, order lifecycle.
-- `payment-service`: payment session, VNPay return/IPN, payment state.
-- `inventory-service`: reserve/commit/release stock.
-- `notification-service`: gửi notification async theo event.
+## 3. Service Ownership (Quy tắc bắt buộc)
+| Service | Chủ sở hữu | ❌ Cấm |
+|---|---|---|
+| **user-service** | auth, profile, address | order, payment, inventory |
+| **product-service** | catalog, category, review | reserve/commit/release stock |
+| **order-service** | cart, order lifecycle | payment callback, stock mutation |
+| **payment-service** | payment transaction, VNPay callback | order state |
+| **inventory-service** | available/reserved stock | product metadata |
+| **notification-service** | template, delivery retry | business state |
+| **api-gateway** | edge auth, routing, rate-limit | domain logic |
 
-## 3. Quy tắc ownership bắt buộc
+**Quy tắc cốt lõi:**
 1. Không đặt payment callback logic trong order-service.
 2. Không đặt stock mutation trong product-service.
 3. Notification là async side effect, không chặn request path.
 4. Không service nào truy cập DB của service khác.
 
-## 4. Integration pattern
-- Sync: REST qua Gateway.
-- Async: domain events (order, payment, inventory, user) -> consumers.
-- Các flow quan trọng cần idempotency: checkout và payment callback.
-
-## 5. Trạng thái hiện tại
-- Code backend đang ở mức skeleton cho nhiều service.
-- Docker compose đã có đủ 7 thành phần backend (gateway + 6 services).
-- Tài liệu strategy/ba/architecture đã cập nhật theo boundary mới.
-
-## 6. Nguyên tắc cho AI khi làm task
-1. Đọc theo thứ tự: PROJECT_CONTEXT -> README -> _index -> UC -> architecture service docs.
-2. Nếu task không rõ domain, xác định owner service trước rồi mới thiết kế API/code.
-3. Nếu endpoint chưa có trong code, ghi rõ planned contract thay vì giả định đã implement.
+## 4. Nguyên tắc cho AI khi làm task
+1. Đọc theo thứ tự: **PROJECT_CONTEXT → README → UC → architecture/services/**
+2. Xác định owner service trước khi thiết kế API/code.
+3. Ghi rõ planned contract nếu endpoint chưa implement.
 4. Ưu tiên cập nhật docs khi thay đổi boundary hoặc event contracts.
+
+## 5. Tài liệu liên quan
+- **Kiến trúc**: [architecture/](architecture/) — source of truth technical design
+- **Business context**: [strategy/](strategy/) — KPI, vision, business rules
+- **Use cases**: [ba/](ba/) — organized by service (user-service/, product-service/, order-service/)
+- **Technical specs**: [technical-spec/](technical-spec/) — organized by service
+- **Navigation**: [README.md](README.md) — decision guide + quick reference
