@@ -40,12 +40,12 @@ Plans:
   1. Each service exposes a complete, documented CRUD set for the assignment scope.
   2. CRUD endpoints follow consistent naming, payload, and pagination conventions where relevant.
   3. API Gateway routes to all CRUD endpoints without ad-hoc inconsistencies.
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: Inventory + Notification CRUD audit and gap closure
-- [ ] 02-02: User + Product CRUD audit and gap closure
-- [ ] 02-03: Order + Payment CRUD audit and gap closure
+- [ ] 02-01-PLAN.md — Inventory + Notification CRUD audit and gap closure
+- [ ] 02-02-PLAN.md — User + Product CRUD audit and gap closure
+- [ ] 02-03-PLAN.md — Order + Payment CRUD audit and gap closure
 
 ### Phase 3: Validation & Error Handling Hardening
 **Goal**: Make validation and error handling consistent and predictable across services and gateway.
@@ -79,7 +79,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. API Contract & Swagger Baseline | 3/3 | Verification needed | 2026-04-22 |
-| 2. CRUD Completeness Across Services | 0/TBD | Not started | - |
+| 2. CRUD Completeness Across Services | 0/3 | Not started | - |
 | 3. Validation & Error Handling Hardening | 0/TBD | Not started | - |
 | 4. Frontend Contract Alignment + E2E Validation | 0/TBD | Not started | - |
 
