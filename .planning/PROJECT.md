@@ -93,6 +93,16 @@ From codebase analysis, areas worth monitoring:
 - Performance optimization (N+1 queries, caching)
 - Comprehensive test coverage (currently minimal)
 
+## Current Milestone: v1.0 MVP Stabilization
+
+**Goal:** Make the API surface consistent and complete (CRUD + Swagger/OpenAPI) so the frontend can reliably integrate and the system can be validated end-to-end.
+
+**Target features:**
+- Complete CRUD endpoints across all microservices (consistent patterns)
+- Swagger/OpenAPI documentation for every service and gateway
+- Frontend-backend API contract alignment (DTOs, status codes, error formats)
+- Cross-service validation and consistent error handling
+
 ## Evolution
 
 This document evolves at phase transitions and milestone boundaries.
@@ -111,4 +121,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Initialized: 2026-04-22 | Ready for planning*
+*Last updated: 2026-04-22 — milestone v1.0 started*
