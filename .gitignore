@@ -1,6 +1,7 @@
 # IDEs & Editors
 .idea/
 .vscode/
+.cursor/
 *.swp
 *.swo
 
@@ -53,3 +54,7 @@ out/
 coverage/
 .nyc_output/
 *.pem
+
+# Python caches (tooling/scripts)
+__pycache__/
+*.pyc
