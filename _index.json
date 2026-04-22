@@ -1,7 +1,7 @@
 {
-  "version": "1.0",
+  "version": "2.0",
   "project": "ecommerce-tech-store",
-  "description": "B2C single-vendor tech store (phones, watches, laptops) — microservices architecture",
+  "description": "B2C single-vendor tech store - FE + API Gateway + 6 backend services",
   "language": {
     "docs": "vi",
     "code": "en",
@@ -14,9 +14,13 @@
     "classDiagrams": "architecture/03-class-diagrams.md",
     "frontend": "architecture/frontend.md",
     "services": {
+      "apiGateway": "architecture/services/api-gateway.md",
       "user": "architecture/services/user-service.md",
       "product": "architecture/services/product-service.md",
-      "order": "architecture/services/order-service.md"
+      "order": "architecture/services/order-service.md",
+      "payment": "architecture/services/payment-service.md",
+      "inventory": "architecture/services/inventory-service.md",
+      "notification": "architecture/services/notification-service.md"
     }
   },
   "strategy": {
@@ -26,7 +30,10 @@
     "services": {
       "user": "strategy/services/user-business.md",
       "product": "strategy/services/product-business.md",
-      "order": "strategy/services/order-business.md"
+      "order": "strategy/services/order-business.md",
+      "payment": "strategy/services/payment-business.md",
+      "inventory": "strategy/services/inventory-business.md",
+      "notification": "strategy/services/notification-business.md"
     }
   },
   "useCases": [
@@ -34,7 +41,7 @@
       "id": "UC-AUTH",
       "name": "Xác thực người dùng (Register/Login/Logout/Reset)",
       "actor": "Customer, Guest",
-      "services": ["user"],
+      "services": ["user", "notification"],
       "ba": "ba/uc-auth.md",
       "ts": "technical-spec/ts-auth.md"
     },
@@ -50,7 +57,7 @@
       "id": "UC-PRODUCT-BROWSE",
       "name": "Duyệt/Tìm kiếm/Lọc/Xem chi tiết sản phẩm",
       "actor": "Customer, Guest",
-      "services": ["product"],
+      "services": ["product", "inventory"],
       "ba": "ba/uc-product-browse.md",
       "ts": "technical-spec/ts-product-browse.md"
     },
@@ -66,7 +73,7 @@
       "id": "UC-CART",
       "name": "Quản lý giỏ hàng",
       "actor": "Customer",
-      "services": ["order", "product"],
+      "services": ["order", "inventory", "product"],
       "ba": "ba/uc-cart.md",
       "ts": "technical-spec/ts-cart.md"
     },
@@ -74,7 +81,7 @@
       "id": "UC-CHECKOUT-PAYMENT",
       "name": "Đặt hàng và thanh toán (VNPay/COD)",
       "actor": "Customer",
-      "services": ["order", "product", "user"],
+      "services": ["order", "payment", "inventory", "user", "notification"],
       "ba": "ba/uc-checkout-payment.md",
       "ts": "technical-spec/ts-checkout-payment.md"
     },
@@ -82,15 +89,15 @@
       "id": "UC-ORDER-TRACKING",
       "name": "Lịch sử/Chi tiết/Tracking/Hủy đơn",
       "actor": "Customer",
-      "services": ["order"],
+      "services": ["order", "payment", "notification"],
       "ba": "ba/uc-order-tracking.md",
       "ts": "technical-spec/ts-order-tracking.md"
     },
     {
       "id": "UC-ADMIN-PRODUCT",
-      "name": "Admin quản lý sản phẩm, tồn kho, danh mục",
+      "name": "Admin quản lý product + category + inventory",
       "actor": "Admin",
-      "services": ["product"],
+      "services": ["product", "inventory"],
       "ba": "ba/uc-admin-product.md",
       "ts": "technical-spec/ts-admin-product.md"
     },
@@ -98,7 +105,7 @@
       "id": "UC-ADMIN-ORDER",
       "name": "Admin duyệt/cập nhật trạng thái đơn",
       "actor": "Admin",
-      "services": ["order", "product"],
+      "services": ["order", "payment", "inventory", "notification"],
       "ba": "ba/uc-admin-order.md",
       "ts": "technical-spec/ts-admin-order.md"
     },
@@ -106,12 +113,11 @@
       "id": "UC-ADMIN-USER",
       "name": "Admin xem/khoá tài khoản người dùng",
       "actor": "Admin",
-      "services": ["user"],
+      "services": ["user", "notification"],
       "ba": "ba/uc-admin-user.md",
       "ts": "technical-spec/ts-admin-user.md"
     }
   ],
-  "businessRules": "strategy/02-business-rules.md",
   "orderStates": [
     "PENDING",
     "PAID",
@@ -123,18 +129,15 @@
     "CANCELLED",
     "REFUNDED"
   ],
-  "userRoles": ["CUSTOMER", "ADMIN"],
   "paymentMethods": ["VNPAY", "COD"],
-  "categories": ["phone", "laptop", "smartwatch", "accessory"],
+  "userRoles": ["CUSTOMER", "ADMIN"],
   "events": {
-    "user": ["UserRegistered", "UserBlocked"],
-    "product": ["ProductCreated", "ProductUpdated", "StockReserved", "StockReleased", "StockCommitted"],
-    "order": ["OrderPlaced", "OrderPaid", "OrderCancelled", "OrderShipped", "OrderDelivered"]
+    "user": ["UserRegistered", "UserBlocked", "UserUnblocked", "PasswordResetRequested"],
+    "order": ["OrderPlaced", "OrderStateChanged", "OrderDelivered", "OrderCancelled"],
+    "payment": ["PaymentInitiated", "PaymentSucceeded", "PaymentFailed", "PaymentExpired"],
+    "inventory": ["StockReserved", "StockReservationFailed", "StockCommitted", "StockReleased", "LowStockDetected"],
+    "product": ["ProductCreated", "ProductUpdated", "ReviewPosted"],
+    "notification": ["NotificationSent", "NotificationFailed"]
   },
-  "apiVersionPrefix": "/api/v1",
-  "conventions": {
-    "branch": "feat/{ticket-id}-{short-desc}",
-    "commit": "{ticket-id} {type}: {desc}",
-    "ticketTypes": ["feat", "fix", "hotfix", "chore", "docs", "refactor"]
-  }
+  "apiVersionPrefix": "/api/v1"
 }
