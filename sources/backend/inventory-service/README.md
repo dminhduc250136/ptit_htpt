@@ -1,9 +1,18 @@
+# inventory-service ENV Guide
+
+## Biến môi trường cần thiết
+- SPRING_DATASOURCE_URL
+- SPRING_DATASOURCE_USERNAME
+- SPRING_DATASOURCE_PASSWORD
+- JWT_SECRET
+- CORS_ALLOWED_ORIGINS
+
+## Ví dụ cấu hình (application.yml)
 spring:
   application:
     name: inventory-service
 server:
   port: 8081
-
 ---
 spring:
   profiles: dev
@@ -16,15 +25,3 @@ jwt:
   expiration: 3600
 cors:
   allowed-origins: http://localhost:3000
-spring:
-  application:
-    name: inventory-service
-
-server:
-  port: 8080
-
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info

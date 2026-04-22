@@ -1,14 +1,18 @@
+# product-service ENV Guide
+
+## Biến môi trường cần thiết
+- SPRING_DATASOURCE_URL
+- SPRING_DATASOURCE_USERNAME
+- SPRING_DATASOURCE_PASSWORD
+- JWT_SECRET
+- CORS_ALLOWED_ORIGINS
+
+## Ví dụ cấu hình (application.yml)
 spring:
   application:
     name: product-service
 server:
   port: 8083
-management:
-  endpoints:
-    web:
-      exposure:
-        include: health,info
-
 ---
 spring:
   profiles: dev
