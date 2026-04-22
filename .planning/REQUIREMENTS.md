@@ -6,8 +6,8 @@
 
 - [ ] **API-01**: Every service exposes Swagger/OpenAPI docs in a consistent way (including auth where applicable).
 - [ ] **API-02**: API Gateway publishes an aggregated or discoverable OpenAPI surface for frontend integration.
-- [ ] **API-03**: Standardize response envelope and error format across services (error code, message, field errors, trace id).
-- [ ] **API-04**: Standardize HTTP status code usage across services (success, validation, auth, not-found, conflict).
+- [x] **API-03**: Standardize response envelope and error format across services (error code, message, field errors, trace id).
+- [x] **API-04**: Standardize HTTP status code usage across services (success, validation, auth, not-found, conflict).
 
 ### CRUD Completeness
 

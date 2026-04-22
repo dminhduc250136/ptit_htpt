@@ -28,7 +28,7 @@ Stabilize the existing microservices + gateway + Next.js frontend by making the 
 **Plans**: TBD
 
 Plans:
-- [ ] 01-01: Define and document the standard API response + error schema
+- [x] 01-01: Define and document the standard API response + error schema
 - [ ] 01-02: Ensure Swagger/OpenAPI is enabled and consistent in every service
 - [ ] 01-03: Gateway API surface conventions and compatibility checks
 
@@ -78,7 +78,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. API Contract & Swagger Baseline | 0/TBD | Not started | - |
+| 1. API Contract & Swagger Baseline | 1/3 | In progress | 2026-04-22 |
 | 2. CRUD Completeness Across Services | 0/TBD | Not started | - |
 | 3. Validation & Error Handling Hardening | 0/TBD | Not started | - |
 | 4. Frontend Contract Alignment + E2E Validation | 0/TBD | Not started | - |
