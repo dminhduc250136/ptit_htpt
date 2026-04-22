@@ -43,9 +43,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md — Inventory + Notification CRUD audit and gap closure
-- [ ] 02-02-PLAN.md — User + Product CRUD audit and gap closure
-- [ ] 02-03-PLAN.md — Order + Payment CRUD audit and gap closure
+- [x] 02-01-PLAN.md — Inventory + Notification CRUD audit and gap closure
+- [x] 02-02-PLAN.md — User + Product CRUD audit and gap closure
+- [x] 02-03-PLAN.md — Order + Payment CRUD audit and gap closure
 
 ### Phase 3: Validation & Error Handling Hardening
 **Goal**: Make validation and error handling consistent and predictable across services and gateway.

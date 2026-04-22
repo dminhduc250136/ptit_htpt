@@ -11,12 +11,18 @@
 
 ### CRUD Completeness
 
-- [ ] **CRUD-01**: User Service CRUD endpoints are complete and follow the standard contract patterns.
-- [ ] **CRUD-02**: Product Service CRUD endpoints are complete (including admin operations) and follow the standard contract patterns.
-- [ ] **CRUD-03**: Order Service CRUD endpoints are complete (cart + order lifecycle) and follow the standard contract patterns.
-- [ ] **CRUD-04**: Payment Service endpoints are complete for the assignment scope (mock payment is acceptable) and follow the standard contract patterns.
-- [ ] **CRUD-05**: Inventory Service endpoints are complete and follow the standard contract patterns.
-- [ ] **CRUD-06**: Notification Service endpoints are complete (dispatch + templates/config as applicable) and follow the standard contract patterns.
+- [x] **CRUD-01
+**: User Service CRUD endpoints are complete and follow the standard contract patterns.
+- [x] **CRUD-02
+**: Product Service CRUD endpoints are complete (including admin operations) and follow the standard contract patterns.
+- [x] **CRUD-03
+**: Order Service CRUD endpoints are complete (cart + order lifecycle) and follow the standard contract patterns.
+- [x] **CRUD-04
+**: Payment Service endpoints are complete for the assignment scope (mock payment is acceptable) and follow the standard contract patterns.
+- [x] **CRUD-05
+**: Inventory Service endpoints are complete and follow the standard contract patterns.
+- [x] **CRUD-06
+**: Notification Service endpoints are complete (dispatch + templates/config as applicable) and follow the standard contract patterns.
 
 ### Validation & Error Handling
 
