@@ -11,7 +11,7 @@ Stabilize the existing microservices + gateway + Next.js frontend by making the 
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
 - [ ] **Phase 1: API Contract & Swagger Baseline** - Establish consistent API patterns and Swagger/OpenAPI everywhere
-- [ ] **Phase 2: CRUD Completeness Across Services** - Close CRUD gaps across services using the Phase 1 contract
+- [x] **Phase 2: CRUD Completeness Across Services** - Close CRUD gaps across services using the Phase 1 contract
 - [ ] **Phase 3: Validation & Error Handling Hardening** - Standardize validation and error handling behaviors
 - [ ] **Phase 4: Frontend Contract Alignment + E2E Validation** - Align frontend with contracts and validate shopping flow
 
@@ -79,7 +79,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. API Contract & Swagger Baseline | 3/3 | Verification needed | 2026-04-22 |
-| 2. CRUD Completeness Across Services | 0/3 | Not started | - |
+| 2. CRUD Completeness Across Services | 3/3 | Complete | 2026-04-22 |
 | 3. Validation & Error Handling Hardening | 0/TBD | Not started | - |
 | 4. Frontend Contract Alignment + E2E Validation | 0/TBD | Not started | - |
 
