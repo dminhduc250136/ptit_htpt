@@ -1,88 +1,82 @@
-# BA Use Case Index
+# BA Use Case Index (v2) - Organized by Service
 
 ## Tóm tắt
-Index của tất cả use case. Mỗi UC có ID format `UC-{SLUG}`, map 1-1 với technical spec `TS-{SLUG}`. Dùng bảng dưới để navigate nhanh.
+Index use case cho kiến trúc FE + API Gateway + 6 backend services. Bảng này là điểm vào nhanh để AI map UC -> service -> tài liệu kỹ thuật.
 
-## Context Links
-- Machine map: [../_index.json](../_index.json)
-- Strategy: [../strategy/00-business-overview.md](../strategy/00-business-overview.md)
-- TS index: [../technical-spec/README.md](../technical-spec/README.md)
+**Cấu trúc mới:** Use cases được phân loại theo service để dễ mở rộng.
 
-## Use Case Table
-
-| UC-ID | Name | Actor | Services | BA File | TS File |
-|---|---|---|---|---|---|
-| UC-AUTH | Xác thực người dùng | Customer, Guest | user | [uc-auth.md](./uc-auth.md) | [ts-auth.md](../technical-spec/ts-auth.md) |
-| UC-USER-PROFILE | Hồ sơ & Sổ địa chỉ | Customer | user | [uc-user-profile.md](./uc-user-profile.md) | [ts-user-profile.md](../technical-spec/ts-user-profile.md) |
-| UC-PRODUCT-BROWSE | Duyệt/Tìm/Lọc/Chi tiết sản phẩm | Customer, Guest | product | [uc-product-browse.md](./uc-product-browse.md) | [ts-product-browse.md](../technical-spec/ts-product-browse.md) |
-| UC-PRODUCT-REVIEW | Review & Rating | Customer | product, order | [uc-product-review.md](./uc-product-review.md) | [ts-product-review.md](../technical-spec/ts-product-review.md) |
-| UC-CART | Giỏ hàng | Customer | order, product | [uc-cart.md](./uc-cart.md) | [ts-cart.md](../technical-spec/ts-cart.md) |
-| UC-CHECKOUT-PAYMENT | Đặt hàng & Thanh toán | Customer | order, product, user | [uc-checkout-payment.md](./uc-checkout-payment.md) | [ts-checkout-payment.md](../technical-spec/ts-checkout-payment.md) |
-| UC-ORDER-TRACKING | Lịch sử / Tracking / Hủy | Customer | order | [uc-order-tracking.md](./uc-order-tracking.md) | [ts-order-tracking.md](../technical-spec/ts-order-tracking.md) |
-| UC-ADMIN-PRODUCT | Admin: Product + Stock + Category | Admin | product | [uc-admin-product.md](./uc-admin-product.md) | [ts-admin-product.md](../technical-spec/ts-admin-product.md) |
-| UC-ADMIN-ORDER | Admin: Order management | Admin | order, product | [uc-admin-order.md](./uc-admin-order.md) | [ts-admin-order.md](../technical-spec/ts-admin-order.md) |
-| UC-ADMIN-USER | Admin: User management | Admin | user | [uc-admin-user.md](./uc-admin-user.md) | [ts-admin-user.md](../technical-spec/ts-admin-user.md) |
-
-## BA Template
-
-Mỗi BA spec file tuân theo template:
-
-```markdown
-# UC-{ID}: {Tên use case}
-
-## Tóm tắt
-{1-3 câu}
-
-## Context Links
-- Strategy: [link]
-- Technical Spec: [link]
-- Architecture: [link]
-
-## Actors
-- Primary: ...
-- Secondary: ...
-
-## Preconditions
-- ...
-
-## Main Flow
-1. ...
-
-## Alternative Flows
-### AF-1: {tên}
-...
-
-## Exception Flows
-### EF-1: {tên}
-...
-
-## Business Rules
-- BR-{ID}: ...
-
-## Acceptance Criteria
-- [ ] AC-1: ...
-
-## Data Inputs/Outputs
-...
-
-## UI Notes
-...
-
-## Non-functional Requirements
-...
+## Cấu trúc thư mục
+```
+ba/
+├── README.md (file này - overview)
+├── user-service/
+│   ├── uc-auth.md
+│   ├── uc-user-profile.md
+│   └── uc-admin-user.md
+├── product-service/
+│   ├── uc-product-browse.md
+│   ├── uc-product-review.md
+│   └── uc-admin-product.md
+├── order-service/
+│   ├── uc-cart.md
+│   ├── uc-checkout-payment.md
+│   ├── uc-order-tracking.md
+│   └── uc-admin-order.md
+└── payment-service/ (shared UCs with order-service)
 ```
 
-## Priority / MRR (must/should/could)
+## Use Case by Service
 
-| UC-ID | Priority | Phase |
+### 👤 user-service
+| UC-ID | Name | Files |
 |---|---|---|
-| UC-AUTH | Must | MVP |
-| UC-PRODUCT-BROWSE | Must | MVP |
-| UC-CART | Must | MVP |
-| UC-CHECKOUT-PAYMENT | Must | MVP |
-| UC-ORDER-TRACKING | Must | MVP |
-| UC-ADMIN-PRODUCT | Must | MVP |
-| UC-ADMIN-ORDER | Must | MVP |
-| UC-USER-PROFILE | Should | MVP |
-| UC-ADMIN-USER | Should | MVP |
-| UC-PRODUCT-REVIEW | Should | v1.1 |
+| UC-AUTH | Xác thực người dùng | [uc-auth.md](./user-service/uc-auth.md) |
+| UC-USER-PROFILE | Hồ sơ và sổ địa chỉ | [uc-user-profile.md](./user-service/uc-user-profile.md) |
+| UC-ADMIN-USER | Admin quản lý user | [uc-admin-user.md](./user-service/uc-admin-user.md) |
+
+### 📦 product-service
+| UC-ID | Name | Files |
+|---|---|---|
+| UC-PRODUCT-BROWSE | Duyệt/tìm/lọc sản phẩm | [uc-product-browse.md](./product-service/uc-product-browse.md) |
+| UC-PRODUCT-REVIEW | Review và rating | [uc-product-review.md](./product-service/uc-product-review.md) |
+| UC-ADMIN-PRODUCT | Admin quản lý catalog | [uc-admin-product.md](./product-service/uc-admin-product.md) |
+
+### 🛒 order-service
+| UC-ID | Name | Files |
+|---|---|---|
+| UC-CART | Quản lý giỏ hàng | [uc-cart.md](./order-service/uc-cart.md) |
+| UC-CHECKOUT-PAYMENT | Đặt hàng và thanh toán | [uc-checkout-payment.md](./order-service/uc-checkout-payment.md) |
+| UC-ORDER-TRACKING | Lịch sử, tracking, hủy | [uc-order-tracking.md](./order-service/uc-order-tracking.md) |
+| UC-ADMIN-ORDER | Admin quản lý đơn | [uc-admin-order.md](./order-service/uc-admin-order.md) |
+
+### 💳 payment-service
+> Chia sẻ UC với order-service
+- [uc-checkout-payment.md](./order-service/uc-checkout-payment.md) — Payment section
+
+## Complete Use Case Table
+| UC-ID | Name | Actor | Services | BA File | TS File | Priority |
+|---|---|---|---|---|---|---|
+| UC-AUTH | Xác thực | Guest, Customer | user, notif | [↗](./user-service/uc-auth.md) | [↗](../technical-spec/user-service/ts-auth.md) | Must |
+| UC-USER-PROFILE | Hồ sơ | Customer | user | [↗](./user-service/uc-user-profile.md) | [↗](../technical-spec/user-service/ts-user-profile.md) | Should |
+| UC-ADMIN-USER | User admin | Admin | user, notif | [↗](./user-service/uc-admin-user.md) | [↗](../technical-spec/user-service/ts-admin-user.md) | Should |
+| UC-PRODUCT-BROWSE | Browse/search | Guest, Customer | product, inv | [↗](./product-service/uc-product-browse.md) | [↗](../technical-spec/product-service/ts-product-browse.md) | Must |
+| UC-PRODUCT-REVIEW | Review | Customer | product, order | [↗](./product-service/uc-product-review.md) | [↗](../technical-spec/product-service/ts-product-review.md) | Should |
+| UC-ADMIN-PRODUCT | Product admin | Admin | product, inv | [↗](./product-service/uc-admin-product.md) | [↗](../technical-spec/product-service/ts-admin-product.md) | Must |
+| UC-CART | Cart | Customer | order, inv, product | [↗](./order-service/uc-cart.md) | [↗](../technical-spec/order-service/ts-cart.md) | Must |
+| UC-CHECKOUT-PAYMENT | Checkout | Customer | order, pay, inv, user, notif | [↗](./order-service/uc-checkout-payment.md) | [↗](../technical-spec/order-service/ts-checkout-payment.md) | Must |
+| UC-ORDER-TRACKING | Tracking | Customer | order, pay, notif | [↗](./order-service/uc-order-tracking.md) | [↗](../technical-spec/order-service/ts-order-tracking.md) | Must |
+| UC-ADMIN-ORDER | Order admin | Admin | order, pay, inv, notif | [↗](./order-service/uc-admin-order.md) | [↗](../technical-spec/order-service/ts-admin-order.md) | Must |
+
+## Context Links
+- Main: [../README.md](../README.md)
+- Project Context: [../PROJECT_CONTEXT.md](../PROJECT_CONTEXT.md)
+- Machine Map: [../_index.json](../_index.json)
+- Strategy: [../strategy/00-business-overview.md](../strategy/00-business-overview.md)
+- Architecture: [../architecture/00-overview.md](../architecture/00-overview.md)
+- Technical Specs: [../technical-spec/README.md](../technical-spec/README.md)
+
+## Rule of use cho AI
+1. Đọc UC theo service folder + ID từ _index trước.
+2. Mỗi UC phải kiểm tra service touchpoints trước khi code.
+3. Nếu endpoint chưa có trong code, đánh dấu planned contract.
+4. Khi thêm UC mới: tạo file trong service folder tương ứng.
