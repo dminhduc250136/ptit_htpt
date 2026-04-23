@@ -12,7 +12,7 @@ Stabilize the existing microservices + gateway + Next.js frontend by making the 
 
 - [x] **Phase 1: API Contract & Swagger Baseline** - Establish consistent API patterns and Swagger/OpenAPI everywhere
 - [x] **Phase 2: CRUD Completeness Across Services** - Close CRUD gaps across services using the Phase 1 contract
-- [ ] **Phase 3: Validation & Error Handling Hardening** - Standardize validation and error handling behaviors
+- [x] **Phase 3: Validation & Error Handling Hardening** - Standardize validation and error handling behaviors
 - [ ] **Phase 4: Frontend Contract Alignment + E2E Validation** - Align frontend with contracts and validate shopping flow
 
 ## Phase Details
@@ -58,8 +58,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md — Standardize validation + exception handling in all services
-- [ ] 03-02-PLAN.md — Align gateway error propagation and auth error behaviors
+- [x] 03-01-PLAN.md — Standardize validation + exception handling in all services
+- [x] 03-02-PLAN.md — Align gateway error propagation and auth error behaviors
 
 ### Phase 4: Frontend Contract Alignment + E2E Validation
 **Goal**: Ensure the Next.js frontend is aligned to the backend contracts and the key flows behave reliably.
@@ -80,6 +80,6 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. API Contract & Swagger Baseline | 3/3 | Complete | 2026-04-22 |
 | 2. CRUD Completeness Across Services | 3/3 | Complete | 2026-04-22 |
-| 3. Validation & Error Handling Hardening | 0/2 | Not started | - |
+| 3. Validation & Error Handling Hardening | 2/2 | Complete | 2026-04-23 |
 | 4. Frontend Contract Alignment + E2E Validation | 0/TBD | Not started | - |
 
