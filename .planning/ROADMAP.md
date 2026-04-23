@@ -69,10 +69,12 @@ Plans:
   1. Frontend uses the documented endpoints/DTOs and handles standardized errors without breaking UX.
   2. Shopping flow is validated end-to-end locally: browse → cart → checkout → payment (mock) → confirmation.
   3. Failures during checkout (validation, stock, payment) are surfaced clearly and recoverably in the UI.
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: Align frontend API client + DTOs to OpenAPI and validate E2E flows
+- [ ] 04-01-PLAN.md — Typed HTTP tier + OpenAPI codegen + route protection foundation
+- [ ] 04-02-PLAN.md — Error-recovery UI components + page rewires (auth, cart, checkout, read-paths)
+- [ ] 04-03-PLAN.md — UAT walkthrough + cleanup + phase deliverable
 
 ## Progress
 
@@ -81,5 +83,5 @@ Plans:
 | 1. API Contract & Swagger Baseline | 3/3 | Complete | 2026-04-22 |
 | 2. CRUD Completeness Across Services | 3/3 | Complete | 2026-04-22 |
 | 3. Validation & Error Handling Hardening | 2/2 | Complete | 2026-04-23 |
-| 4. Frontend Contract Alignment + E2E Validation | 0/TBD | Not started | - |
+| 4. Frontend Contract Alignment + E2E Validation | 0/3 | Not started | - |
 
