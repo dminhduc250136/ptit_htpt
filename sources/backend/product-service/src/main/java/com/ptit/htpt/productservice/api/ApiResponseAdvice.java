@@ -21,7 +21,6 @@ public class ApiResponseAdvice implements ResponseBodyAdvice<Object> {
       "/actuator",
       "/v3/api-docs",
       "/swagger-ui",
-      "/swagger-resources",
       "/swagger-resources"
   );
   private static final Set<String> SKIP_EXACT = Set.of("/swagger-ui.html");
