@@ -40,3 +40,10 @@ services:
     build: ./sources/backend/notification-service
     ports:
       - "8086:8080"
+
+  frontend:
+      build: ./sources/frontend
+      ports:
+        - "3000:3000"
+      depends_on:
+        - api-gateway

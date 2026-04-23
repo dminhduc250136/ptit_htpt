@@ -11,7 +11,8 @@
     "plan_check": true,
     "verifier": true,
     "nyquist_validation": true,
-    "auto_advance": true
+    "auto_advance": true,
+    "_auto_chain_active": false
   },
   "sub_repos": [],
   "created_at": "2026-04-22T00:00:00Z"

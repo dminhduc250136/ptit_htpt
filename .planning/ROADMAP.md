@@ -10,7 +10,7 @@ Stabilize the existing microservices + gateway + Next.js frontend by making the 
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: API Contract & Swagger Baseline** - Establish consistent API patterns and Swagger/OpenAPI everywhere
+- [x] **Phase 1: API Contract & Swagger Baseline** - Establish consistent API patterns and Swagger/OpenAPI everywhere
 - [x] **Phase 2: CRUD Completeness Across Services** - Close CRUD gaps across services using the Phase 1 contract
 - [ ] **Phase 3: Validation & Error Handling Hardening** - Standardize validation and error handling behaviors
 - [ ] **Phase 4: Frontend Contract Alignment + E2E Validation** - Align frontend with contracts and validate shopping flow
@@ -55,11 +55,11 @@ Plans:
   1. Invalid requests return structured field errors (same format across services).
   2. Common failure modes (not found, conflict, unauthorized/forbidden) behave consistently across services.
   3. Gateway and services produce compatible error shapes for frontend handling.
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 03-01: Standardize validation + exception handling in all services
-- [ ] 03-02: Align gateway error propagation and auth error behaviors
+- [ ] 03-01-PLAN.md — Standardize validation + exception handling in all services
+- [ ] 03-02-PLAN.md — Align gateway error propagation and auth error behaviors
 
 ### Phase 4: Frontend Contract Alignment + E2E Validation
 **Goal**: Ensure the Next.js frontend is aligned to the backend contracts and the key flows behave reliably.
@@ -78,8 +78,8 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. API Contract & Swagger Baseline | 3/3 | Verification needed | 2026-04-22 |
+| 1. API Contract & Swagger Baseline | 3/3 | Complete | 2026-04-22 |
 | 2. CRUD Completeness Across Services | 3/3 | Complete | 2026-04-22 |
-| 3. Validation & Error Handling Hardening | 0/TBD | Not started | - |
+| 3. Validation & Error Handling Hardening | 0/2 | Not started | - |
 | 4. Frontend Contract Alignment + E2E Validation | 0/TBD | Not started | - |
 
