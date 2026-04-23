@@ -48,17 +48,18 @@ public class GlobalGatewayErrorHandler implements ErrorWebExceptionHandler {
       String error = status.getReasonPhrase();
       String message = "Internal error";
 
-      if (ex instanceof ResponseStatusException rse) {
-        status = resolveStatus(rse.getStatusCode().value());
-        error = status.getReasonPhrase();
-        message = rse.getReason() != null && !rse.getReason().isBlank() ? rse.getReason() : error;
-        code = mapCommonCode(status);
-      } else if (ex != null && ex.getClass().getSimpleName().contains("NotFoundException")) {
-        // Spring Cloud Gateway uses NotFoundException for missing routes.
+      if (ex != null && ex.getClass().getSimpleName().contains("NotFoundException")) {
+        // Spring Cloud Gateway's NotFoundException extends ResponseStatusException with a
+        // default 503 status, so we must map missing routes to 404 BEFORE the generic RSE branch.
         status = HttpStatus.NOT_FOUND;
         error = status.getReasonPhrase();
         message = "Not Found";
         code = "NOT_FOUND";
+      } else if (ex instanceof ResponseStatusException rse) {
+        status = resolveStatus(rse.getStatusCode().value());
+        error = status.getReasonPhrase();
+        message = rse.getReason() != null && !rse.getReason().isBlank() ? rse.getReason() : error;
+        code = mapCommonCode(status);
       }
 
       body = ApiErrorResponse.of(
