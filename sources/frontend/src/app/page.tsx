@@ -1,15 +1,60 @@
-import styles from "./page.module.css";
-import ProductCard from "@/components/ui/ProductCard/ProductCard";
-import Button from "@/components/ui/Button/Button";
-import Badge from "@/components/ui/Badge/Badge";
-import { mockProducts, mockCategories } from "@/mock-data/products";
-import Link from "next/link";
+'use client';
+
+import React, { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import styles from './page.module.css';
+import ProductCard from '@/components/ui/ProductCard/ProductCard';
+import Button from '@/components/ui/Button/Button';
+import Badge from '@/components/ui/Badge/Badge';
+import RetrySection from '@/components/ui/RetrySection/RetrySection';
+import { listProducts, listCategories } from '@/services/products';
+import type { Product, Category } from '@/types';
 
 export default function Home() {
-  const featuredProducts = mockProducts.filter(
-    (p) => p.tags?.includes("Bán chạy") || p.tags?.includes("Best Seller")
-  );
-  const allProducts = mockProducts.slice(0, 8);
+  const [featured, setFeatured] = useState<Product[]>([]);
+  const [latest, setLatest] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setFailed(false);
+    try {
+      // Featured: best-seller-ish sort proxy via reviewCount desc.
+      // Latest: createdAt desc. Backend sort param may or may not honour these —
+      // fall back to default order if not supported (we still get a page of products).
+      const [featuredResp, latestResp] = await Promise.all([
+        listProducts({ size: 8, sort: 'reviewCount,desc' }).catch(() =>
+          listProducts({ size: 8 }),
+        ),
+        listProducts({ size: 8, sort: 'createdAt,desc' }).catch(() =>
+          listProducts({ size: 8 }),
+        ),
+      ]);
+      setFeatured(featuredResp?.content ?? []);
+      setLatest(latestResp?.content ?? []);
+    } catch {
+      // 5xx / network → RetrySection per D-10 (no auto-retry).
+      setFailed(true);
+      setFeatured([]);
+      setLatest([]);
+    } finally {
+      setLoading(false);
+    }
+    // Categories load is best-effort and non-blocking for the hero/featured sections.
+    try {
+      const cats = await listCategories();
+      setCategories(cats?.content ?? []);
+    } catch {
+      setCategories([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   return (
     <>
@@ -53,40 +98,42 @@ export default function Home() {
       </section>
 
       {/* ===== CATEGORIES SECTION ===== */}
-      <section className={styles.categoriesSection}>
-        <div className={styles.container}>
-          <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>Danh mục sản phẩm</h2>
-            <p className={styles.sectionSubtitle}>
-              Khám phá các dòng sản phẩm được tuyển chọn kỹ lưỡng
-            </p>
+      {categories.length > 0 && (
+        <section className={styles.categoriesSection}>
+          <div className={styles.container}>
+            <div className={styles.sectionHeader}>
+              <h2 className={styles.sectionTitle}>Danh mục sản phẩm</h2>
+              <p className={styles.sectionSubtitle}>
+                Khám phá các dòng sản phẩm được tuyển chọn kỹ lưỡng
+              </p>
+            </div>
+            <div className={styles.categoriesGrid}>
+              {categories.map((cat) => (
+                <Link
+                  key={cat.id}
+                  href={`/products?category=${cat.slug}`}
+                  className={styles.categoryCard}
+                >
+                  <div className={styles.categoryIcon}>
+                    <svg
+                      width="28"
+                      height="28"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    >
+                      <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
+                      <line x1="7" y1="7" x2="7.01" y2="7" />
+                    </svg>
+                  </div>
+                  <span className={styles.categoryName}>{cat.name}</span>
+                </Link>
+              ))}
+            </div>
           </div>
-          <div className={styles.categoriesGrid}>
-            {mockCategories.map((cat) => (
-              <Link
-                key={cat.id}
-                href={`/products?category=${cat.slug}`}
-                className={styles.categoryCard}
-              >
-                <div className={styles.categoryIcon}>
-                  <svg
-                    width="28"
-                    height="28"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                  >
-                    <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z" />
-                    <line x1="7" y1="7" x2="7.01" y2="7" />
-                  </svg>
-                </div>
-                <span className={styles.categoryName}>{cat.name}</span>
-              </Link>
-            ))}
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ===== FEATURED PRODUCTS ===== */}
       <section className={styles.productsSection}>
@@ -102,11 +149,23 @@ export default function Home() {
               Xem tất cả →
             </Button>
           </div>
-          <div className={styles.productsGrid}>
-            {featuredProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          {loading ? (
+            <div className={styles.productsGrid}>
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="skeleton" style={{ height: 360, borderRadius: 'var(--radius-lg)' }} />
+              ))}
+            </div>
+          ) : failed ? (
+            <RetrySection onRetry={() => load()} loading={loading} />
+          ) : featured.length > 0 ? (
+            <div className={styles.productsGrid}>
+              {featured.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            <p style={{ color: 'var(--on-surface-variant)' }}>Chưa có sản phẩm nổi bật.</p>
+          )}
         </div>
       </section>
 
@@ -158,25 +217,37 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ===== ALL PRODUCTS PREVIEW ===== */}
+      {/* ===== LATEST PRODUCTS PREVIEW ===== */}
       <section className={styles.productsSection}>
         <div className={styles.container}>
           <div className={styles.sectionHeader}>
             <div>
-              <h2 className={styles.sectionTitle}>Sản phẩm</h2>
+              <h2 className={styles.sectionTitle}>Sản phẩm mới</h2>
               <p className={styles.sectionSubtitle}>
-                Khám phá toàn bộ bộ sưu tập của chúng tôi
+                Khám phá bộ sưu tập mới nhất của chúng tôi
               </p>
             </div>
             <Button href="/products" variant="tertiary">
               Xem tất cả →
             </Button>
           </div>
-          <div className={styles.productsGrid}>
-            {allProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
-            ))}
-          </div>
+          {loading ? (
+            <div className={styles.productsGrid}>
+              {[...Array(4)].map((_, i) => (
+                <div key={i} className="skeleton" style={{ height: 360, borderRadius: 'var(--radius-lg)' }} />
+              ))}
+            </div>
+          ) : failed ? (
+            <RetrySection onRetry={() => load()} loading={loading} />
+          ) : latest.length > 0 ? (
+            <div className={styles.productsGrid}>
+              {latest.map((product) => (
+                <ProductCard key={product.id} product={product} />
+              ))}
+            </div>
+          ) : (
+            <p style={{ color: 'var(--on-surface-variant)' }}>Chưa có sản phẩm mới.</p>
+          )}
         </div>
       </section>
     </>

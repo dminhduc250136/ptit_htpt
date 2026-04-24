@@ -1,37 +1,101 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useParams, useRouter, notFound } from 'next/navigation';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button/Button';
 import Badge from '@/components/ui/Badge/Badge';
 import ProductCard from '@/components/ui/ProductCard/ProductCard';
-import { mockProducts } from '@/mock-data/products';
+import RetrySection from '@/components/ui/RetrySection/RetrySection';
+import { useToast } from '@/components/ui/Toast/Toast';
+import { getProductBySlug, listProducts } from '@/services/products';
+import { addToCart } from '@/services/cart';
+import { isApiError } from '@/services/errors';
 import { formatPrice } from '@/services/api';
+import type { Product } from '@/types';
 
-export default function ProductDetailPage({ params }: { params: { slug: string } }) {
-  const { slug } = params;
-  const product = mockProducts.find(p => p.slug === slug);
+export default function ProductDetailPage() {
+  const params = useParams<{ slug: string }>();
+  const slug = params?.slug;
+  const router = useRouter();
+  const { showToast } = useToast();
+
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
 
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'description' | 'specs' | 'reviews'>('description');
 
-  if (!product) {
+  const load = useCallback(async () => {
+    if (!slug) return;
+    setLoading(true);
+    setFailed(false);
+    try {
+      const p = await getProductBySlug(slug);
+      if (!p) {
+        // Slug lookup returned null (no match) → Claude's Discretion: direct
+        // resource navigation → 404 page.
+        notFound();
+        return;
+      }
+      setProduct(p);
+      // Load related products (best-effort; failure does not flip the page state).
+      try {
+        const resp = await listProducts({
+          size: 4,
+          categoryId: p.category?.id,
+        });
+        setRelatedProducts((resp?.content ?? []).filter((x) => x.id !== p.id).slice(0, 4));
+      } catch {
+        setRelatedProducts([]);
+      }
+    } catch (err) {
+      if (isApiError(err) && err.code === 'NOT_FOUND') {
+        notFound();
+        return;
+      }
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }, [slug]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  if (loading) {
     return (
-      <div className={styles.notFound}>
-        <h2>Sản phẩm không tồn tại</h2>
-        <p>Sản phẩm bạn đang tìm kiếm không tồn tại hoặc đã bị xóa.</p>
-        <Button href="/products">Quay lại cửa hàng</Button>
+      <div className={styles.page}>
+        <div className={styles.container} style={{ padding: 'var(--space-5) 0' }}>
+          <div className="skeleton" style={{ height: 400, borderRadius: 'var(--radius-lg)' }} />
+        </div>
       </div>
     );
   }
 
+  if (failed) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.container} style={{ padding: 'var(--space-5) 0' }}>
+          <RetrySection onRetry={() => load()} loading={loading} />
+        </div>
+      </div>
+    );
+  }
+
+  if (!product) {
+    // This branch is unreachable because notFound() triggered above, but kept as
+    // a type-narrowing safety net.
+    return null;
+  }
+
   const hasDiscount = product.originalPrice && product.discount;
-  const relatedProducts = mockProducts
-    .filter(p => p.category.id === product.category.id && p.id !== product.id)
-    .slice(0, 4);
 
   return (
     <div className={styles.page}>
@@ -41,10 +105,14 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
           <Link href="/" className={styles.breadcrumbLink}>Trang chủ</Link>
           <span className={styles.breadcrumbSep}>/</span>
           <Link href="/products" className={styles.breadcrumbLink}>Sản phẩm</Link>
-          <span className={styles.breadcrumbSep}>/</span>
-          <Link href={`/products?category=${product.category.slug}`} className={styles.breadcrumbLink}>
-            {product.category.name}
-          </Link>
+          {product.category && (
+            <>
+              <span className={styles.breadcrumbSep}>/</span>
+              <Link href={`/products?category=${product.category.slug}`} className={styles.breadcrumbLink}>
+                {product.category.name}
+              </Link>
+            </>
+          )}
           <span className={styles.breadcrumbSep}>/</span>
           <span className={styles.breadcrumbCurrent}>{product.name}</span>
         </div>
@@ -58,7 +126,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
             <div className={styles.gallery}>
               <div className={styles.mainImage}>
                 <Image
-                  src={product.images[selectedImage]}
+                  src={product.images?.[selectedImage] ?? product.thumbnailUrl}
                   alt={product.name}
                   fill
                   sizes="(max-width: 768px) 100vw, 50vw"
@@ -67,15 +135,26 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 />
                 {product.tags && product.tags.length > 0 && (
                   <div className={styles.imageTags}>
-                    {product.tags.map(tag => (
-                      <Badge key={tag} variant={tag.toLowerCase().includes('sale') ? 'sale' : tag.toLowerCase().includes('mới') || tag.toLowerCase().includes('new') ? 'new' : tag.toLowerCase().includes('bán chạy') || tag.toLowerCase().includes('best') ? 'hot' : 'default'}>
+                    {product.tags.map((tag) => (
+                      <Badge
+                        key={tag}
+                        variant={
+                          tag.toLowerCase().includes('sale')
+                            ? 'sale'
+                            : tag.toLowerCase().includes('mới') || tag.toLowerCase().includes('new')
+                            ? 'new'
+                            : tag.toLowerCase().includes('bán chạy') || tag.toLowerCase().includes('best')
+                            ? 'hot'
+                            : 'default'
+                        }
+                      >
                         {tag}
                       </Badge>
                     ))}
                   </div>
                 )}
               </div>
-              {product.images.length > 1 && (
+              {product.images && product.images.length > 1 && (
                 <div className={styles.thumbnails}>
                   {product.images.map((img, i) => (
                     <button
@@ -92,7 +171,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
 
             {/* Product Info */}
             <div className={styles.info}>
-              <span className={styles.categoryLabel}>{product.category.name}</span>
+              {product.category && <span className={styles.categoryLabel}>{product.category.name}</span>}
               {product.brand && <span className={styles.brandLabel}>{product.brand}</span>}
               <h1 className={styles.productName}>{product.name}</h1>
 
@@ -101,18 +180,18 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 <div className={styles.stars}>
                   {[...Array(5)].map((_, i) => (
                     <svg key={i} width="18" height="18" viewBox="0 0 24 24"
-                      fill={i < Math.floor(product.rating) ? 'var(--secondary-container)' : 'none'}
-                      stroke={i < Math.floor(product.rating) ? 'var(--secondary-container)' : 'var(--outline-variant)'}
+                      fill={i < Math.floor(product.rating ?? 0) ? 'var(--secondary-container)' : 'none'}
+                      stroke={i < Math.floor(product.rating ?? 0) ? 'var(--secondary-container)' : 'var(--outline-variant)'}
                       strokeWidth="2">
                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                     </svg>
                   ))}
                 </div>
-                <span className={styles.ratingText}>{product.rating}</span>
-                <span className={styles.reviewCount}>({product.reviewCount} đánh giá)</span>
+                <span className={styles.ratingText}>{product.rating ?? 0}</span>
+                <span className={styles.reviewCount}>({product.reviewCount ?? 0} đánh giá)</span>
               </div>
 
-              <p className={styles.shortDesc}>{product.shortDescription}</p>
+              {product.shortDescription && <p className={styles.shortDesc}>{product.shortDescription}</p>}
 
               {/* Price */}
               <div className={styles.priceBlock}>
@@ -127,7 +206,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
 
               {/* Stock */}
               <div className={styles.stockInfo}>
-                {product.stock > 0 ? (
+                {(product.stock ?? 0) > 0 ? (
                   <span className={styles.inStock}>✓ Còn hàng ({product.stock} sản phẩm)</span>
                 ) : (
                   <span className={styles.outOfStock}>✗ Hết hàng</span>
@@ -145,17 +224,33 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                   <span className={styles.qtyValue}>{quantity}</span>
                   <button
                     className={styles.qtyBtn}
-                    onClick={() => setQuantity(Math.min(product.stock, quantity + 1))}
-                    disabled={quantity >= product.stock}
+                    onClick={() => setQuantity(Math.min(product.stock ?? 99, quantity + 1))}
+                    disabled={quantity >= (product.stock ?? 99)}
                   >+</button>
                 </div>
-                <Button size="lg" fullWidth disabled={product.stock === 0}>
+                <Button
+                  size="lg"
+                  fullWidth
+                  disabled={(product.stock ?? 0) === 0}
+                  onClick={() => {
+                    addToCart(
+                      {
+                        id: product.id,
+                        name: product.name,
+                        thumbnailUrl: product.thumbnailUrl,
+                        price: product.price,
+                      },
+                      quantity,
+                    );
+                    showToast('Đã thêm vào giỏ hàng', 'success');
+                  }}
+                >
                   Thêm vào giỏ hàng
                 </Button>
               </div>
 
-              <Button variant="secondary" size="lg" fullWidth>
-                ♡ Thêm vào yêu thích
+              <Button variant="secondary" size="lg" fullWidth onClick={() => router.push('/cart')}>
+                ♡ Xem giỏ hàng
               </Button>
 
               {/* Guarantees */}
@@ -201,7 +296,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
             <button
               className={`${styles.tab} ${activeTab === 'reviews' ? styles.tabActive : ''}`}
               onClick={() => setActiveTab('reviews')}
-            >Đánh giá ({product.reviewCount})</button>
+            >Đánh giá ({product.reviewCount ?? 0})</button>
           </div>
 
           <div className={styles.tabContent}>
@@ -210,7 +305,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                 <p>{product.description}</p>
               </div>
             )}
-            {activeTab === 'specs' && product.specifications && (
+            {activeTab === 'specs' && product.specifications && product.specifications.length > 0 && (
               <div className={styles.specsContent}>
                 <table className={styles.specsTable}>
                   <tbody>
@@ -223,6 +318,9 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
                   </tbody>
                 </table>
               </div>
+            )}
+            {activeTab === 'specs' && (!product.specifications || product.specifications.length === 0) && (
+              <p style={{ color: 'var(--on-surface-variant)' }}>Chưa có thông số kỹ thuật.</p>
             )}
             {activeTab === 'reviews' && (
               <div className={styles.reviewsContent}>
@@ -242,7 +340,7 @@ export default function ProductDetailPage({ params }: { params: { slug: string }
           <div className={styles.container}>
             <h2 className={styles.relatedTitle}>Sản phẩm liên quan</h2>
             <div className={styles.relatedGrid}>
-              {relatedProducts.map(p => (
+              {relatedProducts.map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}
             </div>

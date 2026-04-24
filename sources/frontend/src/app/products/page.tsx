@@ -1,69 +1,92 @@
 'use client';
 
-import React, { Suspense, useMemo, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
 import ProductCard from '@/components/ui/ProductCard/ProductCard';
 import Button from '@/components/ui/Button/Button';
 import Input from '@/components/ui/Input/Input';
-import { mockProducts, mockCategories } from '@/mock-data/products';
+import RetrySection from '@/components/ui/RetrySection/RetrySection';
+import { listProducts, listCategories } from '@/services/products';
+import type { Product, Category } from '@/types';
 
 type SortOption = 'newest' | 'price_asc' | 'price_desc' | 'popular' | 'rating';
 
 function ProductsPageContent() {
   const searchParams = useSearchParams();
-  const categorySlug = searchParams.get('category');
-  const initialCategory = categorySlug
-    ? mockCategories.find(c => c.slug === categorySlug)?.id ?? null
-    : null;
+  const initialCategorySlug = searchParams.get('category');
 
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(initialCategory);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
-  const filteredProducts = useMemo(() => {
-    let result = [...mockProducts];
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
 
-    // Filter by category
-    if (selectedCategory) {
-      result = result.filter(p => p.category.id === selectedCategory);
+  // Load categories once (best-effort; failure here does NOT block the grid).
+  useEffect(() => {
+    let alive = true;
+    listCategories()
+      .then((resp) => {
+        if (!alive) return;
+        setCategories(resp?.content ?? []);
+        if (initialCategorySlug) {
+          const match = resp?.content?.find((c) => c.slug === initialCategorySlug);
+          if (match) setSelectedCategory(match.id);
+        }
+      })
+      .catch(() => {
+        // Categories failure is non-fatal — grid + price filters still usable.
+      });
+    return () => {
+      alive = false;
+    };
+  }, [initialCategorySlug]);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    setFailed(false);
+    try {
+      const sortParam =
+        sortBy === 'price_asc'
+          ? 'price,asc'
+          : sortBy === 'price_desc'
+          ? 'price,desc'
+          : sortBy === 'newest'
+          ? 'createdAt,desc'
+          : sortBy === 'rating'
+          ? 'rating,desc'
+          : sortBy === 'popular'
+          ? 'reviewCount,desc'
+          : undefined;
+      const resp = await listProducts({
+        size: 24,
+        sort: sortParam,
+        categoryId: selectedCategory ?? undefined,
+        keyword: searchQuery.trim() || undefined,
+      });
+      setProducts(resp?.content ?? []);
+    } catch {
+      // Any ApiError (incl. 5xx / network) → RetrySection per D-10. No auto-retry.
+      setFailed(true);
+      setProducts([]);
+    } finally {
+      setLoading(false);
     }
+  }, [sortBy, selectedCategory, searchQuery]);
 
-    // Filter by search
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter(p =>
-        p.name.toLowerCase().includes(q) ||
-        p.shortDescription.toLowerCase().includes(q)
-      );
-    }
+  useEffect(() => {
+    load();
+  }, [load]);
 
-    // Filter by price range
-    result = result.filter(p => p.price >= priceRange[0] && p.price <= priceRange[1]);
-
-    // Sort
-    switch (sortBy) {
-      case 'price_asc':
-        result.sort((a, b) => a.price - b.price);
-        break;
-      case 'price_desc':
-        result.sort((a, b) => b.price - a.price);
-        break;
-      case 'newest':
-        result.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        break;
-      case 'rating':
-        result.sort((a, b) => b.rating - a.rating);
-        break;
-      case 'popular':
-        result.sort((a, b) => b.reviewCount - a.reviewCount);
-        break;
-    }
-
-    return result;
-  }, [selectedCategory, searchQuery, sortBy, priceRange]);
+  // Client-side price filter on already-fetched page (backend filter not relied on).
+  const filteredProducts = products.filter(
+    (p) => p.price >= priceRange[0] && p.price <= priceRange[1],
+  );
 
   const clearFilters = () => {
     setSelectedCategory(null);
@@ -133,7 +156,7 @@ function ProductsPageContent() {
                 >
                   Tất cả
                 </button>
-                {mockCategories.map(cat => (
+                {categories.map((cat) => (
                   <button
                     key={cat.id}
                     className={`${styles.filterChip} ${selectedCategory === cat.id ? styles.filterChipActive : ''}`}
@@ -201,10 +224,18 @@ function ProductsPageContent() {
               </select>
             </div>
 
-            {/* Grid */}
-            {filteredProducts.length > 0 ? (
+            {/* States: loading → skeleton; failed → RetrySection; empty → empty-state; list → grid */}
+            {loading ? (
               <div className={styles.productsGrid}>
-                {filteredProducts.map(product => (
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className={`${styles.skeletonCard} skeleton`} style={{ height: 360 }} />
+                ))}
+              </div>
+            ) : failed ? (
+              <RetrySection onRetry={() => load()} loading={loading} />
+            ) : filteredProducts.length > 0 ? (
+              <div className={styles.productsGrid}>
+                {filteredProducts.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
