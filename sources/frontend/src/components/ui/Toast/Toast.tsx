@@ -30,7 +30,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
               {t.type === 'success' ? '✓' : t.type === 'error' ? '✗' : 'ℹ'}
             </span>
             <span className={styles.message}>{t.message}</span>
-            <button className={styles.close} onClick={() => setToasts(prev => prev.filter(x => x.id !== t.id))}>✕</button>
+            <button className={styles.close} aria-label="Đóng thông báo" onClick={() => setToasts(prev => prev.filter(x => x.id !== t.id))}>✕</button>
           </div>
         ))}
       </div>
