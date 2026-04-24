@@ -1,9 +1,19 @@
 /**
- * API Service Abstraction Layer
- * 
- * This module abstracts all data fetching. Currently uses mock data.
- * When real APIs are ready, swap the mock imports for fetch() calls
- * WITHOUT touching any UI components.
+ * LEGACY: mock-backed API helpers. Still used by admin/* pages (Phase 5 cleanup).
+ * New code MUST import from services/http.ts + services/{domain}.ts instead.
+ * formatPrice / formatPriceShort remain canonical and are re-exported from here.
+ *
+ * Audit (Phase 4-03): remaining non-admin importers of this module —
+ *   - src/app/cart/page.tsx        → imports { formatPrice } only
+ *   - src/app/checkout/page.tsx    → imports { formatPrice } only
+ *   - src/app/profile/page.tsx     → imports { formatPrice } only
+ *   - src/app/products/[slug]/page.tsx   → imports { formatPrice } only
+ *   - src/app/profile/orders/[id]/page.tsx → imports { formatPrice } only (deferred rewire)
+ *   - src/components/ui/ProductCard/ProductCard.tsx → imports { formatPrice } only
+ * No non-admin page consumes the mock-backed data helpers (getProducts / getProductBySlug
+ * / getProductById / getFeaturedProducts / getNewProducts / getCategories / getCategoryBySlug)
+ * anymore — those are safe to delete in a future phase once admin/* is rewired. Leaving them
+ * in place now keeps admin/* functional (still on mocks per 04-CONTEXT.md §Deferred Ideas).
  */
 
 import { Product, Category, PaginatedResponse, ProductFilter } from '@/types';
