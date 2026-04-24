@@ -1,12 +1,33 @@
 'use client';
 
-import React, { useState } from 'react';
+// NOTE: auth backend endpoints /auth/login etc. not yet implemented —
+// see 04-WAVE-STATUS.md. Mock flow preserved per user decision (Wave 2 deviation
+// approved): we still populate localStorage tokens + auth_present cookie + the
+// AuthProvider state so middleware admits the user to /checkout and /profile.
+// Swap mock submit for `services/auth.login()` once backend exposes /api/users/auth/login.
+
+import React, { Suspense, useState } from 'react';
 import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button/Button';
 import Input from '@/components/ui/Input/Input';
+import Banner from '@/components/ui/Banner/Banner';
+import { setTokens } from '@/services/token';
+import { useAuth } from '@/providers/AuthProvider';
 
-export default function LoginPage() {
+function LoginPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const rawReturnTo = searchParams.get('returnTo') ?? '/';
+  // T-04-03 open-redirect hardening: relative paths only.
+  // Reject anything that is not a single-slash-prefixed path (protocol-relative
+  // URLs like "//evil.example.com" would hijack the redirect otherwise).
+  const returnTo =
+    rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//') ? rawReturnTo : '/';
+
+  const { login: authLogin } = useAuth();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
@@ -23,11 +44,18 @@ export default function LoginPage() {
     }
     setErrors({});
     setLoading(true);
-    // Mock login delay
-    await new Promise(r => setTimeout(r, 1500));
+    // Mock login: backend /auth/login not shipped yet. Simulate a short delay,
+    // then populate tokens + auth state so downstream flows (middleware, header
+    // badges, protected pages) behave as if the user is signed in.
+    await new Promise((r) => setTimeout(r, 800));
+    const derivedName = email.split('@')[0] || 'Khách hàng';
+    setTokens('mock-access-token', 'mock-refresh-token');
+    authLogin({ id: 'mock-user', email, name: derivedName });
     setLoading(false);
-    alert('Đăng nhập thành công! (Mock)');
+    router.replace(returnTo);
   };
+
+  const errorCount = Object.keys(errors).length;
 
   return (
     <div className={styles.page}>
@@ -38,6 +66,8 @@ export default function LoginPage() {
             Chào mừng trở lại! Đăng nhập để tiếp tục mua sắm
           </p>
         </div>
+
+        {errorCount > 0 && <Banner count={errorCount} />}
 
         <form className={styles.form} onSubmit={handleSubmit}>
           <Input
@@ -108,5 +138,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className={styles.page} />}>
+      <LoginPageContent />
+    </Suspense>
   );
 }
