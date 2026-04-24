@@ -2,6 +2,39 @@
    DATA CONTRACTS / TypeScript Interfaces
    These define the "shape" of data exchanged
    between FE and the 3 BE microservices.
+   ============================================
+
+   Phase 4-03 audit note — LEGACY hand-written types retained intentionally.
+
+   The backend-derived DTOs below (User, Address, Product, Category, Specification,
+   Order, OrderItem, CreateOrderRequest, LoginRequest, RegisterRequest, AuthResponse)
+   look like duplicates of `src/types/api/*.generated.ts` but they are NOT removable
+   today because:
+
+     1. Pitfall 7 / 04-01 Deviation 2: springdoc emits `never` for every response body
+        wrapped by `ApiResponseAdvice` (~1,238 `: never;` occurrences across the 6
+        generated files). Every `services/*.ts` module hand-narrows to the types below
+        (e.g. `httpGet<PaginatedResponse<Product>>`). Deleting them breaks the build.
+
+     2. `/auth/*` endpoints are not shipped yet (04-WAVE-STATUS.md §Blocker). The
+        generated `users.generated.ts` has no `/auth/login`, `/auth/register`,
+        `/auth/refresh` paths — LoginRequest / RegisterRequest / AuthResponse can
+        ONLY come from here until backend publishes the routes.
+
+   UI-owned types (NOT backend-derived) that stay here permanently:
+     - ProductFilter        (FE query-shape for filter UI state)
+     - PaginatedResponse<T> (matches Phase 2 D-05 shape exactly; shared across services)
+     - CartItem (below) is currently defined here but services/cart.ts writes a FLAT
+       shape ({ productId, name, thumbnailUrl, price, quantity }). Phase 5 cleanup:
+       either update CartItem below to match the flat shape or move flat shape into
+       services/cart.ts as its own exported type.
+
+   Phase 5 cleanup candidates (DO NOT remove now):
+     - Backend-derived DTOs collapse to `paths[...]['responses'][...]['content']['application/json']`
+       imports once every backend controller gains `@ApiResponse(content=@Content(schema=@Schema(...)))`
+       annotations — at that point the generated types stop being `never` and become authoritative.
+     - `getFeaturedProducts` / `getNewProducts` / mock-backed getters in services/api.ts can be
+       deleted once admin/* pages move off mocks.
    ============================================ */
 
 // ===== USER SERVICE =====
