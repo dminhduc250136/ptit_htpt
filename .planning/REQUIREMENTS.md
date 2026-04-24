@@ -26,8 +26,10 @@
 
 ### Frontend ↔ Backend Alignment
 
-- [ ] **FE-01**: Frontend API client aligns to the documented contracts (URLs, DTOs, status codes, error format).
-- [ ] **FE-02**: Checkout and cart flows handle error cases gracefully (validation, stock, payment failure, auth).
+- [x] **FE-01
+**: Frontend API client aligns to the documented contracts (URLs, DTOs, status codes, error format).
+- [x] **FE-02
+**: Checkout and cart flows handle error cases gracefully (validation, stock, payment failure, auth).
 
 ## Future (Deferred)
 
