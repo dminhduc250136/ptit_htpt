@@ -1,11 +1,11 @@
 ---
 phase: 04-frontend-contract-alignment-e2e-validation
-status: wave-1-complete
+status: wave-2-complete
 updated: 2026-04-24
 branch: develop
 waves_total: 3
-waves_complete: 1
-waves_pending: [2, 3]
+waves_complete: 2
+waves_pending: [3]
 verification: pending
 ---
 
@@ -18,7 +18,7 @@ User paused execution after Wave 1 on 2026-04-24. Use this file as the entry poi
 | Wave | Plan | Autonomous | Status | Commits |
 |------|------|-----------|--------|---------|
 | 1 | 04-01 — Typed HTTP tier + codegen + middleware | ✓ | **complete** | `8957411`, `afb0757`, `4466080`, `f37bb62`, `2828e70` |
-| 2 | 04-02 — Page wiring + error-recovery UI | ✓ | pending | — |
+| 2 | 04-02 — Page wiring + error-recovery UI | ✓ | **complete** | `a1bd832`, `5b75a23`, `65d2895` |
 | 3 | 04-03 — UAT checklist + mock cleanup + README | ✗ (checkpoint) | pending | — |
 | — | phase verification + code review + roadmap update | — | pending | — |
 
