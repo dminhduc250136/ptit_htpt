@@ -1,0 +1,90 @@
+/* ============================================
+   MODAL COMPONENT
+   UI-SPEC Surface 2: Error recovery modal shell
+   Backdrop literal rgba(25, 28, 30, 0.40) is the ONE
+   UI-SPEC-allowed non-token value (derived from
+   --on-surface RGB at 40% alpha).
+   ============================================ */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(25, 28, 30, 0.40);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4);
+  z-index: 1000;
+  animation: fadeIn var(--transition-base) ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.dialog {
+  position: relative;
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-xl);
+  max-width: 480px;
+  width: 100%;
+  padding: var(--space-5);
+  animation: slideUp var(--transition-base) ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(var(--space-3)); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.close {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  background: transparent;
+  border: 0;
+  font-size: var(--text-title-lg);
+  line-height: 1;
+  cursor: pointer;
+  color: var(--on-surface-variant);
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  transition: color var(--transition-fast);
+}
+
+.close:hover {
+  color: var(--on-surface);
+}
+
+.title {
+  margin: 0 0 var(--space-3);
+  color: var(--on-surface);
+  padding-right: var(--space-5);
+}
+
+.body {
+  margin: 0 0 var(--space-4);
+  color: var(--on-surface-variant);
+}
+
+.footer {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: flex-end;
+}
+
+@media (max-width: 600px) {
+  .dialog {
+    padding: var(--space-4);
+  }
+
+  .footer {
+    flex-direction: column-reverse;
+  }
+
+  .footer > * {
+    width: 100%;
+  }
+}
