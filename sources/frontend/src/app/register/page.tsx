@@ -1,17 +1,37 @@
 'use client';
 
+// NOTE: auth backend endpoints /auth/register etc. not yet implemented —
+// see 04-WAVE-STATUS.md. Mock flow preserved per user decision (Wave 2 deviation
+// approved): we still populate localStorage tokens + auth_present cookie + the
+// AuthProvider state so middleware admits the user post-register.
+// Swap mock submit for `services/auth.register()` once backend exposes /api/users/auth/register.
+
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import styles from '../login/page.module.css';
 import Button from '@/components/ui/Button/Button';
 import Input from '@/components/ui/Input/Input';
+import Banner from '@/components/ui/Banner/Banner';
+import { setTokens } from '@/services/token';
+import { useAuth } from '@/providers/AuthProvider';
 
 export default function RegisterPage() {
-  const [form, setForm] = useState({ fullName: '', email: '', phone: '', password: '', confirmPassword: '' });
+  const router = useRouter();
+  const { login: authLogin } = useAuth();
+
+  const [form, setForm] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+  });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
 
-  const update = (field: string, value: string) => setForm(prev => ({ ...prev, [field]: value }));
+  const update = (field: string, value: string) =>
+    setForm((prev) => ({ ...prev, [field]: value }));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,7 +41,8 @@ export default function RegisterPage() {
     else if (!/\S+@\S+\.\S+/.test(form.email)) newErrors.email = 'Email không hợp lệ';
     if (!form.password) newErrors.password = 'Vui lòng nhập mật khẩu';
     else if (form.password.length < 6) newErrors.password = 'Mật khẩu ít nhất 6 ký tự';
-    if (form.password !== form.confirmPassword) newErrors.confirmPassword = 'Mật khẩu không khớp';
+    if (form.password !== form.confirmPassword)
+      newErrors.confirmPassword = 'Mật khẩu không khớp';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -29,10 +50,21 @@ export default function RegisterPage() {
     }
     setErrors({});
     setLoading(true);
-    await new Promise(r => setTimeout(r, 1500));
+    // Mock register: backend /auth/register not shipped yet. Simulate a short
+    // delay, then auto-login the user so the rest of the flow (cart/checkout)
+    // can be walked through without a separate sign-in step.
+    await new Promise((r) => setTimeout(r, 800));
+    setTokens('mock-access-token', 'mock-refresh-token');
+    authLogin({
+      id: 'mock-user',
+      email: form.email,
+      name: form.fullName,
+    });
     setLoading(false);
-    alert('Đăng ký thành công! (Mock)');
+    router.replace('/');
   };
+
+  const errorCount = Object.keys(errors).length;
 
   return (
     <div className={styles.page}>
@@ -43,6 +75,8 @@ export default function RegisterPage() {
             Đăng ký để trải nghiệm mua sắm đẳng cấp
           </p>
         </div>
+
+        {errorCount > 0 && <Banner count={errorCount} />}
 
         <form className={styles.form} onSubmit={handleSubmit}>
           <Input

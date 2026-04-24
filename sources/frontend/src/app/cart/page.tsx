@@ -1,37 +1,38 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button/Button';
-import { mockProducts } from '@/mock-data/products';
+import {
+  readCart,
+  removeFromCart,
+  updateQuantity,
+  type CartItem,
+} from '@/services/cart';
 import { formatPrice } from '@/services/api';
 
-interface MockCartItem {
-  product: typeof mockProducts[0];
-  quantity: number;
-}
-
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<MockCartItem[]>([
-    { product: mockProducts[0], quantity: 1 },
-    { product: mockProducts[1], quantity: 2 },
-    { product: mockProducts[3], quantity: 1 },
-  ]);
+  // Hydrate cart synchronously on first client render via lazy initializer.
+  // `typeof window` guard keeps SSR safe (Pitfall 2). Same pattern as AuthProvider —
+  // avoids the react-hooks/set-state-in-effect lint trigger.
+  const [cartItems, setCartItems] = useState<CartItem[]>(() =>
+    typeof window === 'undefined' ? [] : readCart(),
+  );
+  const [hydrated, setHydrated] = useState<boolean>(() => typeof window !== 'undefined');
 
-  const updateQuantity = (index: number, qty: number) => {
-    if (qty < 1) return;
-    setCartItems(prev => prev.map((item, i) =>
-      i === index ? { ...item, quantity: Math.min(qty, item.product.stock) } : item
-    ));
-  };
+  useEffect(() => {
+    // Subscribe to cart:change so cross-page updates (remove/update) reflect here.
+    const onChange = () => setCartItems(readCart());
+    window.addEventListener('cart:change', onChange);
+    // Ensure hydrated flag is true once effect runs on the client (defensive for SSR).
+    if (!hydrated) setHydrated(true);
+    return () => window.removeEventListener('cart:change', onChange);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const removeItem = (index: number) => {
-    setCartItems(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const subtotal = cartItems.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shippingFee = subtotal >= 1000000 ? 0 : 30000;
   const total = subtotal + shippingFee;
 
@@ -40,12 +41,14 @@ export default function CartPage() {
       <div className={styles.pageHeader}>
         <div className={styles.container}>
           <h1 className={styles.pageTitle}>Giỏ hàng</h1>
-          <p className={styles.pageSubtitle}>{cartItems.length} sản phẩm trong giỏ hàng</p>
+          <p className={styles.pageSubtitle}>
+            {hydrated ? `${cartItems.length} sản phẩm trong giỏ hàng` : 'Đang tải...'}
+          </p>
         </div>
       </div>
 
       <div className={`${styles.container} ${styles.content}`}>
-        {cartItems.length === 0 ? (
+        {hydrated && cartItems.length === 0 ? (
           <div className={styles.emptyCart}>
             <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--outline-variant)" strokeWidth="1">
               <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
@@ -60,12 +63,12 @@ export default function CartPage() {
           <div className={styles.layout}>
             {/* Cart Items */}
             <div className={styles.cartItems}>
-              {cartItems.map((item, index) => (
-                <div key={item.product.id} className={styles.cartItem}>
-                  <Link href={`/products/${item.product.slug}`} className={styles.itemImage}>
+              {cartItems.map((item) => (
+                <div key={item.productId} className={styles.cartItem}>
+                  <Link href={`/products/${item.productId}`} className={styles.itemImage}>
                     <Image
-                      src={item.product.thumbnailUrl}
-                      alt={item.product.name}
+                      src={item.thumbnailUrl}
+                      alt={item.name}
                       fill
                       sizes="120px"
                       className={styles.itemImg}
@@ -75,14 +78,13 @@ export default function CartPage() {
                   <div className={styles.itemInfo}>
                     <div className={styles.itemTop}>
                       <div>
-                        <span className={styles.itemCategory}>{item.product.category.name}</span>
-                        <Link href={`/products/${item.product.slug}`} className={styles.itemName}>
-                          {item.product.name}
+                        <Link href={`/products/${item.productId}`} className={styles.itemName}>
+                          {item.name}
                         </Link>
                       </div>
                       <button
                         className={styles.removeBtn}
-                        onClick={() => removeItem(index)}
+                        onClick={() => removeFromCart(item.productId)}
                         aria-label="Xóa sản phẩm"
                       >
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -94,14 +96,25 @@ export default function CartPage() {
 
                     <div className={styles.itemBottom}>
                       <div className={styles.quantitySelector}>
-                        <button className={styles.qtyBtn} onClick={() => updateQuantity(index, item.quantity - 1)} disabled={item.quantity <= 1}>−</button>
+                        <button
+                          className={styles.qtyBtn}
+                          onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                          disabled={item.quantity <= 1}
+                        >
+                          −
+                        </button>
                         <span className={styles.qtyValue}>{item.quantity}</span>
-                        <button className={styles.qtyBtn} onClick={() => updateQuantity(index, item.quantity + 1)} disabled={item.quantity >= item.product.stock}>+</button>
+                        <button
+                          className={styles.qtyBtn}
+                          onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                        >
+                          +
+                        </button>
                       </div>
                       <div className={styles.itemPrice}>
-                        <span className={styles.priceTotal}>{formatPrice(item.product.price * item.quantity)}</span>
+                        <span className={styles.priceTotal}>{formatPrice(item.price * item.quantity)}</span>
                         {item.quantity > 1 && (
-                          <span className={styles.priceUnit}>{formatPrice(item.product.price)} / sản phẩm</span>
+                          <span className={styles.priceUnit}>{formatPrice(item.price)} / sản phẩm</span>
                         )}
                       </div>
                     </div>
@@ -137,7 +150,7 @@ export default function CartPage() {
                 <span className={styles.totalPrice}>{formatPrice(total)}</span>
               </div>
 
-              <Button size="lg" fullWidth>
+              <Button href="/checkout" size="lg" fullWidth>
                 Tiến hành thanh toán
               </Button>
               <Link href="/products" className={styles.continueLink}>
