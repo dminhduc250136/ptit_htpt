@@ -1,0 +1,43 @@
+/* ============================================
+   BANNER COMPONENT
+   UI-SPEC Surface 1: Validation banner
+   Design: left-border accent + error-container tint
+   Error tint literal matches Input.module.css .hasError
+   ============================================ */
+
+.banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  margin-bottom: var(--space-4);
+  border-left: 4px solid var(--error);
+  background-color: rgba(255, 218, 214, 0.30);
+  color: var(--on-error-container);
+}
+
+.tone-error {
+  border-left-color: var(--error);
+}
+
+.icon {
+  color: var(--error);
+  flex-shrink: 0;
+  margin-top: var(--space-1);
+}
+
+.body {
+  flex: 1;
+}
+
+.heading {
+  font-weight: var(--weight-medium);
+  color: var(--on-error-container);
+}
+
+.subtext {
+  margin-top: var(--space-1);
+  color: var(--on-error-container);
+  opacity: 0.9;
+}

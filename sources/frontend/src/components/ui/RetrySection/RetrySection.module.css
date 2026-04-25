@@ -1,0 +1,31 @@
+/* ============================================
+   RETRYSECTION COMPONENT
+   UI-SPEC Surface 3: Inline retry CTA
+   Centered layout analog of empty-state block
+   in app/cart/page.tsx lines 49-58.
+   ============================================ */
+
+.wrapper {
+  background: var(--surface-container-low);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.icon {
+  color: var(--error);
+  margin-bottom: var(--space-3);
+}
+
+.heading {
+  margin: 0 0 var(--space-1);
+  color: var(--on-surface);
+}
+
+.body {
+  margin: 0 0 var(--space-4);
+  color: var(--on-surface-variant);
+}

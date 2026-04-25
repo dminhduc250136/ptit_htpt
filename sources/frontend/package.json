@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "gen:api": "node scripts/gen-api.mjs"
   },
   "dependencies": {
     "next": "16.2.3",
@@ -19,6 +20,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.3",
+    "openapi-typescript": "7.13.0",
     "typescript": "^5"
   }
 }

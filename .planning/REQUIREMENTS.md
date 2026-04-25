@@ -4,19 +4,19 @@
 
 ### API Contract & Documentation
 
-- [ ] **API-01**: Every service exposes Swagger/OpenAPI docs in a consistent way (including auth where applicable).
-- [ ] **API-02**: API Gateway publishes an aggregated or discoverable OpenAPI surface for frontend integration.
-- [ ] **API-03**: Standardize response envelope and error format across services (error code, message, field errors, trace id).
-- [ ] **API-04**: Standardize HTTP status code usage across services (success, validation, auth, not-found, conflict).
+- [x] **API-01**: Every service exposes Swagger/OpenAPI docs in a consistent way (including auth where applicable).
+- [x] **API-02**: API Gateway publishes an aggregated or discoverable OpenAPI surface for frontend integration.
+- [x] **API-03**: Standardize response envelope and error format across services (error code, message, field errors, trace id).
+- [x] **API-04**: Standardize HTTP status code usage across services (success, validation, auth, not-found, conflict).
 
 ### CRUD Completeness
 
-- [ ] **CRUD-01**: User Service CRUD endpoints are complete and follow the standard contract patterns.
-- [ ] **CRUD-02**: Product Service CRUD endpoints are complete (including admin operations) and follow the standard contract patterns.
-- [ ] **CRUD-03**: Order Service CRUD endpoints are complete (cart + order lifecycle) and follow the standard contract patterns.
-- [ ] **CRUD-04**: Payment Service endpoints are complete for the assignment scope (mock payment is acceptable) and follow the standard contract patterns.
-- [ ] **CRUD-05**: Inventory Service endpoints are complete and follow the standard contract patterns.
-- [ ] **CRUD-06**: Notification Service endpoints are complete (dispatch + templates/config as applicable) and follow the standard contract patterns.
+- [x] **CRUD-01**: User Service CRUD endpoints are complete and follow the standard contract patterns.
+- [x] **CRUD-02**: Product Service CRUD endpoints are complete (including admin operations) and follow the standard contract patterns.
+- [x] **CRUD-03**: Order Service CRUD endpoints are complete (cart + order lifecycle) and follow the standard contract patterns.
+- [x] **CRUD-04**: Payment Service endpoints are complete for the assignment scope (mock payment is acceptable) and follow the standard contract patterns.
+- [x] **CRUD-05**: Inventory Service endpoints are complete and follow the standard contract patterns.
+- [x] **CRUD-06**: Notification Service endpoints are complete (dispatch + templates/config as applicable) and follow the standard contract patterns.
 
 ### Validation & Error Handling
 
@@ -26,8 +26,10 @@
 
 ### Frontend ↔ Backend Alignment
 
-- [ ] **FE-01**: Frontend API client aligns to the documented contracts (URLs, DTOs, status codes, error format).
-- [ ] **FE-02**: Checkout and cart flows handle error cases gracefully (validation, stock, payment failure, auth).
+- [x] **FE-01
+**: Frontend API client aligns to the documented contracts (URLs, DTOs, status codes, error format).
+- [x] **FE-02
+**: Checkout and cart flows handle error cases gracefully (validation, stock, payment failure, auth).
 
 ## Future (Deferred)
 

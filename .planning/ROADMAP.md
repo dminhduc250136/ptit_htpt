@@ -10,9 +10,9 @@ Stabilize the existing microservices + gateway + Next.js frontend by making the 
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: API Contract & Swagger Baseline** - Establish consistent API patterns and Swagger/OpenAPI everywhere
-- [ ] **Phase 2: CRUD Completeness Across Services** - Close CRUD gaps across services using the Phase 1 contract
-- [ ] **Phase 3: Validation & Error Handling Hardening** - Standardize validation and error handling behaviors
+- [x] **Phase 1: API Contract & Swagger Baseline** - Establish consistent API patterns and Swagger/OpenAPI everywhere
+- [x] **Phase 2: CRUD Completeness Across Services** - Close CRUD gaps across services using the Phase 1 contract
+- [x] **Phase 3: Validation & Error Handling Hardening** - Standardize validation and error handling behaviors
 - [ ] **Phase 4: Frontend Contract Alignment + E2E Validation** - Align frontend with contracts and validate shopping flow
 
 ## Phase Details
@@ -28,9 +28,9 @@ Stabilize the existing microservices + gateway + Next.js frontend by making the 
 **Plans**: TBD
 
 Plans:
-- [ ] 01-01: Define and document the standard API response + error schema
-- [ ] 01-02: Ensure Swagger/OpenAPI is enabled and consistent in every service
-- [ ] 01-03: Gateway API surface conventions and compatibility checks
+- [x] 01-01: Define and document the standard API response + error schema
+- [x] 01-02: Ensure Swagger/OpenAPI is enabled and consistent in every service
+- [x] 01-03: Gateway API surface conventions and compatibility checks
 
 ### Phase 2: CRUD Completeness Across Services
 **Goal**: Close CRUD endpoint gaps across all services while following the Phase 1 contract patterns.
@@ -40,12 +40,12 @@ Plans:
   1. Each service exposes a complete, documented CRUD set for the assignment scope.
   2. CRUD endpoints follow consistent naming, payload, and pagination conventions where relevant.
   3. API Gateway routes to all CRUD endpoints without ad-hoc inconsistencies.
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: Inventory + Notification CRUD audit and gap closure
-- [ ] 02-02: User + Product CRUD audit and gap closure
-- [ ] 02-03: Order + Payment CRUD audit and gap closure
+- [x] 02-01-PLAN.md — Inventory + Notification CRUD audit and gap closure
+- [x] 02-02-PLAN.md — User + Product CRUD audit and gap closure
+- [x] 02-03-PLAN.md — Order + Payment CRUD audit and gap closure
 
 ### Phase 3: Validation & Error Handling Hardening
 **Goal**: Make validation and error handling consistent and predictable across services and gateway.
@@ -55,11 +55,11 @@ Plans:
   1. Invalid requests return structured field errors (same format across services).
   2. Common failure modes (not found, conflict, unauthorized/forbidden) behave consistently across services.
   3. Gateway and services produce compatible error shapes for frontend handling.
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 03-01: Standardize validation + exception handling in all services
-- [ ] 03-02: Align gateway error propagation and auth error behaviors
+- [x] 03-01-PLAN.md — Standardize validation + exception handling in all services
+- [x] 03-02-PLAN.md — Align gateway error propagation and auth error behaviors
 
 ### Phase 4: Frontend Contract Alignment + E2E Validation
 **Goal**: Ensure the Next.js frontend is aligned to the backend contracts and the key flows behave reliably.
@@ -69,17 +69,19 @@ Plans:
   1. Frontend uses the documented endpoints/DTOs and handles standardized errors without breaking UX.
   2. Shopping flow is validated end-to-end locally: browse → cart → checkout → payment (mock) → confirmation.
   3. Failures during checkout (validation, stock, payment) are surfaced clearly and recoverably in the UI.
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 04-01: Align frontend API client + DTOs to OpenAPI and validate E2E flows
+- [x] 04-01-PLAN.md — Typed HTTP tier + OpenAPI codegen + route protection foundation
+- [x] 04-02-PLAN.md — Error-recovery UI components + page rewires (auth, cart, checkout, read-paths)
+- [ ] 04-03-PLAN.md — UAT walkthrough + cleanup + phase deliverable
 
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. API Contract & Swagger Baseline | 0/TBD | Not started | - |
-| 2. CRUD Completeness Across Services | 0/TBD | Not started | - |
-| 3. Validation & Error Handling Hardening | 0/TBD | Not started | - |
-| 4. Frontend Contract Alignment + E2E Validation | 0/TBD | Not started | - |
+| 1. API Contract & Swagger Baseline | 3/3 | Complete | 2026-04-22 |
+| 2. CRUD Completeness Across Services | 3/3 | Complete | 2026-04-22 |
+| 3. Validation & Error Handling Hardening | 2/2 | Complete | 2026-04-23 |
+| 4. Frontend Contract Alignment + E2E Validation | 2/3 | In progress | - |
 
