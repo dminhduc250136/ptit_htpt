@@ -13,7 +13,7 @@ Stabilize the existing microservices + gateway + Next.js frontend by making the 
 - [x] **Phase 1: API Contract & Swagger Baseline** - Establish consistent API patterns and Swagger/OpenAPI everywhere
 - [x] **Phase 2: CRUD Completeness Across Services** - Close CRUD gaps across services using the Phase 1 contract
 - [x] **Phase 3: Validation & Error Handling Hardening** - Standardize validation and error handling behaviors
-- [x] **Phase 4: Frontend Contract Alignment + E2E Validation** - Align frontend with contracts and validate shopping flow (all 6 plans complete on disk; pending user stage+commit and explicit phase close)
+- [x] **Phase 4: Frontend Contract Alignment + E2E Validation** - Align frontend with contracts and validate shopping flow (verified 2026-04-25; 3/3 SC met; Playwright 12/12 PASS)
 
 ## Phase Details
 
@@ -86,5 +86,5 @@ Plans:
 | 1. API Contract & Swagger Baseline | 3/3 | Complete | 2026-04-22 |
 | 2. CRUD Completeness Across Services | 3/3 | Complete | 2026-04-22 |
 | 3. Validation & Error Handling Hardening | 2/2 | Complete | 2026-04-23 |
-| 4. Frontend Contract Alignment + E2E Validation | 6/6 | All plans complete on disk (04-04 + 04-05 + 04-06); Playwright re-run 12/12 PASS; ready to close pending user approval (no auto-commit per MEMORY.md) | 2026-04-25 (pending close) |
+| 4. Frontend Contract Alignment + E2E Validation | 6/6 | Complete (verified — 3/3 SC met; Playwright 12/12 PASS) | 2026-04-25 |
 
