@@ -26,10 +26,11 @@
 
 ### Frontend ↔ Backend Alignment
 
-- [x] **FE-01
-**: Frontend API client aligns to the documented contracts (URLs, DTOs, status codes, error format).
-- [x] **FE-02
-**: Checkout and cart flows handle error cases gracefully (validation, stock, payment failure, auth).
+- [ ] **FE-01** (status: needs-rework): Frontend API client aligns to the documented contracts (URLs, DTOs, status codes, error format).
+  - Compile-time: **achieved** Wave 1 (04-01) — openapi-typescript codegen + httpGet/Post wrappers + 6 generated `.generated.ts` files compile clean.
+  - Runtime: **NOT aligned** — UAT (04-03) surfaced 3 concrete gaps: (1) backend `product-service` returns thin Product DTO while FE `ProductCard` consumes rich DTO with `category.name`/`thumbnailUrl`/`rating`/etc.; (2) backend `order-service.createOrder` requires `userId`+`status` (raw entity Upsert) while FE sends domain-command shape; (3) backend `/api/products/products/slug/{slug}` returns HTTP 500. See `.planning/phases/04-frontend-contract-alignment-e2e-validation/04-03-SUMMARY.md` §FE-01 gaps surfaced. Closure planned via Phase 4.1.
+- [x] **FE-02** (status: met): Checkout and cart flows handle error cases gracefully (validation, stock, payment failure, auth).
+  - All 5 dispatcher branches verified per UAT (04-03): B1 real-backend `VALIDATION_ERROR` → Banner ✓; B2 stubbed CONFLICT/STOCK_SHORTAGE → Stock modal + Cập nhật/Xóa khỏi giỏ ✓; B3 stubbed CONFLICT/PAYMENT → Payment modal + Thử lại/Đổi phương thức ✓; B4a stubbed 401 → silent redirect + clearTokens (T-04-04) ✓; B5 stubbed 502 → Toast + no auto-retry on POST (D-10) ✓. Open-redirect guard verified end-to-end (B4b real, T-04-03). T-04-02/03/04 verified. See `04-03-SUMMARY.md` §FE-02 verified.
 
 ## Future (Deferred)
 
