@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_plan: 6
-status: phase-4-gap-closure-complete-awaiting-user-approval
-last_updated: "2026-04-25T12:13:14.000Z"
-last_activity: 2026-04-25 -- Phase 04 plan 04-06 COMPLETE (no auto-commit; user stages manually). Frontend hardening Wave 2 landed: WR-01 thumbnailUrl placeholder fallback + WR-02 JSON.parse try/catch + WR-04 ProductCard null guards + unitPrice/X-User-Id plumbing trong checkout flow + regenerated codegen từ 04-04+04-05 OpenAPI emit. Playwright UAT re-run 12/12 PASS (vs 7/12 PASS, 5/12 FAIL trong 04-03). 4 stubs (Q3/Q4/B4a/B5) preserved per Phase 5 deferral và explicitly documented trong 04-UAT.md Phase 5 Carry-Over section. Phase 4 SC#1+SC#2+SC#3 all met at runtime; ready to close pending user approval.
+status: phase-4-complete-milestone-v1.0-complete
+last_updated: "2026-04-25T13:00:00.000Z"
+last_activity: 2026-04-25 -- Phase 04 CLOSED. Code review (0 critical / 5 warning / 7 info — non-blocking) + verifier PASSED (3/3 SC). Milestone v1.0 (4/4 phases) complete. Commits cac7c1b + 85b850d + 67c2167 + abd44ce + fa31a99 + a133458 on develop. Ready for milestone wrap-up or next milestone.
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 14
   completed_plans: 14
   percent: 100
@@ -16,11 +16,11 @@ progress:
 
 ## Current Position
 
-Phase: 04 (frontend-contract-alignment-e2e-validation) — Gap-closure Wave 2 COMPLETE (04-04 + 04-05 + 04-06 all done; phase ready to close)
+Phase: 04 (frontend-contract-alignment-e2e-validation) — CLOSED (verified 2026-04-25; 3/3 SC met)
 Plan: 6 of 6 (ALL DONE)
 Current Plan: 6
 Total Plans: 06
-Status: Phase 04 plan 04-06 COMPLETE on disk (no commits — user stages manually per MEMORY.md no-autocommit rule). FE hardening (WR-01/02/04) + cart-unitPrice + X-User-Id plumbing + regenerated codegen + Playwright re-run 12/12 PASS. SC#1 (FE-01 contract alignment) + SC#2 (E2E shopping flow) + SC#3 (FE-02 error recovery) all met at runtime. Phase 4 ready to close — user runs `gsd-sdk query phase.complete 04` (or equivalent) after stage+commit.
+Status: Milestone v1.0 COMPLETE (4/4 phases, 14/14 plans). Phase 04 verified PASSED — Playwright 12/12 PASS, mvn tests green, code review 0 critical. All gates run: code-review (commit fa31a99) + verifier (commit a133458) + ROADMAP/STATE close (this commit). Ready for `/gsd-complete-milestone` or `/gsd-new-milestone` if continuing.
 Last activity: 2026-04-25 — Executed 04-06 Wave 2 (frontend half). Task 1 (WR-01 thumbnailUrl fallback in cart/checkout/ProductCard + new /placeholder.png 1×1 PNG asset; WR-04 null-coalescing in ProductCard). Task 2 (WR-02 JSON.parse try/catch in services/http.ts; httpPost/httpPut/httpPatch extended với extraHeaders param; npm run gen:api regenerated products.generated.ts +78/-1 + orders.generated.ts +23/-2). Task 3 (services/orders.createOrder takes userId arg + sends X-User-Id header; checkout/page.tsx plumb unitPrice: i.price + user?.id từ useAuth(); CreateOrderRequest type updated). Task 4 (Playwright re-run against real backend; 12/12 PASS sau khi fix Turbopack production hydration timing với page.reload + waitForFunction + cart:change dispatch). Task 5 (04-UAT.md updated in place: result: 12/12 PASS; rows A1/A3/A4/A5 flipped; new Phase 5 Carry-Over section). Task 6 (checkpoint auto-approved per workflow.auto_advance config). 3 deviations: 1 Rule 3 blocker (pre-existing ESLint `any` in uat.spec.ts:288 fixed inline), 2 Rule 1 bugs (Turbopack hydration race + selector strict-mode → all in test infrastructure). All verification gates pass; build + lint green throughout.
 
 ## Resume Cheat-Sheet
