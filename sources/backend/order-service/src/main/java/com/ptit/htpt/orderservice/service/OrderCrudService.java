@@ -3,9 +3,12 @@ package com.ptit.htpt.orderservice.service;
 import com.ptit.htpt.orderservice.domain.CartEntity;
 import com.ptit.htpt.orderservice.domain.OrderEntity;
 import com.ptit.htpt.orderservice.repository.InMemoryOrderRepository;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -76,6 +79,27 @@ public class OrderCrudService {
 
   public OrderEntity createOrder(OrderUpsertRequest request) {
     OrderEntity order = OrderEntity.create(request.userId(), request.totalAmount(), request.status(), request.note());
+    return repository.saveOrder(order);
+  }
+
+  /**
+   * Domain entry point for the FE checkout flow. Derives totalAmount from items, defaults status
+   * to PENDING, persists via the existing OrderEntity factory. The userId is supplied by the
+   * controller after reading the X-User-Id session header — the service treats it as already
+   * trusted (Phase 5: replace header trust with JWT claim verification at the gateway).
+   */
+  public OrderEntity createOrderFromCommand(String userId, CreateOrderCommand command) {
+    if (userId == null || userId.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing X-User-Id session header");
+    }
+
+    BigDecimal totalAmount = command.items().stream()
+        .map(item -> item.unitPrice().multiply(BigDecimal.valueOf(item.quantity())))
+        .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    String note = command.note();   // null is fine — OrderEntity.note is nullable
+
+    OrderEntity order = OrderEntity.create(userId, totalAmount, "PENDING", note);
     return repository.saveOrder(order);
   }
 
@@ -152,4 +176,35 @@ public class OrderCrudService {
   ) {}
 
   public record OrderStateRequest(@NotBlank String state) {}
+
+  /**
+   * Domain command shape consumed by the FE checkout page (sources/frontend/src/app/checkout/page.tsx).
+   * userId is NOT in the body — the controller derives it from the X-User-Id header so the FE never
+   * has to know its own user id (consistent with the typical session/JWT pattern; full JWT-claim
+   * derivation is a Phase 5 follow-up).
+   * status is NOT in the body — service layer defaults it to PENDING.
+   * totalAmount is NOT in the body — service layer computes it from items[].quantity * items[].unitPrice
+   * (the FE sends the cart's price snapshot; mismatch with current product-service price is allowed for
+   * this MVP — Phase 5 candidate to re-fetch authoritative price server-side).
+   */
+  public record CreateOrderCommand(
+      @NotEmpty List<@Valid OrderItemRequest> items,
+      @NotNull @Valid ShippingAddressRequest shippingAddress,
+      @NotBlank String paymentMethod,
+      String note
+  ) {}
+
+  public record OrderItemRequest(
+      @NotBlank String productId,
+      @Min(1) int quantity,
+      @NotNull @DecimalMin("0.0") BigDecimal unitPrice
+  ) {}
+
+  public record ShippingAddressRequest(
+      @NotBlank String street,
+      @NotBlank String ward,
+      @NotBlank String district,
+      @NotBlank String city,
+      String zipCode
+  ) {}
 }
