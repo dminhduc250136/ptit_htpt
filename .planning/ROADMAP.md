@@ -38,7 +38,7 @@ Mục tiêu: biến demo flow từ "stub-verified" thành "real visible end-to-e
   2. 5 services (user/product/order/payment/inventory) start green với JPA + Flyway baseline migration applied (`V1__init_schema.sql`)
   3. Flyway dev seed (`V2__seed_dev_data.sql`) populate đúng products/orders từ FE mocks + 1 admin user (`admin/admin123` BCrypt) + 5 categories
   4. FE `GET /api/products` qua gateway trả seeded products thật từ Postgres (verify bằng cách query trực tiếp DB → match payload)
-  5. Sau verify: `sources/frontend/src/mock-data/` đã được xóa; FE flow chính (browse → cart → checkout → confirmation) vẫn PASS bằng data thật
+  5. Sau verify: `sources/frontend/src/mock-data/` đã được xóa; FE flow visible (browse danh mục, product detail, add-to-cart) vẫn PASS với seeded data thật từ Postgres. Checkout submit + confirmation full breakdown defer Phase 8 (PERSIST-01..03) — Phase 5 chỉ cam kết các trang đó không vỡ build/render.
 **Plans:** 9 plans
 Plans:
 - [ ] 05-01-PLAN.md — Pre-flight: capture OpenAPI baselines (5 services) + verify BCrypt admin123 hash
