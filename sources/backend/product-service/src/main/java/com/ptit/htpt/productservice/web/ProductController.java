@@ -3,6 +3,7 @@ package com.ptit.htpt.productservice.web;
 import com.ptit.htpt.productservice.api.ApiResponse;
 import com.ptit.htpt.productservice.service.ProductCrudService;
 import com.ptit.htpt.productservice.service.ProductCrudService.CategoryUpsertRequest;
+import com.ptit.htpt.productservice.service.ProductCrudService.ProductResponse;
 import com.ptit.htpt.productservice.service.ProductCrudService.ProductUpsertRequest;
 import jakarta.validation.Valid;
 import java.util.Map;
@@ -37,8 +38,15 @@ public class ProductController {
   }
 
   @GetMapping("/{id}")
-  public ApiResponse<Object> getProduct(@PathVariable String id) {
-    return ApiResponse.of(200, "Product loaded", productCrudService.getProduct(id, false));
+  public ApiResponse<ProductResponse> getProduct(@PathVariable String id) {
+    return ApiResponse.of(200, "Product loaded",
+        productCrudService.toResponse(productCrudService.getProduct(id, false)));
+  }
+
+  @GetMapping("/slug/{slug}")
+  public ApiResponse<ProductResponse> getProductBySlug(@PathVariable String slug) {
+    return ApiResponse.of(200, "Product loaded",
+        productCrudService.toResponse(productCrudService.getProductBySlug(slug)));
   }
 
   @PostMapping
