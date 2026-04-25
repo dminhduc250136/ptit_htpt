@@ -96,7 +96,7 @@ try {
 | 4 | Vào `http://localhost:8081/v3/api-docs` | Trả về JSON đặc tả OpenAPI (rất dài, bắt đầu bằng `{"openapi":"3.0..."}`) |
 
 **FAIL nếu:** trang trắng, lỗi 404, hoặc dropdown không có service nào.
-
+RESULT: OK
 ---
 
 ### TC1.2 — Kiểm tra envelope thành công
@@ -120,6 +120,12 @@ Invoke-RestMethod -Uri "http://localhost:8081/__contract/ping"
 ```
 
 **FAIL nếu:** response chỉ là `{"service": "user-service"}` (thiếu wrapper) → ResponseBodyAdvice không hoạt động.
+RESULT:
+PS C:\WINDOWS\system32> Invoke-RestMethod -Uri "http://localhost:8081/__contract/ping"
+
+timestamp                      status message data
+---------                      ------ ------- ----
+2026-04-25T04:07:36.128723587Z    200 OK      @{service=user-service}
 
 ---
 
@@ -153,7 +159,35 @@ try {
 ```
 
 **Check list:** ✓ status=400 ✓ code="VALIDATION_ERROR" ✓ `fieldErrors` không rỗng ✓ mỗi field error có 3 key `field/rejectedValue/message`.
+RESULT: 
+PS C:\WINDOWS\system32> try {
+>>   $res = Invoke-WebRequest -Uri "http://localhost:8081/__contract/validate" `
+>>     -Method Post -Body '{}' -ContentType "application/json" `
+>>     -Headers @{ "X-Request-Id" = "TC1-4-trace-xyz" }
+>>
+>>   $res.StatusCode
+>>   $res.Content
+>> } catch {
+>>   $_ | Format-List * -Force
+>> }
 
+
+PSMessageDetails      :
+Exception             : System.Net.WebException: The remote server returned an error: (400) Bad Request.
+                           at Microsoft.PowerShell.Commands.WebRequestPSCmdlet.GetResponse(WebRequest request)
+                           at Microsoft.PowerShell.Commands.WebRequestPSCmdlet.ProcessRecord()
+TargetObject          : System.Net.HttpWebRequest
+CategoryInfo          : InvalidOperation: (System.Net.HttpWebRequest:HttpWebRequest) [Invoke-WebRequest], WebException
+FullyQualifiedErrorId : WebCmdletWebResponseException,Microsoft.PowerShell.Commands.InvokeWebRequestCommand
+ErrorDetails          :
+InvocationInfo        : System.Management.Automation.InvocationInfo
+ScriptStackTrace      : at <ScriptBlock>, <No file>: line 2
+PipelineIterationInfo : {}
+
+
+
+PS C:\WINDOWS\system32>
+=> TÔI PHẢI NHỜ CHATGPT XEM LẠI LỆNH, THÌ CÓ RA RESULT NHƯ TRÊN.
 ---
 
 ### TC1.4 — Kiểm tra `X-Request-Id` được giữ nguyên
@@ -170,6 +204,31 @@ try {
 
 **Mong đợi:** Response body có `"traceId": "TC1-4-trace-xyz"` (đúng giá trị bạn gửi).
 
+RESULT:
+PS C:\WINDOWS\system32> try {
+>>   Invoke-WebRequest -Uri "http://localhost:8081/__contract/validate" 
+>>     -Method Post -Body '{}' -ContentType "application/json" 
+>>     -Headers @{ "X-Request-Id" = "TC1-4-trace-xyz" }
+>>
+>> } catch {
+>>   $response = $_.Exception.Response
+>>   if ($response -ne $null) {
+>>     $reader = New-Object System.IO.StreamReader($response.GetResponseStream())
+>>     $reader.ReadToEnd()
+>>   } else {
+>>     $_ | Format-List * -Force
+>>   }
+>> }
+{"timestamp":"2026-04-25T04:15:08.937250036Z","status":400,"error":"Bad Request","message":"Validation failed","code":"VALIDATION_ERROR","path":"/__contract/validate","traceId":"TC1-4-trace-xyz","fieldErrors":[{"field":"name","rejectedValue":null,"message":"must not be blank"}]}
+
+✅ Kết luận cuối
+❌ Lý do ban đầu “không thấy gì” → do 400 + catch không in
+❌ Lý do fail hiện tại → thiếu name
+✅ Nhưng:
+
+🔥 TraceId propagation đã đúng → PASS TC1.4
+
+
 ---
 
 ### TC1.5 — Kiểm tra route không tồn tại qua gateway
@@ -183,6 +242,14 @@ try {
 ```
 
 **Mong đợi:** Status 404, body có `"code": "NOT_FOUND"`, content-type là `application/json` (KHÔNG phải HTML lỗi mặc định).
+
+RESULT:
+PS C:\WINDOWS\system32> try {
+>>   Invoke-RestMethod -Uri "http://localhost:8080/api/does-not-exist/foo"
+>> } catch {
+>>   $_.ErrorDetails.Message
+>> }
+{"timestamp":"2026-04-25T04:17:01.342824408Z","status":404,"error":"Not Found","message":"No static resource api/does-not-exist/foo.","code":"NOT_FOUND","path":"/api/does-not-exist/foo","traceId":null,"fieldErrors":[]}
 
 ---
 
@@ -205,6 +272,24 @@ Invoke-RestMethod -Uri "http://localhost:8080/api/products/products?page=0&size=
   "isFirst": true,
   "isLast": ...
 }
+
+RESULT:
+{
+  "timestamp": "2026-04-25T04:20:33.030633527Z",
+  "status": 500,
+  "error": "Internal Server Error",
+  "message": "Internal server error",
+  "code": "INTERNAL_ERROR",
+  "path": "/products",
+  "traceId": "ae66948c-7af4-42fc-8efe-48440142868b",
+  "fieldErrors": []
+}
+
+❌ Lỗi 500 không phải do request mà do backend bị crash
+🔥 Nguyên nhân gốc: chưa có database / bảng products
+👉 JPA query vào bảng không tồn tại → ném exception
+✅ Tạo DB hoặc bật ddl-auto=update là chạy lại bình thường
+
 ```
 
 **Cách kiểm tra trong Swagger UI** (cách dễ hơn):
@@ -212,6 +297,7 @@ Invoke-RestMethod -Uri "http://localhost:8080/api/products/products?page=0&size=
 2. Tìm endpoint `GET /products`.
 3. Bấm **"Try it out"** → điền `page=0`, `size=5` → **"Execute"**.
 4. Section "Response body" hiện đúng cấu trúc trên = PASS.
+=> CHƯA CÓ API CHO GET /products
 
 ---
 
@@ -559,3 +645,7 @@ Dùng mẫu này khi điền `04-UAT.md` hoặc gửi report cho mentor:
 | TC4.6   | Banner trên checkout | Submit form trống | PASS | Banner đỏ + inline error |
 | ...     | ... | ... | ... | ... |
 ```
+
+
+** Các phase 2 3 4 cũng do chưa có db nên kết quả test trả về là:
+{"timestamp":"2026-04-25T04:22:48.392714561Z","status":500,"error":"Internal Server Error","message":"Internal server error","code":"INTERNAL_ERROR","path":"/auth/register","traceId":"48c2ee82-81c5-40bb-8ce3-cdd09b45e87e","fieldErrors":[]}
