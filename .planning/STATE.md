@@ -34,6 +34,7 @@ Last activity: 2026-04-25 — Milestone v1.1 Real End-User Experience started
 - v1.1 scope reshape theo "visible-first" (user feedback): chỉ pick 6/17 deferred items có visible impact (D3 partial, D4, D5, D11 partial, D15, D16). 11/17 còn lại (D1, D2, D6, D7, D8, D9, D10, D12, D13, D14, D17) defer sang v1.2.
 - Phase numbering: continue từ v1.0 (start Phase 5), KHÔNG dùng `--reset-phase-numbers`.
 - Skip research step: stack đã locked, patterns auth/CRUD đã có sẵn từ v1.0 foundation.
+- **2026-04-25 audit finding**: v1.0 không có DB layer thật (không service nào có JPA dep, docker-compose không có Postgres, không có datasource config). v1.0 "CRUD" chạy in-memory. → **Thêm cluster C0 Database Foundation (DB-01..06) vào v1.1** đứng trước C1/C2/C3, dùng Postgres + Flyway + seed từ FE mocks (`sources/frontend/src/mock-data/`).
 
 ## Blockers
 
