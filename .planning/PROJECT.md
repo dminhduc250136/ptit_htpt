@@ -30,11 +30,12 @@ Dự án thử nghiệm GSD workflow trên codebase e-commerce laptop (Spring Bo
 
 ### Active (v1.1 — Real End-User Experience)
 
-- [ ] **AUTH-01..03**: Real auth flow (backend `/api/users/auth/{login,register,logout}` + JWT issuance + FE form thật call backend, session persist)
-- [ ] **UI-01**: `/search` page rewire → `listProducts({keyword})` real data (hết placeholder/mock)
-- [ ] **UI-02**: Admin pages migrate khỏi mock → CRUD thật qua gateway (products/orders/users list/edit/delete)
+- [ ] **DB-01..06**: Database Foundation — Postgres trong docker-compose + JPA cho 5 services + Flyway baseline + seed từ FE mocks + E2E connectivity verify (audit phát hiện v1.0 chạy in-memory, không có DB layer)
+- [ ] **AUTH-01..06**: Real auth flow (backend `/api/users/auth/{login,register,logout}` + JWT + FE form thật call backend + session persist sau reload)
+- [ ] **UI-01..04**: `/search` rewire + admin/products + admin/orders + admin/users migrate khỏi mock → CRUD thật qua gateway
 - [ ] **PERSIST-01**: ProductEntity.stock persisted (A4 add-to-cart respect stock thật, hết "cart-seed via localStorage")
-- [ ] **PERSIST-02**: OrderEntity persist per-item OrderItem rows + shippingAddress + paymentMethod (order detail page show full breakdown đúng)
+- [ ] **PERSIST-02**: OrderEntity persist per-item OrderItem rows + shippingAddress + paymentMethod
+- [ ] **PERSIST-03**: FE order confirmation + order detail render full breakdown thật từ backend payload
 
 ### Out of Scope
 
@@ -109,6 +110,7 @@ Foundation đã có:
 **Goal:** Biến demo flow từ "stub-verified" thành "real visible end-to-end" — mọi thứ user click trên UI phải hoạt động với real data thay vì mock/seeded.
 
 **Target features (visible-first):**
+- **C0. Database Foundation** ⚠ — Postgres + JPA + Flyway + seed từ FE mocks. Audit phát hiện v1.0 không có DB layer (in-memory only). C0 block C1/C2/C3.
 - **C1. Auth flow thật** — Backend `/api/users/auth/{login,register,logout}` + JWT issuance + FE login/register/logout call backend, session persist sau reload
 - **C2. Admin + Search real data** — `/search` page rewire `listProducts({keyword})` real; `admin/*` pages migrate khỏi mock → CRUD thật qua gateway
 - **C3. Cart → Order persistence visible** — ProductEntity.stock persist (hết "cart-seed via localStorage"); OrderEntity persist per-item rows + shippingAddress + paymentMethod (order detail page show full breakdown đúng)
