@@ -3,23 +3,23 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Real End-User Experience
 current_plan: null
-status: phase5-context-gathered
+status: phase5-planned
 last_updated: "2026-04-26T00:00:00.000Z"
-last_activity: 2026-04-26 -- Phase 5 CONTEXT.md captured. 9 implementation decisions locked (multi-schema Postgres 16, Entity+DTO split, String UUID giữ nguyên, Flyway V2 dev-profile seed minimal-realistic, mock-data xóa cuối phase). Sẵn sàng cho /gsd-plan-phase 5.
+last_activity: 2026-04-26 -- Phase 5 đã PLANNED. 9 PLAN.md files tạo trong 5 waves (preflight → Postgres infra → 5 services parallel refactor → integration smoke → FE cleanup). Plan checker PASSED iteration 2 sau khi tighten Plan 09 + add cross-service ID constants + smoke verifies. Sẵn sàng /gsd-execute-phase 5.
 progress:
   total_phases: 4
   completed_phases: 0
-  total_plans: 0
+  total_plans: 9
   completed_plans: 0
   percent: 0
 ---
 
 ## Current Position
 
-Phase: 5 — Database Foundation (chưa bắt đầu)
-Plan: —
-Status: Roadmap v1.1 đã defined, chờ `/gsd-plan-phase 5`
-Last activity: 2026-04-25 — Roadmap v1.1 created với 4 phases (Phase 5-8) cover 19 REQ
+Phase: 5 — Database Foundation (planned, ready to execute)
+Plan: 9 plans / 5 waves — Wave 1 preflight → Wave 2 Postgres infra → Wave 3 5 services parallel → Wave 4 integration smoke → Wave 5 FE cleanup
+Status: PLAN.md files đã verified PASS, sẵn sàng `/gsd-execute-phase 5`
+Last activity: 2026-04-26 — Phase 5 planning complete (research + patterns + 9 plans + revision iteration). ROADMAP SC#5 tightened theo visible-first (defer checkout/confirmation hardening sang Phase 8).
 
 ## Resume Cheat-Sheet
 
