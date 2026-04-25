@@ -2,7 +2,8 @@ package com.ptit.htpt.paymentservice.service;
 
 import com.ptit.htpt.paymentservice.domain.PaymentSessionEntity;
 import com.ptit.htpt.paymentservice.domain.PaymentTransactionEntity;
-import com.ptit.htpt.paymentservice.repository.InMemoryPaymentRepository;
+import com.ptit.htpt.paymentservice.repository.PaymentSessionRepository;
+import com.ptit.htpt.paymentservice.repository.PaymentTransactionRepository;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;
@@ -17,27 +18,26 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class PaymentCrudService {
-  private final InMemoryPaymentRepository repository;
+  private final PaymentSessionRepository sessionRepo;
+  private final PaymentTransactionRepository transactionRepo;
 
-  public PaymentCrudService(InMemoryPaymentRepository repository) {
-    this.repository = repository;
+  public PaymentCrudService(PaymentSessionRepository sessionRepo, PaymentTransactionRepository transactionRepo) {
+    this.sessionRepo = sessionRepo;
+    this.transactionRepo = transactionRepo;
   }
 
   public Map<String, Object> listSessions(int page, int size, String sort, boolean includeDeleted) {
-    List<PaymentSessionEntity> all = repository.findAllSessions().stream()
-        .filter(session -> includeDeleted || !session.deleted())
+    // Sau Phase 5: @SQLRestriction("deleted=false") tự động filter soft-deleted records
+    // → includeDeleted flag giữ trong API contract nhưng không còn tác dụng (deleted records không hiển thị).
+    List<PaymentSessionEntity> all = sessionRepo.findAll().stream()
         .sorted(sessionComparator(sort))
         .toList();
     return paginate(all, page, size);
   }
 
   public PaymentSessionEntity getSession(String id, boolean includeDeleted) {
-    PaymentSessionEntity session = repository.findSessionById(id)
+    return sessionRepo.findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment session not found"));
-    if (!includeDeleted && session.deleted()) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment session not found");
-    }
-    return session;
   }
 
   public PaymentSessionEntity createSession(SessionUpsertRequest request) {
@@ -47,76 +47,67 @@ public class PaymentCrudService {
         request.amount(),
         request.status()
     );
-    return repository.saveSession(session);
+    return sessionRepo.save(session);
   }
 
   public PaymentSessionEntity updateSession(String id, SessionUpsertRequest request) {
     PaymentSessionEntity current = getSession(id, true);
-    PaymentSessionEntity updated = current.update(
-        request.orderId(),
-        request.provider(),
-        request.amount(),
-        request.status()
-    );
-    return repository.saveSession(updated);
+    current.update(request.orderId(), request.provider(), request.amount(), request.status());
+    return sessionRepo.save(current);
   }
 
   public PaymentSessionEntity updateSessionStatus(String id, SessionStatusRequest request) {
     PaymentSessionEntity current = getSession(id, true);
-    return repository.saveSession(current.setStatus(request.status()));
+    current.setStatus(request.status());
+    return sessionRepo.save(current);
   }
 
   public void deleteSession(String id) {
     PaymentSessionEntity current = getSession(id, true);
-    repository.saveSession(current.softDelete());
+    // @SQLDelete maps repository.delete(...) to UPDATE SET deleted=true
+    sessionRepo.delete(current);
   }
 
   public Map<String, Object> listTransactions(int page, int size, String sort, boolean includeDeleted) {
-    List<PaymentTransactionEntity> all = repository.findAllTransactions().stream()
-        .filter(transaction -> includeDeleted || !transaction.deleted())
+    List<PaymentTransactionEntity> all = transactionRepo.findAll().stream()
         .sorted(transactionComparator(sort))
         .toList();
     return paginate(all, page, size);
   }
 
   public PaymentTransactionEntity getTransaction(String id, boolean includeDeleted) {
-    PaymentTransactionEntity transaction = repository.findTransactionById(id)
+    return transactionRepo.findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment transaction not found"));
-    if (!includeDeleted && transaction.deleted()) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment transaction not found");
-    }
-    return transaction;
   }
 
   public PaymentTransactionEntity createTransaction(TransactionUpsertRequest request) {
     PaymentTransactionEntity transaction = PaymentTransactionEntity.create(
         request.sessionId(),
         request.reference(),
+        request.amount(),
+        request.method(),
         request.status(),
         request.message()
     );
-    return repository.saveTransaction(transaction);
+    return transactionRepo.save(transaction);
   }
 
   public PaymentTransactionEntity updateTransaction(String id, TransactionUpsertRequest request) {
     PaymentTransactionEntity current = getTransaction(id, true);
-    PaymentTransactionEntity updated = current.update(
-        request.sessionId(),
-        request.reference(),
-        request.status(),
-        request.message()
-    );
-    return repository.saveTransaction(updated);
+    current.update(request.sessionId(), request.reference(), request.amount(),
+        request.method(), request.status(), request.message());
+    return transactionRepo.save(current);
   }
 
   public PaymentTransactionEntity updateTransactionStatus(String id, TransactionStatusRequest request) {
     PaymentTransactionEntity current = getTransaction(id, true);
-    return repository.saveTransaction(current.setStatus(request.status()));
+    current.setStatus(request.status());
+    return transactionRepo.save(current);
   }
 
   public void deleteTransaction(String id) {
     PaymentTransactionEntity current = getTransaction(id, true);
-    repository.saveTransaction(current.softDelete());
+    transactionRepo.delete(current);
   }
 
   private Comparator<PaymentSessionEntity> sessionComparator(String sort) {
@@ -173,6 +164,8 @@ public class PaymentCrudService {
   public record TransactionUpsertRequest(
       @NotBlank String sessionId,
       @NotBlank String reference,
+      BigDecimal amount,
+      String method,
       @NotBlank String status,
       String message
   ) {}
