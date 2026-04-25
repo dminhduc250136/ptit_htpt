@@ -37,6 +37,7 @@ async function request<T>(
   method: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
   path: string,
   body?: unknown,
+  extraHeaders?: Record<string, string>,
 ): Promise<T> {
   const token = getAccessToken();
   const headers: Record<string, string> = {
@@ -44,6 +45,12 @@ async function request<T>(
   };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (token) headers['Authorization'] = `Bearer ${token}`;
+  if (extraHeaders) {
+    for (const [k, v] of Object.entries(extraHeaders)) {
+      // Skip undefined/empty so callers can pass `userId ? { 'X-User-Id': userId } : undefined`
+      if (v) headers[k] = v;
+    }
+  }
 
   let res: Response;
   try {
@@ -59,7 +66,28 @@ async function request<T>(
   }
 
   const text = await res.text();
-  const parsed = text ? JSON.parse(text) : null;
+  // WR-02: wrap JSON.parse in try/catch — non-JSON 5xx (e.g. HTML error page from
+  // gateway/Nginx) would otherwise throw SyntaxError and bypass the dispatcher
+  // contract. Normalize to ApiError('INTERNAL_ERROR', ...) on parse failure for
+  // !res.ok; for OK responses with malformed body, fall back to null data.
+  let parsed: unknown = null;
+  if (text) {
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      if (!res.ok) {
+        throw new ApiError(
+          'INTERNAL_ERROR',
+          res.status,
+          `Request failed (${res.status})`,
+          [],
+          undefined,
+          path,
+        );
+      }
+      parsed = null;
+    }
+  }
 
   if (res.ok) {
     // Success envelope: { timestamp, status, message, data }
@@ -98,7 +126,7 @@ async function request<T>(
 }
 
 export const httpGet    = <T>(path: string) => request<T>('GET', path);
-export const httpPost   = <T>(path: string, body?: unknown) => request<T>('POST', path, body);
-export const httpPut    = <T>(path: string, body?: unknown) => request<T>('PUT', path, body);
-export const httpPatch  = <T>(path: string, body?: unknown) => request<T>('PATCH', path, body);
+export const httpPost   = <T>(path: string, body?: unknown, extraHeaders?: Record<string, string>) => request<T>('POST', path, body, extraHeaders);
+export const httpPut    = <T>(path: string, body?: unknown, extraHeaders?: Record<string, string>) => request<T>('PUT', path, body, extraHeaders);
+export const httpPatch  = <T>(path: string, body?: unknown, extraHeaders?: Record<string, string>) => request<T>('PATCH', path, body, extraHeaders);
 export const httpDelete = <T>(path: string) => request<T>('DELETE', path);

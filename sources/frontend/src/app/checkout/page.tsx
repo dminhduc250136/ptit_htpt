@@ -19,6 +19,7 @@ import {
 import { createOrder } from '@/services/orders';
 import { isApiError } from '@/services/errors';
 import { formatPrice } from '@/services/api';
+import { useAuth } from '@/providers/AuthProvider';
 
 interface StockConflictItem {
   productId: string;
@@ -29,6 +30,7 @@ interface StockConflictItem {
 
 export default function CheckoutPage() {
   const { showToast } = useToast();
+  const { user } = useAuth();
 
   // Hydrate cart via lazy initializer (SSR-safe, avoids set-state-in-effect lint).
   const [cartItems, setCartItems] = useState<CartItem[]>(() =>
@@ -75,7 +77,11 @@ export default function CheckoutPage() {
     setFieldErrors({});
     try {
       const order = await createOrder({
-        items: cartItems.map((i) => ({ productId: i.productId, quantity: i.quantity })),
+        items: cartItems.map((i) => ({
+          productId: i.productId,
+          quantity: i.quantity,
+          unitPrice: i.price,           // Phase 4-06: cart price snapshot → backend CreateOrderCommand totalAmount
+        })),
         shippingAddress: {
           street: form.street,
           ward: form.ward,
@@ -84,7 +90,7 @@ export default function CheckoutPage() {
         },
         paymentMethod: form.paymentMethod,
         note: form.note || undefined,
-      });
+      }, user?.id);                     // Phase 4-06: userId → X-User-Id header (Phase 5: JWT-claim derivation)
       clearCart();
       setShowSuccess({
         orderCode:
@@ -250,7 +256,7 @@ export default function CheckoutPage() {
                 {cartItems.map((item) => (
                   <div key={item.productId} className={styles.summaryItem}>
                     <div className={styles.summaryItemImg}>
-                      <Image src={item.thumbnailUrl} alt={item.name} fill sizes="60px" style={{ objectFit: 'cover' }} />
+                      <Image src={item.thumbnailUrl?.trim() ? item.thumbnailUrl : '/placeholder.png'} alt={item.name} fill sizes="60px" style={{ objectFit: 'cover' }} />
                     </div>
                     <div className={styles.summaryItemInfo}>
                       <span className={styles.summaryItemName}>{item.name}</span>

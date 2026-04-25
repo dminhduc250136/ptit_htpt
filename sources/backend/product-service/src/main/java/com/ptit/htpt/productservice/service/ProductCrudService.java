@@ -6,10 +6,13 @@ import com.ptit.htpt.productservice.repository.InMemoryProductRepository;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -28,7 +31,12 @@ public class ProductCrudService {
         .filter(product -> includeDeleted || !product.deleted())
         .sorted(productComparator(sort))
         .toList();
-    return paginate(all, page, size);
+    // Convert paginate output's content list to ProductResponse — keep envelope keys identical.
+    Map<String, Object> page0 = paginate(all, page, size);
+    @SuppressWarnings("unchecked")
+    List<ProductEntity> content = (List<ProductEntity>) page0.get("content");
+    page0.put("content", content.stream().map(this::toResponse).toList());
+    return page0;
   }
 
   public ProductEntity getProduct(String id, boolean includeDeleted) {
@@ -38,6 +46,16 @@ public class ProductCrudService {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found");
     }
     return product;
+  }
+
+  public ProductEntity getProductBySlug(String slug) {
+    if (slug == null || slug.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found");
+    }
+    return repository.findAllProducts().stream()
+        .filter(product -> !product.deleted() && slug.equals(product.slug()))
+        .findFirst()
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
   }
 
   public ProductEntity createProduct(ProductUpsertRequest request) {
@@ -106,6 +124,52 @@ public class ProductCrudService {
     repository.saveCategory(current.softDelete());
   }
 
+  /**
+   * Map a ProductEntity to the rich ProductResponse the frontend consumes. Defaults
+   * applied for fields not yet persisted on the in-memory entity. Category lookup uses
+   * the existing repository.findCategoryById path; if the category has been deleted or
+   * is missing, emit a placeholder CategoryRef with the raw categoryId so the FE can
+   * still render `Category` link without crashing.
+   */
+  public ProductResponse toResponse(ProductEntity product) {
+    CategoryRef categoryRef = repository.findCategoryById(product.categoryId())
+        .map(c -> new CategoryRef(c.id(), c.name(), categorySlugFor(c)))
+        .orElseGet(() -> new CategoryRef(product.categoryId(), "—", product.categoryId()));
+
+    return new ProductResponse(
+        product.id(),
+        product.name(),
+        product.slug(),
+        "",                                            // description default — Phase 5: persist
+        "",                                            // shortDescription default — Phase 5
+        product.price(),
+        null,                                          // originalPrice — null = "no discount"
+        null,                                          // discount — null = "no discount"
+        Collections.emptyList(),                       // images default
+        "",                                            // thumbnailUrl default (FE applies '/placeholder.png' fallback)
+        categoryRef,
+        null,                                          // brand default
+        BigDecimal.ZERO,                               // rating default 0
+        0,                                             // reviewCount default 0
+        0,                                             // stock default 0 — Phase 5: read from inventory-service
+        product.status(),
+        Collections.emptyList(),                       // tags default
+        product.createdAt(),
+        product.updatedAt()
+    );
+  }
+
+  /**
+   * Derive a slug for a CategoryEntity. CategoryEntity does not currently expose a slug()
+   * accessor, so we fall back to a lowercase-hyphenated transform of name(). When a real
+   * datastore lands in Phase 5, persist a slug column on Category and call c.slug() here.
+   */
+  private String categorySlugFor(CategoryEntity c) {
+    return c.name() == null ? c.id() : c.name().toLowerCase(Locale.ROOT)
+        .replaceAll("[^a-z0-9]+", "-")
+        .replaceAll("^-+|-+$", "");
+  }
+
   private Comparator<ProductEntity> productComparator(String sort) {
     if (sort == null || sort.isBlank()) {
       return Comparator.comparing(ProductEntity::updatedAt).reversed();
@@ -159,4 +223,37 @@ public class ProductCrudService {
   public record ProductStatusRequest(@NotBlank String status) {}
 
   public record CategoryUpsertRequest(@NotBlank String name, String parentId, @NotBlank String status) {}
+
+  /**
+   * Rich product shape consumed by the FE (sources/frontend/src/types/index.ts Product).
+   * Defaults applied where the in-memory entity does not yet carry the field. Phase 5
+   * candidate: persist the new fields in ProductEntity once a real datastore lands.
+   */
+  public record ProductResponse(
+      String id,
+      String name,
+      String slug,
+      String description,
+      String shortDescription,
+      BigDecimal price,
+      BigDecimal originalPrice,
+      Integer discount,
+      List<String> images,
+      String thumbnailUrl,
+      CategoryRef category,
+      String brand,
+      BigDecimal rating,
+      int reviewCount,
+      int stock,
+      String status,
+      List<String> tags,
+      Instant createdAt,
+      Instant updatedAt
+  ) {}
+
+  public record CategoryRef(
+      String id,
+      String name,
+      String slug
+  ) {}
 }

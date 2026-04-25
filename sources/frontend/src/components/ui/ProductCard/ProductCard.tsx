@@ -32,7 +32,7 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
       {/* Image Section */}
       <div className={styles.imageWrapper}>
         <Image
-          src={product.thumbnailUrl}
+          src={product.thumbnailUrl?.trim() ? product.thumbnailUrl : '/placeholder.png'}
           alt={product.name}
           fill
           sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
@@ -69,7 +69,9 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
 
       {/* Content Section */}
       <div className={styles.content}>
-        <span className={styles.category}>{product.category.name}</span>
+        {product.category?.name && (
+          <span className={styles.category}>{product.category.name}</span>
+        )}
         <h3 className={styles.name}>{product.name}</h3>
         <p className={styles.description}>{product.shortDescription}</p>
 
@@ -92,15 +94,15 @@ export default function ProductCard({ product, className = '' }: ProductCardProp
                 width="14"
                 height="14"
                 viewBox="0 0 24 24"
-                fill={i < Math.floor(product.rating) ? 'var(--secondary-container)' : 'none'}
-                stroke={i < Math.floor(product.rating) ? 'var(--secondary-container)' : 'var(--outline-variant)'}
+                fill={i < Math.floor(product.rating ?? 0) ? 'var(--secondary-container)' : 'none'}
+                stroke={i < Math.floor(product.rating ?? 0) ? 'var(--secondary-container)' : 'var(--outline-variant)'}
                 strokeWidth="2"
               >
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
               </svg>
             ))}
           </div>
-          <span className={styles.reviewCount}>({product.reviewCount})</span>
+          <span className={styles.reviewCount}>({product.reviewCount ?? 0})</span>
         </div>
       </div>
     </div>

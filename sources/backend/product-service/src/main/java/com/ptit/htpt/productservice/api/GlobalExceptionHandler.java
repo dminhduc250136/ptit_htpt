@@ -5,6 +5,8 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
@@ -16,6 +18,8 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+  private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
   private static final int MAX_REJECTED_VALUE_LENGTH = 120;
   private static final String MASKED_VALUE = "***";
@@ -99,6 +103,8 @@ public class GlobalExceptionHandler {
       Exception ex,
       HttpServletRequest request
   ) {
+    log.error("Unhandled exception for {} {} (traceId={})",
+        request.getMethod(), request.getRequestURI(), getTraceId(request), ex);
     HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
     return org.springframework.http.ResponseEntity.status(status).body(ApiErrorResponse.of(
         status.value(),
