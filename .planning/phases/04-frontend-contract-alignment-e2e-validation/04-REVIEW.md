@@ -2,268 +2,364 @@
 phase: 04-frontend-contract-alignment-e2e-validation
 reviewed: 2026-04-25T00:00:00Z
 depth: standard
-files_reviewed: 31
+files_reviewed: 18
 files_reviewed_list:
-  - sources/frontend/middleware.ts
-  - sources/frontend/next.config.ts
-  - sources/frontend/scripts/gen-api.mjs
-  - sources/frontend/playwright.config.ts
+  - sources/backend/order-service/src/main/java/com/ptit/htpt/orderservice/service/OrderCrudService.java
+  - sources/backend/order-service/src/main/java/com/ptit/htpt/orderservice/web/OrderController.java
+  - sources/backend/order-service/src/test/java/com/ptit/htpt/orderservice/web/OrderControllerCreateOrderCommandTest.java
+  - sources/backend/product-service/pom.xml
+  - sources/backend/product-service/src/main/java/com/ptit/htpt/productservice/api/GlobalExceptionHandler.java
+  - sources/backend/product-service/src/main/java/com/ptit/htpt/productservice/service/ProductCrudService.java
+  - sources/backend/product-service/src/main/java/com/ptit/htpt/productservice/web/ProductController.java
+  - sources/backend/product-service/src/test/java/com/ptit/htpt/productservice/web/ProductControllerSlugTest.java
+  - sources/frontend/e2e/observations.json
   - sources/frontend/e2e/uat.spec.ts
   - sources/frontend/src/app/cart/page.tsx
   - sources/frontend/src/app/checkout/page.tsx
-  - sources/frontend/src/app/layout.tsx
-  - sources/frontend/src/app/login/page.tsx
-  - sources/frontend/src/app/not-found.tsx
-  - sources/frontend/src/app/page.tsx
-  - sources/frontend/src/app/products/[slug]/page.tsx
-  - sources/frontend/src/app/products/page.tsx
-  - sources/frontend/src/app/profile/page.tsx
-  - sources/frontend/src/app/register/page.tsx
-  - sources/frontend/src/components/ui/Banner/Banner.tsx
-  - sources/frontend/src/components/ui/Modal/Modal.tsx
-  - sources/frontend/src/components/ui/RetrySection/RetrySection.tsx
-  - sources/frontend/src/components/ui/Toast/Toast.tsx
-  - sources/frontend/src/components/ui/index.ts
-  - sources/frontend/src/providers/AuthProvider.tsx
-  - sources/frontend/src/services/auth.ts
-  - sources/frontend/src/services/cart.ts
-  - sources/frontend/src/services/errors.ts
+  - sources/frontend/src/components/ui/ProductCard/ProductCard.tsx
   - sources/frontend/src/services/http.ts
-  - sources/frontend/src/services/inventory.ts
-  - sources/frontend/src/services/notifications.ts
   - sources/frontend/src/services/orders.ts
-  - sources/frontend/src/services/payments.ts
-  - sources/frontend/src/services/products.ts
-  - sources/frontend/src/services/token.ts
+  - sources/frontend/src/types/api/orders.generated.ts
+  - sources/frontend/src/types/api/products.generated.ts
+  - sources/frontend/src/types/index.ts
 findings:
   critical: 0
-  warning: 7
-  info: 6
-  total: 13
+  warning: 5
+  info: 7
+  total: 12
 status: issues_found
 ---
 
-# Phase 4: Báo cáo Code Review
+# Phase 4: Báo cáo Code Review (gộp 04-01..06)
 
 **Reviewed:** 2026-04-25
 **Depth:** standard
-**Files Reviewed:** 31
-**Status:** issues_found (0 critical / 7 warning / 6 info)
+**Files Reviewed:** 18 (delta của các plan 04-04 / 04-05 / 04-06 + các file FE đã touch lại trong gap-closure)
+**Status:** issues_found (0 critical / 5 warning / 7 info)
 
 ## Tóm tắt
 
-Phase 4 đã xây dựng tầng HTTP có kiểu (typed wrapper), middleware bảo vệ route, AuthProvider, các page đã rewire sang services thật, bộ component error-recovery (Banner/Modal/RetrySection), pipeline OpenAPI codegen và bộ Playwright UAT. Các điểm nóng về **bảo mật được kiểm tra trực tiếp đều đạt**:
+Phase 4 đóng lại gap FE↔BE bằng ba commit chính:
 
-- `services/token.ts.clearTokens()` xoá ĐÚNG cả localStorage `accessToken`/`refreshToken` lẫn cookie `auth_present` (`Max-Age=0`) — T-04-04 OK.
-- `middleware.ts` matcher hẹp đúng phạm vi `/checkout/:path*`, `/profile/:path*`, `/admin/:path*` — T-04-02 OK; KHÔNG đọc / verify JWT, chỉ presence check.
-- Cả `services/http.ts` (line 80) và `app/login/page.tsx` (line 27) đều có guard `pathname.startsWith('/') && !pathname.startsWith('//')` cho returnTo — T-04-03 OK; UAT B4b PASS.
-- KHÔNG tìm thấy `dangerouslySetInnerHTML`, `innerHTML`, `eval(`, `Function(` ở bất kỳ đâu trong `src/` — T-04-01 sinks không bị mở.
-- KHÔNG có `fetch()` trực tiếp ngoài `services/http.ts` (D-10 OK).
-- Tất cả accessor localStorage/document.cookie đều có guard `typeof window`.
+- **04-04 (BE product-service)** — thêm `GET /products/slug/{slug}`, đổi `GET /products`, `GET /products/{id}` sang trả về `ProductResponse` (rich shape) và build pom đã có sẵn `springdoc-openapi-starter-webmvc-ui` cho codegen FE.
+- **04-05 (BE order-service)** — thêm `CreateOrderCommand` + `createOrderFromCommand()` để map đúng vào hợp đồng FE checkout (`items[].unitPrice`, `shippingAddress`, `paymentMethod`, header `X-User-Id` thay cho userId trong body, `totalAmount`/`status` server-side).
+- **04-06 (FE hardening + Playwright UAT)** — `services/http.ts` đã wrap `JSON.parse` (WR-02), `services/orders.ts` truyền `X-User-Id`, `app/checkout/page.tsx` thêm dispatcher CONFLICT (STOCK_SHORTAGE / PAYMENT_FAILED) + Modal, `ProductCard` thêm null-guards (`thumbnailUrl?.trim()`, `tags && tags.length > 0`, `rating ?? 0`, `reviewCount ?? 0`, `category?.name`), `e2e/uat.spec.ts` tự động hoá 12/12 row UAT (A1-A6 + B1-B5/B4a-B4b) với `observations.json` đính kèm.
 
-**Vấn đề chính cần xử lý** xoay quanh độ chắc chắn dữ liệu thay vì lỗ hổng bảo mật:
-1. `next/image` nhận `src=""` (chuỗi rỗng) sẽ throw runtime — đây là khả năng cao gây crash render trên `/cart` và phần summary của `/checkout` khi seed cart từ UAT (B1/B2/B5 cố tình set `thumbnailUrl: ''`). Trùng với FE-01 contract gap.
-2. ProductCard và một số page tiêu thụ trường rich (`product.category.name`, `product.rating`, `product.reviewCount`, `product.images[]`) không có null-guard — đúng là FE-01 gap được UAT phát hiện; vẫn flag ở đây như code-quality để tracking.
-3. `services/http.ts` parse JSON không bọc try/catch — body 5xx không phải JSON (ví dụ HTML error page của gateway) sẽ throw `SyntaxError` thay vì biến thành `ApiError('INTERNAL_ERROR', ...)`, dispatcher mất tác dụng và rơi xuống `catch`/network branch.
-4. `http.ts` 401 handler chỉ dùng `pathname` (mất `search`), trong khi `middleware.ts` lưu `pathname + search` — mất query string khi quay lại sau đăng nhập.
-5. `Toast.tsx` dùng `Date.now()` làm key/id — trùng id khi 2 toast bắn cùng millisecond → cảnh báo React + dismiss nhầm.
-6. `Modal.tsx` không trap Tab focus trong dialog (focus có thể nhảy ra background) — a11y regression nhẹ.
-7. `register/page.tsx` không honor `?returnTo=` (login có); thiếu nhất quán.
+**Bảo mật / hợp đồng đã được kiểm chứng:**
 
-## Critical Issues
+- `services/http.ts` (line 108) vẫn giữ guard open-redirect cho 401 returnTo (`pathname.startsWith('/') && !pathname.startsWith('//')`) — T-04-03 OK; UAT B4b PASS.
+- 401 branch gọi `clearTokens()` trước khi redirect — T-04-04 OK; UAT B4a PASS.
+- `OrderCrudService.createOrderFromCommand()` từ chối khi `userId` null/blank với `ResponseStatusException(BAD_REQUEST, "Missing X-User-Id session header")` — `OrderControllerCreateOrderCommandTest` cover đủ ba nhánh (200/201, 400 missing header, 400 validation empty items).
+- `ProductControllerSlugTest` xác nhận envelope `ApiResponse` 200 (rich shape) và 404 với `code="NOT_FOUND"` qua GlobalExceptionHandler.
+- KHÔNG có hardcoded secret, `eval(`, `Function(`, `innerHTML`, `dangerouslySetInnerHTML` trong các file đang review.
 
-Không có.
+**Tồn đọng theo plan đã được chấp nhận:**
 
-## Warnings
+- Backend chưa persist `stock` → UAT A4 phải seed cart trực tiếp qua `localStorage` (Phase 5).
+- Backend chưa emit `STOCK_SHORTAGE` / `PAYMENT_FAILED` → UAT B2/B3 dùng `page.route()` stub (Phase 5).
+- `/auth/register` chưa ship → UAT A2 chạy mock setTimeout flow (Phase 5).
 
-### WR-01: `next/image` crash với `src=""` từ cart/checkout
+Các phát hiện dưới đây là rủi ro CHẤT LƯỢNG, KHÔNG chặn release v1.0.
 
-**File:** `sources/frontend/src/app/cart/page.tsx:70`, `sources/frontend/src/app/checkout/page.tsx:253`
-**Issue:** Cả hai page render trực tiếp `<Image src={item.thumbnailUrl} ... />`. Type `CartItem.thumbnailUrl: string` không cấm chuỗi rỗng và bộ test UAT (B1/B2/B5 trong `e2e/uat.spec.ts:283, 328, 396, 540`) đều seed `thumbnailUrl: ''`. `next/image` ném `Error: Image is missing required "src" property` khi nhận chuỗi rỗng → unmount cây React, page trắng. Có khả năng cao đây là một trong các nguyên nhân làm UAT FAIL khi `/cart` hoặc summary `/checkout` render bằng cart đã seed.
-**Fix:**
-```tsx
-// app/cart/page.tsx (≈ line 69)
-<Image
-  src={item.thumbnailUrl?.trim() ? item.thumbnailUrl : '/placeholder.png'}
-  alt={item.name}
-  fill
-  sizes="120px"
-  className={styles.itemImg}
-/>
-```
-Áp dụng cùng pattern ở `app/checkout/page.tsx:253` (summary). Hoặc, an toàn hơn, đổi `services/cart.ts.addToCart` để fallback khi `product.thumbnailUrl` rỗng/undefined trước khi ghi localStorage. Tham khảo `app/profile/page.tsx:151` — đã guard đúng bằng `item.productImage ? <Image ... /> : null`.
+## Cảnh báo (Warnings)
 
-### WR-02: `services/http.ts` không bắt lỗi `JSON.parse` cho body lỗi
+### WR-01: `clearTokens()` chỉ chạy khi `res.status === 401` nhưng `throw` luôn xảy ra — caller có thể double-handle UNAUTHORIZED
 
-**File:** `sources/frontend/src/services/http.ts:62`
-**Issue:** Sau khi `await res.text()`, gọi thẳng `JSON.parse(text)` không try/catch. Khi gateway/Nginx trả HTML 502/504 (rất phổ biến trong dev khi `docker compose stop`), parse lỗi → throw `SyntaxError` xuyên qua phần dispatcher, lên đến page và rơi vào nhánh `if (!isApiError(err))` (toast generic) — đúng *kết quả* mong muốn nhưng KHÔNG đi qua đường `ApiError('INTERNAL_ERROR', ...)`, mất `traceId`/`path`/`status` trên log và phá vỡ contract của `httpGet/httpPost`. Nếu UI sau này dispatch theo `err.status` cho 5xx, branch này sẽ không bao giờ chạy.
-**Fix:**
+**File:** `sources/frontend/src/services/http.ts:102-126`
+**Issue:**
+Khi nhận 401, `request()` (1) xoá token, (2) trigger `window.location.href` redirect, rồi (3) tiếp tục `throw new ApiError('UNAUTHORIZED', ...)`. Trong `app/checkout/page.tsx` line 129-131 có comment "http.ts already redirected; no-op here." — đúng là no-op nhưng ApiError vẫn lan ra `submitOrder()` và đi qua `setLoading(false)` ở `finally`. Nếu trong tương lai có thêm dispatcher case bắt `default` ở phía trên `UNAUTHORIZED` (ví dụ ai đó refactor switch), error sẽ bị toast "Đã có lỗi" trước khi redirect kịp thực hiện. Hành vi hiện tại đúng nhưng phụ thuộc vào THỨ TỰ case trong switch — fragile.
+
+**Fix:** Sau khi gọi `clearTokens()` + set `window.location.href`, nên `throw` một sentinel `ApiError` đã được đánh dấu rõ ràng (hoặc trả về `Promise<never>` với `new Promise(() => {})` để dừng caller hẳn vì trang sắp navigate).
+
 ```ts
-let parsed: unknown = null;
-if (text) {
-  try { parsed = JSON.parse(text); }
-  catch {
-    // Non-JSON body (HTML 5xx page, empty 204, etc.). Throw a normalized ApiError
-    // so the dispatcher contract holds.
-    if (!res.ok) {
-      throw new ApiError('INTERNAL_ERROR', res.status, `Request failed (${res.status})`, [], undefined, path);
-    }
-    parsed = null;
+if (res.status === 401) {
+  clearTokens();
+  if (typeof window !== 'undefined') {
+    const pathname = window.location.pathname;
+    const target = pathname.startsWith('/') && !pathname.startsWith('//')
+      ? `/login?returnTo=${encodeURIComponent(pathname)}`
+      : '/login';
+    window.location.href = target;
+    // Stop the caller — page is navigating away, no point in propagating.
+    return new Promise<T>(() => {}); // never resolves
   }
 }
 ```
 
-### WR-03: Mất query string khi 401 redirect trong `http.ts`
-
-**File:** `sources/frontend/src/services/http.ts:79-85`
-**Issue:** Handler 401 chỉ encode `window.location.pathname`, trong khi `middleware.ts:24` lưu `pathname + search`. Nếu user đang ở `/products?category=x&keyword=y` và session hết hạn ở giữa một call, sau khi đăng nhập sẽ quay lại `/products` — mất bộ lọc. Hai code path này nên đồng bộ.
-**Fix:**
-```ts
-const pathname = window.location.pathname;
-const search = window.location.search; // already includes leading '?'
-if (pathname.startsWith('/') && !pathname.startsWith('//')) {
-  const returnTo = encodeURIComponent(pathname + search);
-  window.location.href = `/login?returnTo=${returnTo}`;
-} else {
-  window.location.href = `/login`;
-}
-```
-Lưu ý: guard `startsWith('/')` không cần áp dụng lên `search` vì search luôn là chuỗi sau `?` cùng pathname.
-
-### WR-04: ProductCard truy cập field optional/non-existent không guard (FE-01)
-
-**File:** `sources/frontend/src/components/ui/ProductCard/ProductCard.tsx:72, 95-96, 103`
-**Issue:** ProductCard render `product.category.name`, `Math.floor(product.rating)`, `product.reviewCount` trực tiếp. Theo lưu ý phase: backend trả thin DTO, nhiều trường là `undefined` → `Math.floor(undefined)` = `NaN` (không crash nhưng render `NaN ngôi sao`); `product.category.name` khi `category` undefined → `TypeError: Cannot read properties of undefined`, unmount cây — đây chính là contract gap UAT đã ghi (`A1` notes). Đã có gap-closure plan, nhưng cần flag rõ:
-**Fix:** Áp dụng pattern null-coalescing y như `app/products/[slug]/page.tsx:174, 183, 191`:
-```tsx
-{product.category?.name && <span className={styles.category}>{product.category.name}</span>}
-...
-fill={i < Math.floor(product.rating ?? 0) ? '...' : 'none'}
-...
-<span className={styles.reviewCount}>({product.reviewCount ?? 0})</span>
-```
-Đồng thời loại bỏ field-leak khi card render `<Image src={product.thumbnailUrl}>` (line 35) — same pattern as WR-01: nếu `thumbnailUrl` rỗng hoặc undefined, fallback placeholder.
-
-### WR-05: `Toast.tsx` collide id khi tạo 2 toast cùng millisecond
-
-**File:** `sources/frontend/src/components/ui/Toast/Toast.tsx:18`
-**Issue:** `const id = Date.now();` — nếu hai `showToast(...)` chạy back-to-back trong cùng một tick (ví dụ catch dispatcher cùng lúc với optimistic-update toast), cả hai cùng id. React phát warning "encountered two children with the same key", và `setTimeout`-cleanup đầu tiên (`filter(t => t.id !== id)`) sẽ xoá CẢ HAI toast → toast thứ hai biến mất sớm 0–3.5s.
-**Fix:**
-```tsx
-const idCounter = useRef(0);
-const showToast = useCallback((message, type = 'success') => {
-  idCounter.current += 1;
-  const id = idCounter.current;
-  ...
-}, []);
-```
-Hoặc dùng `crypto.randomUUID()` (đã có ở Node 18+/Next 16 client) — `id: crypto.randomUUID()`.
-
-### WR-06: `Modal.tsx` không trap Tab focus
-
-**File:** `sources/frontend/src/components/ui/Modal/Modal.tsx:52-72`
-**Issue:** Modal có `aria-modal="true"`, focus phần tử đầu tiên khi mở, và đóng bằng Esc — nhưng KHÔNG capture phím Tab. Người dùng nhấn Tab có thể nhảy focus ra Header/Footer ở DOM nền (vẫn được scroll-locked nhưng vẫn nhận focus). Đây là regression nhẹ về a11y so với contract `aria-modal`.
-**Fix:** Thêm trap đơn giản trong cùng `useEffect`:
-```tsx
-const onKey = (e: KeyboardEvent) => {
-  if (e.key === 'Escape') { onClose(); return; }
-  if (e.key !== 'Tab') return;
-  const focusables = dialogRef.current?.querySelectorAll<HTMLElement>(
-    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
-  );
-  if (!focusables || focusables.length === 0) return;
-  const first = focusables[0];
-  const last = focusables[focusables.length - 1];
-  if (e.shiftKey && document.activeElement === first) {
-    e.preventDefault(); last.focus();
-  } else if (!e.shiftKey && document.activeElement === last) {
-    e.preventDefault(); first.focus();
-  }
-};
-```
-
-### WR-07: `register/page.tsx` không honor `?returnTo=` như `login`
-
-**File:** `sources/frontend/src/app/register/page.tsx:64`
-**Issue:** Sau register thành công gọi `router.replace('/')` cứng, không đọc `searchParams.get('returnTo')`. Login (`app/login/page.tsx:55`) đã làm đúng (bao gồm cả guard open-redirect). Người dùng thường được middleware đẩy vào `/login?returnTo=/checkout`; nếu họ chuyển sang đường dẫn `/register` (qua link "Đăng ký ngay") rồi đăng ký, họ sẽ bị thả về `/` thay vì quay lại `/checkout` — UX bug.
-**Fix:** Bọc trong `Suspense` rồi đọc `useSearchParams()` y hệt login, áp cùng guard `startsWith('/') && !startsWith('//')`, rồi `router.replace(returnTo)`.
-
-## Info
-
-### IN-01: `home page.tsx` raw `<img>` cho hero — chỉ là style smell
-
-**File:** `sources/frontend/src/app/page.tsx:82-95`
-**Issue:** Đã có `// eslint-disable-next-line @next/next/no-img-element` nên không phải bug, nhưng `next/image` đang được cấu hình cho `images.unsplash.com` ở `next.config.ts:18` — có thể chuyển sang `<Image>` để hưởng tối ưu LCP/AVIF.
-**Fix:** Đổi sang `next/image` với `fill` + `sizes` chuẩn; xoá hai dòng eslint-disable.
-
-### IN-02: `playwright.config.ts` — trace='on' luôn ghi credential
-
-**File:** `sources/frontend/playwright.config.ts:11`
-**Issue:** `trace: 'on'` ghi mọi network request bao gồm header `Authorization: Bearer ...` ra `e2e/results/`. Trong dev là token mock nên không sao, nhưng nếu UAT chạy CI với token thật cần đổi thành `'on-first-retry'` hoặc `'retain-on-failure'`. Đáng note để Phase 5/CI.
-**Fix:** `trace: 'retain-on-failure'`.
-
-### IN-03: `errors.ts` — `code` là `string`, đánh mất exhaustiveness check
-
-**File:** `sources/frontend/src/services/errors.ts:19`
-**Issue:** Comment liệt kê union (`'VALIDATION_ERROR' | 'UNAUTHORIZED' | ...`) nhưng type khai báo là `string`. Switch ở `app/checkout/page.tsx:101` không được TS check exhaustive — nếu thêm code mới (ví dụ `'TOO_MANY_REQUESTS'`) sẽ không được nhắc.
-**Fix:**
-```ts
-export type ApiErrorCode =
-  | 'VALIDATION_ERROR' | 'UNAUTHORIZED' | 'FORBIDDEN'
-  | 'CONFLICT' | 'NOT_FOUND' | 'INTERNAL_ERROR';
-
-constructor(
-  public readonly code: ApiErrorCode,
-  ...
-)
-```
-Lưu ý: ApiError được construct từ `err.code ?? 'INTERNAL_ERROR'` (string từ network), nên cần cast hoặc giữ rộng — có thể giữ string nhưng export union type cho dispatcher dùng.
-
-### IN-04: `gen-api.mjs` — `npx --yes` auto install không prompt
-
-**File:** `sources/frontend/scripts/gen-api.mjs:38`
-**Issue:** `npx --yes openapi-typescript@7.13.0` chạy mỗi lần `npm run gen:api`. Cờ `--yes` khoá supply-chain check — nếu lock-file không pin, vẫn có thể chạy. Mức độ rủi ro thấp (chạy local, version pinned exact), nhưng có thể chuyển vào `devDependencies` để pin qua lockfile.
-**Fix:** `npm i -D openapi-typescript@7.13.0` rồi `execFileSync('node', ['./node_modules/openapi-typescript/bin/cli.js', s.url, '-o', outFile])`.
-
-### IN-05: `cart.ts.addToCart` mutate `existing.quantity`
-
-**File:** `sources/frontend/src/services/cart.ts:54`
-**Issue:** `existing.quantity += qty` mutate item ngay trong array trả về từ `readCart()`. Hiện tại OK vì `readCart()` luôn JSON.parse fresh, nhưng pattern này dễ vỡ nếu sau này ai đó cache `readCart()` rồi mutate qua tham chiếu. Pattern immutable rõ ràng hơn.
-**Fix:**
-```ts
-const items = readCart();
-const idx = items.findIndex(i => i.productId === product.id);
-const next = idx >= 0
-  ? items.map((i, n) => n === idx ? { ...i, quantity: i.quantity + qty } : i)
-  : [...items, { productId: product.id, name: product.name, thumbnailUrl: product.thumbnailUrl, price: product.price, quantity: qty }];
-writeCart(next);
-```
-
-### IN-06: `e2e/uat.spec.ts` dùng `waitForTimeout` thay vì assertion-based wait
-
-**File:** `sources/frontend/e2e/uat.spec.ts:68, 105, 169, 231, 307, ...`
-**Issue:** Nhiều `await page.waitForTimeout(2000)` cố định. Trên runner chậm/CI lần đầu, 2s có thể không đủ; trên dev nhanh, lãng phí thời gian. Playwright khuyến nghị `await expect(locator).toBeVisible()` / `await page.waitForResponse(...)`. Nguy cơ flake tăng dần theo số test.
-**Fix:** Mỗi chỗ `waitForTimeout`, đổi sang `await expect(page.getByText('...')).toBeVisible({ timeout: 5000 })` hoặc `await page.waitForResponse(res => res.url().includes('/api/orders'))`.
+Nếu giữ pattern `throw` hiện tại thì BẮT BUỘC document rằng case `UNAUTHORIZED` phải đứng riêng và là no-op trong mọi dispatcher (đã có ở checkout, cần đảm bảo profile/products page cũng vậy).
 
 ---
 
-## Tham chiếu chéo (đã verify, KHÔNG flag — chỉ ghi nhận)
+### WR-02: `createOrderFromCommand` không validate `command.items()` không null trước khi `.stream()`
 
-| Mục | Vị trí | Trạng thái |
-|-----|--------|-----------|
-| `clearTokens()` xoá đủ | `services/token.ts:38-43` | OK — xoá cả localStorage + cookie `Max-Age=0` |
-| 401 handler clear trước redirect | `services/http.ts:74-86` | OK — `clearTokens()` gọi trước `window.location.href` |
-| Open-redirect guard ở http.ts | `services/http.ts:80` | OK — `pathname.startsWith('/') && !startsWith('//')` |
-| Open-redirect guard ở login | `app/login/page.tsx:26-27` | OK — cùng pattern |
-| Middleware matcher hẹp | `middleware.ts:32` | OK — chỉ `/checkout`, `/profile`, `/admin` |
-| Không có direct `fetch()` ngoài http.ts | grep toàn `src/` | OK — chỉ `http.ts:50` |
-| Không có `dangerouslySetInnerHTML` / `eval` / `innerHTML` | grep toàn `src/` | OK — không match |
-| SSR-safe localStorage | tất cả accessor | OK — đều có guard `typeof window` |
-| `not-found.tsx` đã được tạo | `app/not-found.tsx` | OK — phục vụ slug 404 |
-| Auth `services/auth.ts` chưa có endpoint backend | `services/auth.ts` | Known deviation — login/register page dùng mock |
+**File:** `sources/backend/order-service/src/main/java/com/ptit/htpt/orderservice/service/OrderCrudService.java:91-104`
+**Issue:**
+`@NotEmpty List<@Valid OrderItemRequest> items` ở `CreateOrderCommand` đảm bảo Jackson + Bean Validation chặn payload thiếu `items` ở controller (`@Valid @RequestBody`). Tuy nhiên service `createOrderFromCommand` là `public` — nếu sau này có internal caller (queue consumer, scheduled job, test khác) gọi trực tiếp với `command.items() == null` thì `command.items().stream()` sẽ throw `NullPointerException` trồi ra `handleFallback` → 500 INTERNAL_ERROR, mất chuỗi chẩn đoán so với 400 VALIDATION_ERROR.
+
+**Fix:** Defensive guard ngay đầu method, đồng nhất với guard `userId`:
+
+```java
+public OrderEntity createOrderFromCommand(String userId, CreateOrderCommand command) {
+  if (userId == null || userId.isBlank()) {
+    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing X-User-Id session header");
+  }
+  if (command == null || command.items() == null || command.items().isEmpty()) {
+    throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "items must not be empty");
+  }
+  // ...
+}
+```
+
+---
+
+### WR-03: `ProductCrudService.toResponse()` bị gọi 2 lần trong `listProducts` cast `List<ProductEntity>` không an toàn
+
+**File:** `sources/backend/product-service/src/main/java/com/ptit/htpt/productservice/service/ProductCrudService.java:34-40`
+**Issue:**
+
+```java
+Map<String, Object> page0 = paginate(all, page, size);
+@SuppressWarnings("unchecked")
+List<ProductEntity> content = (List<ProductEntity>) page0.get("content");
+page0.put("content", content.stream().map(this::toResponse).toList());
+```
+
+Cast unchecked này hoạt động vì hôm nay `paginate()` luôn trả `List<T>`. Nhưng việc đi qua `Map<String, Object>` rồi cast lại là dấu hiệu thiết kế chưa đúng — `paginate()` đáng lẽ nhận một `Function<T, R>` mapper hoặc trả `PaginatedResponse<T>` typed. Nếu một dev sau refactor `paginate()` cho phép boxing/unboxing khác, compile vẫn pass nhưng runtime sẽ `ClassCastException` ở dòng `(List<ProductEntity>) page0.get("content")`.
+
+**Fix:** Generics hoá `paginate()` để nhận mapper, hoặc tạo riêng overload `paginateAndMap(List<E>, page, size, Function<E,R>)`:
+
+```java
+private <T, R> Map<String, Object> paginate(List<T> source, int page, int size, Function<T, R> mapper) {
+  // ... same body, apply mapper.apply(...) before putting "content"
+}
+// hoặc đơn giản: map TRƯỚC khi paginate
+List<ProductResponse> mapped = all.stream().map(this::toResponse).toList();
+return paginate(mapped, page, size);
+```
+
+Bonus: phương án thứ 2 tránh được `@SuppressWarnings("unchecked")` hoàn toàn.
+
+---
+
+### WR-04: `app/checkout/page.tsx` đọc `order.orderCode` nhưng `Order` type có thể không khớp với envelope thực tế từ backend
+
+**File:** `sources/frontend/src/app/checkout/page.tsx:95-100`
+**Issue:**
+
+```ts
+const order = await createOrder({...}, user?.id);
+clearCart();
+setShowSuccess({
+  orderCode:
+    order?.orderCode ??
+    (order as { code?: string } | undefined)?.code ??
+    '—',
+});
+```
+
+`createOrder` trả `Promise<Order>` (theo `services/orders.ts`), và `Order` từ `@/types/index.ts:155-171` định nghĩa `orderCode: string`. Nhưng backend `OrderEntity.create(...)` (xem 04-05) hôm nay KHÔNG tự sinh `orderCode` — `OrderEntity` chỉ có `id`. Cast `as { code?: string }` là dấu hiệu type Order đang nói dối: response thực tế là `OrderEntity { id, userId, totalAmount, status, note, ... }`. Khi UAT A5 chạy thật trên backend, `order.orderCode` luôn `undefined` → modal hiển thị "Mã đơn hàng: —".
+
+**Fix:** Hoặc backend tự generate `orderCode` ở `OrderEntity.create()` (Phase 5 — cần persist column riêng), hoặc FE fallback dùng `order.id`:
+
+```ts
+setShowSuccess({
+  orderCode:
+    order?.orderCode ??
+    (order as { code?: string; id?: string } | undefined)?.code ??
+    (order as { id?: string } | undefined)?.id ??
+    '—',
+});
+```
+
+Đồng thời cập nhật `Order` interface ở `types/index.ts` để `orderCode` thành `orderCode?: string` (optional), tránh gây hiểu lầm cho dev sau.
+
+---
+
+### WR-05: Spec UAT phụ thuộc nặng vào `waitForTimeout` và state seeded trước khi reload — flaky risk
+
+**File:** `sources/frontend/e2e/uat.spec.ts:240-254, 333-348, 405-417, 478-490, 627-639`
+**Issue:**
+Trong A5, B1, B2, B3, B5 đều có pattern:
+
+```ts
+await page.goto('/checkout');
+await page.waitForLoadState('domcontentloaded');
+await page.reload();
+await page.waitForLoadState('domcontentloaded');
+await page.waitForFunction(() => { ... });
+await page.evaluate(() => window.dispatchEvent(new CustomEvent('cart:change')));
+await page.waitForTimeout(500);
+```
+
+Cộng thêm `await page.waitForTimeout(2000)` / `3000` sau khi click submit. Tổng cộng mỗi test "wait" ~5-7s không cần thiết — sẽ flake trên CI chậm và gây timeout giả nếu network thật mất hơn 3s. Comment trong code đã giải thích lý do (Turbopack lazy initializer race) nhưng vẫn nên thay bằng `expect.poll(...)` hoặc `waitForResponse(...)` thay cho `waitForTimeout` cứng.
+
+**Fix:** Thay `waitForTimeout(2000)` (đợi response sau submit) bằng `waitForResponse`:
+
+```ts
+const [resp] = await Promise.all([
+  page.waitForResponse(
+    (r) => r.url().includes('/api/orders/orders') && r.request().method() === 'POST',
+    { timeout: 10000 },
+  ),
+  submit.click(),
+]);
+```
+
+Tương tự, thay `waitForTimeout(500)` sau dispatch `cart:change` bằng `expect.poll(() => readCartLengthFromDom()).toBeGreaterThan(0)`. Giảm tổng thời gian spec, ổn định hơn trên CI.
+
+## Info
+
+### IN-01: Hardcoded `localhost:8080` fallback trong `services/http.ts`
+
+**File:** `sources/frontend/src/services/http.ts:16`
+**Issue:**
+
+```ts
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
+```
+
+Fallback hardcoded cho dev là OK, nhưng khi build production mà quên set `NEXT_PUBLIC_API_BASE_URL`, FE sẽ lặng lẽ trỏ về `localhost:8080` của user → confusing failure. Nên `throw` ở module load nếu `NODE_ENV === 'production'` mà env thiếu.
+
+**Fix:**
+
+```ts
+const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL
+  ?? (process.env.NODE_ENV === 'production'
+    ? (() => { throw new Error('NEXT_PUBLIC_API_BASE_URL must be set in production'); })()
+    : 'http://localhost:8080');
+```
+
+---
+
+### IN-02: `OrderControllerCreateOrderCommandTest` dùng substring assert thay vì JSONPath/Jackson
+
+**File:** `sources/backend/order-service/src/test/java/com/ptit/htpt/orderservice/web/OrderControllerCreateOrderCommandTest.java:60-67`
+**Issue:**
+Comment giải thích lý do dùng `body.contains("198000")` (relaxed substring để né `198000.0` / `"198000"`) là hợp lý, nhưng substring `"\"userId\":\"user-uat-1\""` sẽ false-positive nếu sau này response thêm field `userId` ở vị trí lồng (ví dụ `nestedAudit.userId`). Test sẽ vẫn pass dù primary `userId` ở root sai.
+
+**Fix:** Dùng `JsonPath` / `ObjectMapper.readTree`:
+
+```java
+JsonNode root = new ObjectMapper().readTree(body);
+JsonNode data = root.path("data");
+assertThat(data.path("userId").asText()).isEqualTo("user-uat-1");
+assertThat(data.path("status").asText()).isEqualTo("PENDING");
+assertThat(new BigDecimal(data.path("totalAmount").asText()))
+    .isEqualByComparingTo(new BigDecimal("198000"));
+```
+
+---
+
+### IN-03: `ProductCrudService.categorySlugFor()` regex chạy 2 lần — minor duplication
+
+**File:** `sources/backend/product-service/src/main/java/com/ptit/htpt/productservice/service/ProductCrudService.java:167-171`
+**Issue:**
+
+```java
+return c.name() == null ? c.id() : c.name().toLowerCase(Locale.ROOT)
+    .replaceAll("[^a-z0-9]+", "-")
+    .replaceAll("^-+|-+$", "");
+```
+
+Đây là util slug, không phải hot-path nhưng `replaceAll` compile regex mỗi lần gọi. Khi list 100 products mỗi product gọi 2 regex compile → 200 compile cho 1 request. Nhỏ nhưng dễ cải thiện.
+
+**Fix:** Cache compiled `Pattern` ở class-level constants:
+
+```java
+private static final Pattern NON_ALPHANUM = Pattern.compile("[^a-z0-9]+");
+private static final Pattern EDGE_DASH = Pattern.compile("^-+|-+$");
+// ...
+return EDGE_DASH.matcher(NON_ALPHANUM.matcher(name.toLowerCase(Locale.ROOT)).replaceAll("-")).replaceAll("");
+```
+
+Phase 5 sẽ có cột `slug` thật trên `CategoryEntity` thì xoá luôn util này.
+
+---
+
+### IN-04: ProductCard rating array `[...Array(5)].map(...)` tốn memory không cần thiết
+
+**File:** `sources/frontend/src/components/ui/ProductCard/ProductCard.tsx:91-103`
+**Issue:**
+
+```tsx
+{[...Array(5)].map((_, i) => (
+  <svg key={i} ... />
+))}
+```
+
+Tạo array 5 phần tử rồi destructure mỗi render. Không nghiêm trọng, nhưng dễ thay bằng const:
+
+**Fix:**
+
+```tsx
+const STAR_INDICES = [0, 1, 2, 3, 4] as const;
+// ...
+{STAR_INDICES.map((i) => (
+  <svg key={i} ... />
+))}
+```
+
+---
+
+### IN-05: `ProductCard.hasDiscount` truthy check dễ false-positive với `discount === 0`
+
+**File:** `sources/frontend/src/components/ui/ProductCard/ProductCard.tsx:25`
+**Issue:**
+
+```tsx
+const hasDiscount = product.originalPrice && product.discount;
+```
+
+Nếu backend trả `discount: 0` (sale ảo) thì `hasDiscount` = 0 (falsy) → không render. Hôm nay backend đặt `null` cho discount nên không vấn đề, nhưng tên biến gợi ý boolean trong khi giá trị là `number | null`.
+
+**Fix:**
+
+```tsx
+const hasDiscount = (product.originalPrice ?? 0) > 0 && (product.discount ?? 0) > 0;
+```
+
+---
+
+### IN-06: `CartItem` (types/index.ts) vs `services/cart.ts` shape khác nhau — đã ghi chú nhưng dễ nhầm
+
+**File:** `sources/frontend/src/types/index.ts:140-145` và `sources/frontend/src/services/cart.ts:22-28`
+**Issue:**
+Comment ở `cart.ts` đã giải thích: `types/index.ts` định nghĩa `CartItem { id, product: Product, quantity, ... }` (UI-layer), còn `cart.ts` định nghĩa flat `CartItem { productId, name, thumbnailUrl, price, quantity }` (storage-layer). Hôm nay không xung đột vì hai type đều export `CartItem`, nhưng IDE auto-import sẽ ngẫu nhiên chọn 1 trong 2 → có ngày sẽ ship bug. Phase 5 đã có TODO clean up.
+
+**Fix:** Đổi tên flat shape thành `StoredCartItem` ở `services/cart.ts` ngay bây giờ — refactor 5 phút, tránh trap auto-import:
+
+```ts
+// services/cart.ts
+export interface StoredCartItem {
+  productId: string;
+  // ...
+}
+```
+
+Sau đó update `app/cart/page.tsx` và `app/checkout/page.tsx` import `StoredCartItem`.
+
+---
+
+### IN-07: `observations.json` có thể commit screenshots binary — kiểm tra `.gitignore` cho `e2e/screenshots/`
+
+**File:** `sources/frontend/e2e/observations.json` (toàn bộ) + path tham chiếu `screenshots/A1.png`...
+**Issue:**
+`uat.spec.ts:33-37` ghi screenshot vào `e2e/screenshots/{id}.png` và `observations.json` reference các path này. Nếu thư mục `screenshots/` chưa được `.gitignore` thì mỗi lần re-run CI sẽ bloat repo bằng PNG binary. Đối với phase này (verification artifact), screenshots có thể đáng commit lần đầu nhưng không nên track lâu dài.
+
+**Fix:** Thêm vào `sources/frontend/.gitignore`:
+
+```
+# Playwright UAT artifacts (commit observations.json only)
+e2e/screenshots/
+e2e/test-results/
+e2e/playwright-report/
+```
+
+Nếu muốn giữ screenshot làm bằng chứng phase, copy chúng sang `.planning/phases/04-.../artifacts/screenshots/` rồi reset thư mục FE.
 
 ---
 
 _Reviewed: 2026-04-25_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
+_Auto Mode: active_
