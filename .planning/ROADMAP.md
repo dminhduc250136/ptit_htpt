@@ -74,7 +74,7 @@ Plans:
 Plans:
 - [x] 04-01-PLAN.md — Typed HTTP tier + OpenAPI codegen + route protection foundation
 - [x] 04-02-PLAN.md — Error-recovery UI components + page rewires (auth, cart, checkout, read-paths)
-- [ ] 04-03-PLAN.md — UAT walkthrough + cleanup + phase deliverable
+- [x] 04-03-PLAN.md — UAT walkthrough + cleanup + phase deliverable (complete-with-gaps — FE-01 runtime gap surfaced; phase NOT yet complete, awaiting verifier + Phase 4.1)
 
 ## Progress
 
@@ -83,5 +83,5 @@ Plans:
 | 1. API Contract & Swagger Baseline | 3/3 | Complete | 2026-04-22 |
 | 2. CRUD Completeness Across Services | 3/3 | Complete | 2026-04-22 |
 | 3. Validation & Error Handling Hardening | 2/2 | Complete | 2026-04-23 |
-| 4. Frontend Contract Alignment + E2E Validation | 2/3 | In progress | - |
+| 4. Frontend Contract Alignment + E2E Validation | 3/3 | Complete-with-gaps (awaiting verifier + Phase 4.1) | - |
 
