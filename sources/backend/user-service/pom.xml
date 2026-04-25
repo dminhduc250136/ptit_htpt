@@ -45,6 +45,12 @@
       <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- Phase 5 / DB-05: BCrypt verifier cho V2 seed hash (RESEARCH §Decision #6) -->
+    <dependency>
+      <groupId>org.springframework.security</groupId>
+      <artifactId>spring-security-crypto</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

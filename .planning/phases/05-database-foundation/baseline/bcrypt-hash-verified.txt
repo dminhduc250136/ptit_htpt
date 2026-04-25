@@ -1,0 +1,15 @@
+verified: $2a$10$TMH2spmmPRD90vJz8w5yz.G0o4AR/Hio2RU1yBwjjT1ClTLqF5lFu -> admin123 (BCryptPasswordEncoder.matches=true, 2026-04-26T00:54:20Z)
+
+Notes:
+- Hash literal originally proposed in 05-RESEARCH.md §Decision #6
+  ("$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy")
+  was empirically verified to be a Spring Security sample hashing the literal
+  "password", NOT "admin123". The Plan 05-01 fail-fast gate (Assumption A1)
+  caught this BEFORE V2 SQL is committed.
+- Replacement hash above was freshly generated via BCryptPasswordEncoder(strength=10)
+  and is the value that downstream Plan 05-03 MUST embed into user-service
+  V2__seed_dev_data.sql for the admin user. Phase 6 admin login (admin/admin123)
+  will rely on this exact hash.
+- Test that gates this evidence:
+  sources/backend/user-service/src/test/java/com/ptit/htpt/userservice/seed/BCryptSeedHashTest.java
+  Run: mvn -pl sources/backend/user-service test -Dtest=BCryptSeedHashTest (green)
