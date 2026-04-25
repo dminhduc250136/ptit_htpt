@@ -1,6 +1,25 @@
 spring:
   application:
     name: product-service
+  datasource:
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:tmdt}?currentSchema=product_svc
+    username: ${DB_USER:tmdt}
+    password: ${DB_PASSWORD:tmdt}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: product_svc
+        format_sql: true
+    open-in-view: false
+  flyway:
+    enabled: true
+    schemas: product_svc
+    default-schema: product_svc
+    baseline-on-migrate: false
+    locations: classpath:db/migration
 
 server:
   port: 8080
@@ -16,3 +35,11 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  flyway:
+    locations: classpath:db/migration,classpath:db/seed-dev
