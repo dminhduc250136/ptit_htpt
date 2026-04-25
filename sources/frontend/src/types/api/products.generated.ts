@@ -164,6 +164,22 @@ export interface paths {
         patch: operations["updateStatus"];
         trace?: never;
     };
+    "/products/slug/{slug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getProductBySlug"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/ping": {
         parameters: {
             query?: never;
@@ -236,6 +252,45 @@ export interface components {
                 [key: string]: Record<string, never>;
             };
         };
+        ApiResponseProductResponse: {
+            /** Format: date-time */
+            timestamp?: string;
+            /** Format: int32 */
+            status?: number;
+            message?: string;
+            data?: components["schemas"]["ProductResponse"];
+        };
+        CategoryRef: {
+            id?: string;
+            name?: string;
+            slug?: string;
+        };
+        ProductResponse: {
+            id?: string;
+            name?: string;
+            slug?: string;
+            description?: string;
+            shortDescription?: string;
+            price?: number;
+            originalPrice?: number;
+            /** Format: int32 */
+            discount?: number;
+            images?: string[];
+            thumbnailUrl?: string;
+            category?: components["schemas"]["CategoryRef"];
+            brand?: string;
+            rating?: number;
+            /** Format: int32 */
+            reviewCount?: number;
+            /** Format: int32 */
+            stock?: number;
+            status?: string;
+            tags?: string[];
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -262,7 +317,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "*/*": components["schemas"]["ApiResponseObject"];
+                    "*/*": components["schemas"]["ApiResponseProductResponse"];
                 };
             };
         };
@@ -723,6 +778,28 @@ export interface operations {
                 };
                 content: {
                     "*/*": components["schemas"]["ApiResponseObject"];
+                };
+            };
+        };
+    };
+    getProductBySlug: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                slug: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "*/*": components["schemas"]["ApiResponseProductResponse"];
                 };
             };
         };

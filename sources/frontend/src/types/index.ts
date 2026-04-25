@@ -181,7 +181,10 @@ export interface OrderItem {
 }
 
 export interface CreateOrderRequest {
-  items: { productId: string; quantity: number }[];
+  // Phase 4-06: per-item unitPrice required by backend CreateOrderCommand (04-05).
+  // Cart already carries `price` per item — checkout passes it through as a snapshot
+  // so the backend can compute totalAmount server-side.
+  items: { productId: string; quantity: number; unitPrice: number }[];
   shippingAddress: Address;
   paymentMethod: 'COD' | 'BANK_TRANSFER' | 'E_WALLET';
   note?: string;
