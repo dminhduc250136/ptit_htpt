@@ -13,7 +13,7 @@ Stabilize the existing microservices + gateway + Next.js frontend by making the 
 - [x] **Phase 1: API Contract & Swagger Baseline** - Establish consistent API patterns and Swagger/OpenAPI everywhere
 - [x] **Phase 2: CRUD Completeness Across Services** - Close CRUD gaps across services using the Phase 1 contract
 - [x] **Phase 3: Validation & Error Handling Hardening** - Standardize validation and error handling behaviors
-- [ ] **Phase 4: Frontend Contract Alignment + E2E Validation** - Align frontend with contracts and validate shopping flow
+- [x] **Phase 4: Frontend Contract Alignment + E2E Validation** - Align frontend with contracts and validate shopping flow (all 6 plans complete on disk; pending user stage+commit and explicit phase close)
 
 ## Phase Details
 
@@ -75,6 +75,9 @@ Plans:
 - [x] 04-01-PLAN.md — Typed HTTP tier + OpenAPI codegen + route protection foundation
 - [x] 04-02-PLAN.md — Error-recovery UI components + page rewires (auth, cart, checkout, read-paths)
 - [x] 04-03-PLAN.md — UAT walkthrough + cleanup + phase deliverable (complete-with-gaps — FE-01 runtime gap surfaced; phase NOT yet complete, awaiting verifier + Phase 4.1)
+- [x] 04-04-PLAN.md — Backend half of FE-01 closure: rich Product DTO + slug 200/404 + handleFallback ERROR logging (product-service). Tests 2/2 green; live smoke green; FE codegen drift recorded for plan 04-06 to commit. **No commits yet — user stages manually per MEMORY.md.**
+- [x] 04-05-PLAN.md — Backend order-service half of FE-01 closure: CreateOrderCommand + X-User-Id header derivation + status=PENDING server-side + totalAmount computed from items. Tests 9/9 green (3 new + 6 existing GlobalExceptionHandler); live smoke 3/3 PASS via gateway (201 happy + 400 missing-header + 400 VALIDATION_ERROR); admin path regression check 201; FE codegen drift +23/-2 on orders.generated.ts (uncommitted, plan 04-06 will commit). **No commits yet — user stages manually per MEMORY.md.**
+- [x] 04-06-PLAN.md — FE hardening WR-01/02/04 + unitPrice/X-User-Id plumbing + codegen drift commit + Playwright UAT re-run. **12/12 PASS** (vs 7/12 PASS, 5/12 FAIL trong 04-03). FE codegen regenerated (products.generated.ts +78/-1, orders.generated.ts +23/-2). 4 stubs (Q3/Q4/B4a/B5) preserved per Phase 5 deferral, explicitly documented trong 04-UAT.md Phase 5 Carry-Over section. Phase 4 SC#1+SC#2+SC#3 all met at runtime; ready to close pending user approval. **No commits yet — user stages manually per MEMORY.md.**
 
 ## Progress
 
@@ -83,5 +86,5 @@ Plans:
 | 1. API Contract & Swagger Baseline | 3/3 | Complete | 2026-04-22 |
 | 2. CRUD Completeness Across Services | 3/3 | Complete | 2026-04-22 |
 | 3. Validation & Error Handling Hardening | 2/2 | Complete | 2026-04-23 |
-| 4. Frontend Contract Alignment + E2E Validation | 3/3 | Complete-with-gaps (awaiting verifier + Phase 4.1) | - |
+| 4. Frontend Contract Alignment + E2E Validation | 6/6 | All plans complete on disk (04-04 + 04-05 + 04-06); Playwright re-run 12/12 PASS; ready to close pending user approval (no auto-commit per MEMORY.md) | 2026-04-25 (pending close) |
 
