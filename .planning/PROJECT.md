@@ -93,15 +93,37 @@ From codebase analysis, areas worth monitoring:
 - Performance optimization (N+1 queries, caching)
 - Comprehensive test coverage (currently minimal)
 
-## Current Milestone: v1.0 MVP Stabilization
+## Current State
 
-**Goal:** Make the API surface consistent and complete (CRUD + Swagger/OpenAPI) so the frontend can reliably integrate and the system can be validated end-to-end.
+**Shipped:** v1.0 — MVP Stabilization (2026-04-25)
 
-**Target features:**
+11/11 requirements MET. Shopping flow validated end-to-end via Playwright (12/12 PASS) trên live docker-compose stack: browse → cart → checkout → mock payment → confirmation. Cross-phase audit `ready_to_complete` (xem `.planning/milestones/v1.0-ROADMAP.md` + `.planning/v1.0-MILESTONE-AUDIT.md`).
+
+Foundation đã có:
+- 6 services + gateway emit unified `ApiErrorResponse` envelope với traceId propagation
+- Springdoc Swagger UI + OpenAPI codegen pipeline (FE 6 typed modules)
+- CRUD completeness + soft-delete baseline + admin/public route boundaries
+- Validation & error handling hardened (gateway pass-through + common-code taxonomy)
+- FE typed HTTP tier + ApiError dispatcher (5 failure branches) + middleware route protection
+
+## Next Milestone Goals
+
+Carry-over từ v1.0 đã được phân loại thành 4 cluster (xem `.planning/milestones/v1.0-REQUIREMENTS.md` §Future):
+- **Auth thật:** Backend `/auth/{login,register,logout}` + JWT enforcement
+- **Backend persistence + service integration:** ProductEntity.stock, OrderItem rows, inventory.reserve, payment-service vào checkout chain
+- **Security hardening:** JWT claim verification ở gateway, server-side price re-fetch, CSP
+- **Cleanup + Observability:** FE `/search`, `admin/*` migrate, sibling-service handleFallback rollout, integration test suite, centralized tracing
+
+Định hình milestone tiếp theo qua `/gsd-new-milestone`.
+
+<details>
+<summary>Previous milestone target features (v1.0 — shipped)</summary>
+
 - Complete CRUD endpoints across all microservices (consistent patterns)
 - Swagger/OpenAPI documentation for every service and gateway
 - Frontend-backend API contract alignment (DTOs, status codes, error formats)
 - Cross-service validation and consistent error handling
+</details>
 
 ## Evolution
 
@@ -121,4 +143,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-22 — Phase 02 CRUD completeness complete*
+*Last updated: 2026-04-25 — Milestone v1.0 MVP Stabilization SHIPPED (4 phases, 14 plans, 57 commits, Playwright 12/12 PASS)*
