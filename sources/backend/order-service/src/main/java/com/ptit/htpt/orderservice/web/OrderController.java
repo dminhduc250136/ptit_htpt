@@ -2,6 +2,7 @@ package com.ptit.htpt.orderservice.web;
 
 import com.ptit.htpt.orderservice.api.ApiResponse;
 import com.ptit.htpt.orderservice.service.OrderCrudService;
+import com.ptit.htpt.orderservice.service.OrderCrudService.CreateOrderCommand;
 import com.ptit.htpt.orderservice.service.OrderCrudService.OrderUpsertRequest;
 import jakarta.validation.Valid;
 import java.util.Map;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -42,8 +44,12 @@ public class OrderController {
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public ApiResponse<Object> createOrder(@Valid @RequestBody OrderUpsertRequest request) {
-    return ApiResponse.of(201, "Order created", orderCrudService.createOrder(request));
+  public ApiResponse<Object> createOrder(
+      @Valid @RequestBody CreateOrderCommand command,
+      @RequestHeader(value = "X-User-Id", required = false) String userId
+  ) {
+    return ApiResponse.of(201, "Order created",
+        orderCrudService.createOrderFromCommand(userId, command));
   }
 
   @PutMapping("/{id}")
