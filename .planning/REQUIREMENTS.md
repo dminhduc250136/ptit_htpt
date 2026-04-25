@@ -91,26 +91,26 @@ Audit `.planning/v1.0-MILESTONE-AUDIT.md` đã liệt kê 17 deferred items; v1.
 | Atomic | ✓ DB chia 6 sub-req (compose / deps / config / refactor / seed / verify); AUTH 6; UI 4; PERSIST 3 |
 | Independent (trong cluster) | ✓ Trong-cluster độc lập. Cross-cluster: C0 block C1/C2/C3 (xử lý bằng wave-based execution trong roadmap) |
 
-## Traceability (sẽ được điền bởi roadmap)
+## Traceability
 
 | REQ | Phase | Plan | Status |
 |---|---|---|---|
-| DB-01 | TBD | TBD | active |
-| DB-02 | TBD | TBD | active |
-| DB-03 | TBD | TBD | active |
-| DB-04 | TBD | TBD | active |
-| DB-05 | TBD | TBD | active |
-| DB-06 | TBD | TBD | active |
-| AUTH-01 | TBD | TBD | active |
-| AUTH-02 | TBD | TBD | active |
-| AUTH-03 | TBD | TBD | active |
-| AUTH-04 | TBD | TBD | active |
-| AUTH-05 | TBD | TBD | active |
-| AUTH-06 | TBD | TBD | active |
-| UI-01 | TBD | TBD | active |
-| UI-02 | TBD | TBD | active |
-| UI-03 | TBD | TBD | active |
-| UI-04 | TBD | TBD | active |
-| PERSIST-01 | TBD | TBD | active |
-| PERSIST-02 | TBD | TBD | active |
-| PERSIST-03 | TBD | TBD | active |
+| DB-01 | Phase 5 | TBD | active |
+| DB-02 | Phase 5 | TBD | active |
+| DB-03 | Phase 5 | TBD | active |
+| DB-04 | Phase 5 | TBD | active |
+| DB-05 | Phase 5 | TBD | active |
+| DB-06 | Phase 5 | TBD | active |
+| AUTH-01 | Phase 6 | TBD | active |
+| AUTH-02 | Phase 6 | TBD | active |
+| AUTH-03 | Phase 6 | TBD | active |
+| AUTH-04 | Phase 6 | TBD | active |
+| AUTH-05 | Phase 6 | TBD | active |
+| AUTH-06 | Phase 6 | TBD | active |
+| UI-01 | Phase 7 | TBD | active |
+| UI-02 | Phase 7 | TBD | active |
+| UI-03 | Phase 7 | TBD | active |
+| UI-04 | Phase 7 | TBD | active |
+| PERSIST-01 | Phase 8 | TBD | active |
+| PERSIST-02 | Phase 8 | TBD | active |
+| PERSIST-03 | Phase 8 | TBD | active |
