@@ -3,9 +3,9 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Real End-User Experience
 current_plan: null
-status: roadmap-defined
-last_updated: "2026-04-25T23:30:00.000Z"
-last_activity: 2026-04-25 -- Roadmap v1.1 created. 4 phases (5-8) cover 19/19 REQ với 100% coverage. Phase 5 Database Foundation (DB-01..06) là phase đầu, block 6/7/8. Sẵn sàng cho /gsd-plan-phase 5.
+status: phase5-context-gathered
+last_updated: "2026-04-26T00:00:00.000Z"
+last_activity: 2026-04-26 -- Phase 5 CONTEXT.md captured. 9 implementation decisions locked (multi-schema Postgres 16, Entity+DTO split, String UUID giữ nguyên, Flyway V2 dev-profile seed minimal-realistic, mock-data xóa cuối phase). Sẵn sàng cho /gsd-plan-phase 5.
 progress:
   total_phases: 4
   completed_phases: 0
