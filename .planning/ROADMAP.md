@@ -39,7 +39,17 @@ Mục tiêu: biến demo flow từ "stub-verified" thành "real visible end-to-e
   3. Flyway dev seed (`V2__seed_dev_data.sql`) populate đúng products/orders từ FE mocks + 1 admin user (`admin/admin123` BCrypt) + 5 categories
   4. FE `GET /api/products` qua gateway trả seeded products thật từ Postgres (verify bằng cách query trực tiếp DB → match payload)
   5. Sau verify: `sources/frontend/src/mock-data/` đã được xóa; FE flow chính (browse → cart → checkout → confirmation) vẫn PASS bằng data thật
-**Plans**: TBD
+**Plans:** 9 plans
+Plans:
+- [ ] 05-01-PLAN.md — Pre-flight: capture OpenAPI baselines (5 services) + verify BCrypt admin123 hash
+- [ ] 05-02-PLAN.md — Infra: Postgres container + db/init/01-schemas.sql + docker-compose wiring (5 services depends_on healthcheck)
+- [ ] 05-03-PLAN.md — product-service refactor (canonical) — JPA + Flyway V1 + V2 (5 cats + 10 products) + DTO/Mapper boundary
+- [ ] 05-04-PLAN.md — user-service refactor — rename UserProfile→UserEntity + V1 + V2 (admin BCrypt + demo_user)
+- [ ] 05-05-PLAN.md — order-service refactor — V1 (preserve `note` field) + V2 (2 demo orders cho demo_user)
+- [ ] 05-06-PLAN.md — payment-service refactor — V1 align entity actual fields (sessionId/reference/message) + KHÔNG V2
+- [ ] 05-07-PLAN.md — inventory-service refactor — rename InventoryItem→InventoryEntity + V1 + V2 (10 rows align prod-001..010)
+- [ ] 05-08-PLAN.md — Integration verify: docker compose stack + Flyway history + gateway round-trip + OpenAPI diff = 0
+- [ ] 05-09-PLAN.md — FE cleanup: xóa mock-data + rewire flow chính + Playwright audit + manual sign-off
 
 ### Phase 6: Real Auth Flow
 **Goal**: User đăng ký + đăng nhập + đăng xuất thật qua backend; JWT issued; FE form gỡ mock; session persist sau page reload; protected routes redirect đúng khi không có session.
@@ -90,7 +100,7 @@ Mục tiêu: biến demo flow từ "stub-verified" thành "real visible end-to-e
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 5. Database Foundation | 0/TBD | Not started | — |
+| 5. Database Foundation | 0/9 | Planned | — |
 | 6. Real Auth Flow | 0/TBD | Not started | — |
 | 7. Search + Admin Real Data | 0/TBD | Not started | — |
 | 8. Cart → Order Persistence Visible | 0/TBD | Not started | — |
