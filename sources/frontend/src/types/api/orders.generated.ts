@@ -189,6 +189,25 @@ export interface components {
             quantity?: number;
             status: string;
         };
+        CreateOrderCommand: {
+            items: components["schemas"]["OrderItemRequest"][];
+            shippingAddress: components["schemas"]["ShippingAddressRequest"];
+            paymentMethod: string;
+            note?: string;
+        };
+        OrderItemRequest: {
+            productId: string;
+            /** Format: int32 */
+            quantity?: number;
+            unitPrice: number;
+        };
+        ShippingAddressRequest: {
+            street: string;
+            ward: string;
+            district: string;
+            city: string;
+            zipCode?: string;
+        };
         ValidateRequest: {
             name: string;
         };
@@ -451,13 +470,15 @@ export interface operations {
     createOrder: {
         parameters: {
             query?: never;
-            header?: never;
+            header?: {
+                "X-User-Id"?: string;
+            };
             path?: never;
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["OrderUpsertRequest"];
+                "application/json": components["schemas"]["CreateOrderCommand"];
             };
         };
         responses: {

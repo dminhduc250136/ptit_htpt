@@ -67,7 +67,7 @@ export default function CartPage() {
                 <div key={item.productId} className={styles.cartItem}>
                   <Link href={`/products/${item.productId}`} className={styles.itemImage}>
                     <Image
-                      src={item.thumbnailUrl}
+                      src={item.thumbnailUrl?.trim() ? item.thumbnailUrl : '/placeholder.png'}
                       alt={item.name}
                       fill
                       sizes="120px"

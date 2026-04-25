@@ -24,8 +24,16 @@ export interface ListOrdersParams {
   sort?: string;
 }
 
-export function createOrder(body: CreateOrderRequest): Promise<Order> {
-  return httpPost<Order>(`/api/orders/orders`, body);
+/**
+ * Create an order. Per backend CreateOrderCommand (04-05): userId is derived
+ * server-side from the X-User-Id header (Phase 5 will move to JWT-claim
+ * verification at the gateway). Each item carries its unitPrice snapshot
+ * from the cart so the backend can compute totalAmount.
+ */
+export function createOrder(body: CreateOrderRequest, userId?: string): Promise<Order> {
+  const headers: Record<string, string> = {};
+  if (userId) headers['X-User-Id'] = userId;
+  return httpPost<Order>(`/api/orders/orders`, body, headers);
 }
 
 export function listMyOrders(params?: ListOrdersParams): Promise<PaginatedResponse<Order>> {
