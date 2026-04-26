@@ -6,52 +6,47 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.ptit.htpt.inventoryservice.domain.InventoryDto;
 import com.ptit.htpt.inventoryservice.domain.InventoryEntity;
 import com.ptit.htpt.inventoryservice.domain.InventoryMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.springframework.test.context.TestPropertySource;
 
 /**
- * JPA layer test cho InventoryRepository — boots Postgres 16 qua Testcontainers, runs Flyway V1.
+ * JPA layer test cho InventoryRepository — uses external Postgres 16 (host port 55434, schema
+ * {@code inventory_svc}). Container managed bởi outer test runner (KHÔNG Testcontainers vì
+ * docker socket không reachable từ inside maven CI container trên Windows).
  *
  * <p>Cover 4 behaviors: save+findById, findByProductId, UNIQUE constraint product_id,
  * InventoryDto round-trip.
  */
-@Testcontainers
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@TestPropertySource(properties = {
+    "spring.datasource.url=jdbc:postgresql://host.docker.internal:55434/test?currentSchema=inventory_svc",
+    "spring.datasource.username=test",
+    "spring.datasource.password=test",
+    "spring.datasource.driver-class-name=org.postgresql.Driver",
+    "spring.jpa.hibernate.ddl-auto=validate",
+    "spring.jpa.properties.hibernate.default_schema=inventory_svc",
+    "spring.flyway.enabled=true",
+    "spring.flyway.schemas=inventory_svc",
+    "spring.flyway.default-schema=inventory_svc",
+    "spring.flyway.baseline-on-migrate=false",
+    "spring.flyway.locations=classpath:db/migration",
+    "spring.flyway.clean-disabled=false"
+})
 class InventoryRepositoryJpaTest {
-
-  @Container
-  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
-      .withDatabaseName("tmdt")
-      .withUsername("tmdt")
-      .withPassword("tmdt")
-      .withInitScript("test-init/01-schemas.sql");
-
-  @DynamicPropertySource
-  static void datasourceProps(DynamicPropertyRegistry registry) {
-    registry.add("spring.datasource.url",
-        () -> postgres.getJdbcUrl() + "?currentSchema=inventory_svc");
-    registry.add("spring.datasource.username", postgres::getUsername);
-    registry.add("spring.datasource.password", postgres::getPassword);
-    registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
-    registry.add("spring.jpa.properties.hibernate.default_schema", () -> "inventory_svc");
-    registry.add("spring.flyway.enabled", () -> "true");
-    registry.add("spring.flyway.schemas", () -> "inventory_svc");
-    registry.add("spring.flyway.default-schema", () -> "inventory_svc");
-    registry.add("spring.flyway.baseline-on-migrate", () -> "false");
-    registry.add("spring.flyway.locations", () -> "classpath:db/migration");
-  }
 
   @Autowired
   private InventoryRepository inventoryRepository;
+
+  @BeforeEach
+  void clean() {
+    inventoryRepository.deleteAllInBatch();
+  }
 
   @Test
   void save_then_findById_returnsEntity() {
