@@ -73,7 +73,11 @@ public class ProductCrudService {
         request.slug(),
         request.categoryId(),
         request.price(),
-        request.status()
+        request.status(),
+        request.brand(),
+        request.thumbnailUrl(),
+        request.shortDescription(),
+        request.originalPrice()
     );
     return productRepo.save(product);
   }
@@ -85,7 +89,11 @@ public class ProductCrudService {
         request.slug(),
         request.categoryId(),
         request.price(),
-        request.status()
+        request.status(),
+        request.brand(),
+        request.thumbnailUrl(),
+        request.shortDescription(),
+        request.originalPrice()
     );
     return productRepo.save(current);
   }
@@ -152,14 +160,14 @@ public class ProductCrudService {
         product.name(),
         product.slug(),
         "",                                            // description default
-        "",                                            // shortDescription default
+        product.shortDescription() != null ? product.shortDescription() : "",
         product.price(),
-        null,                                          // originalPrice
+        product.originalPrice(),
         null,                                          // discount
         Collections.emptyList(),                       // images default
-        "",                                            // thumbnailUrl default
+        product.thumbnailUrl() != null ? product.thumbnailUrl() : "",
         categoryRef,
-        null,                                          // brand default
+        product.brand(),
         BigDecimal.ZERO,                               // rating default
         0,                                             // reviewCount default
         0,                                             // stock default — read from inventory-service
@@ -217,7 +225,11 @@ public class ProductCrudService {
       @NotBlank String slug,
       @NotBlank String categoryId,
       @DecimalMin("0.0") BigDecimal price,
-      @NotBlank String status
+      @NotBlank String status,
+      String brand,               // nullable — D-03
+      String thumbnailUrl,        // nullable — D-03
+      String shortDescription,    // nullable — D-03
+      BigDecimal originalPrice    // nullable — D-03
   ) {}
 
   public record ProductStatusRequest(@NotBlank String status) {}
