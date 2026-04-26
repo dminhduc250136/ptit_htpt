@@ -1,33 +1,63 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import styles from '../products/page.module.css';
 import Button from '@/components/ui/Button/Button';
 import Badge from '@/components/ui/Badge/Badge';
-import { formatPrice } from '@/services/api';
-import type { Order, User } from '@/types';
+import RetrySection from '@/components/ui/RetrySection/RetrySection';
+import { useToast } from '@/components/ui/Toast/Toast';
+import { listAdminOrders } from '@/services/orders';
 
-// TODO Phase 7 (UI-03): wire to listOrders(admin scope) qua gateway + listUsers for name lookup
-const _stubOrders: Order[] = [];
-const _stubUsers: User[] = [];
+// Backend AdminOrderDto shape
+interface AdminOrder {
+  id: string;
+  userId: string;
+  total?: number;
+  totalAmount?: number;
+  status: string;
+  note?: string;
+  createdAt: string;
+  updatedAt?: string;
+}
 
-const statusOptions = ['PENDING', 'CONFIRMED', 'SHIPPING', 'DELIVERED', 'CANCELLED'] as const;
-const statusLabels: Record<string, string> = { PENDING: 'Chờ xác nhận', CONFIRMED: 'Đã xác nhận', SHIPPING: 'Đang giao', DELIVERED: 'Đã giao', CANCELLED: 'Đã hủy' };
-const statusVariants: Record<string, 'default' | 'new' | 'hot' | 'sale' | 'out-of-stock'> = { PENDING: 'default', CONFIRMED: 'new', SHIPPING: 'hot', DELIVERED: 'sale', CANCELLED: 'out-of-stock' };
+const statusLabel: Record<string, string> = {
+  PENDING: 'Chờ xác nhận',
+  CONFIRMED: 'Đã xác nhận',
+  SHIPPING: 'Đang giao',
+  DELIVERED: 'Đã giao',
+  CANCELLED: 'Đã hủy',
+};
+const statusVariant: Record<string, 'default' | 'new' | 'hot' | 'sale' | 'out-of-stock'> = {
+  PENDING: 'default',
+  CONFIRMED: 'new',
+  SHIPPING: 'hot',
+  DELIVERED: 'sale',
+  CANCELLED: 'out-of-stock',
+};
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState(_stubOrders);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [newStatus, setNewStatus] = useState('');
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const router = useRouter();
+  const { showToast: _showToast } = useToast();
 
-  const handleUpdateStatus = () => {
-    if (selectedOrder && newStatus) {
-      setOrders(prev => prev.map(o => o.id === selectedOrder.id ? { ...o, orderStatus: newStatus as Order['orderStatus'] } : o));
-      setSelectedOrder(null);
+  const load = useCallback(async () => {
+    setLoading(true);
+    setFailed(false);
+    try {
+      const resp = await listAdminOrders();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      setOrders((resp?.content ?? []) as any[]);
+    } catch {
+      setFailed(true);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, []);
 
-  const getUserName = (userId: string) => _stubUsers.find(u => u.id === userId)?.fullName || userId;
+  useEffect(() => { load(); }, [load]);
 
   return (
     <div className={styles.page}>
@@ -37,78 +67,71 @@ export default function AdminOrdersPage() {
 
       <div className={styles.tableWrapper}>
         <table className={styles.table}>
-          <thead><tr><th>Mã đơn</th><th>Khách hàng</th><th>Sản phẩm</th><th>Tổng tiền</th><th>Trạng thái</th><th>Ngày đặt</th><th>Thao tác</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Mã đơn</th>
+              <th>Khách hàng</th>
+              <th>Số sản phẩm</th>
+              <th>Tổng tiền</th>
+              <th>Trạng thái</th>
+              <th>Ngày đặt</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
           <tbody>
-            {orders.map(o => (
+            {loading && [...Array(5)].map((_, i) => (
+              <tr key={i}>
+                <td colSpan={7}>
+                  <div className="skeleton" style={{ height: 60, borderRadius: 'var(--radius-md)' }} />
+                </td>
+              </tr>
+            ))}
+
+            {!loading && failed && (
+              <tr>
+                <td colSpan={7}>
+                  <RetrySection onRetry={load} loading={loading} />
+                </td>
+              </tr>
+            )}
+
+            {!loading && !failed && orders.length === 0 && (
+              <tr>
+                <td colSpan={7}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 'var(--space-3)', padding: 'var(--space-7) 0' }}>
+                    <h3 style={{ fontSize: 'var(--text-title-lg)', color: 'var(--on-surface)' }}>Chưa có đơn hàng nào</h3>
+                    <p style={{ fontSize: 'var(--text-body-md)', color: 'var(--on-surface-variant)' }}>Các đơn hàng của khách sẽ hiển thị ở đây</p>
+                  </div>
+                </td>
+              </tr>
+            )}
+
+            {!loading && !failed && orders.map(o => (
               <tr key={o.id}>
-                <td className={styles.tdBold}>{o.orderCode}</td>
-                <td>{getUserName(o.userId)}</td>
-                <td>{o.items.length} sản phẩm</td>
-                <td className={styles.price}>{formatPrice(o.totalAmount)}</td>
-                <td><Badge variant={statusVariants[o.orderStatus] || 'default'}>{statusLabels[o.orderStatus]}</Badge></td>
+                <td className={styles.tdBold}>{o.id.slice(0, 8)}</td>
+                <td>{o.userId.slice(0, 8)}</td>
+                <td>—</td>
+                <td className={styles.price}>{(o.totalAmount ?? o.total)?.toLocaleString('vi-VN')}₫</td>
+                <td>
+                  <Badge variant={statusVariant[o.status] ?? 'default'}>
+                    {statusLabel[o.status] ?? o.status}
+                  </Badge>
+                </td>
                 <td className={styles.tdMuted}>{new Date(o.createdAt).toLocaleDateString('vi-VN')}</td>
                 <td>
-                  <button className={styles.actionBtn} onClick={() => { setSelectedOrder(o); setNewStatus(o.orderStatus); }}>📋</button>
+                  <button
+                    className={styles.actionBtn}
+                    aria-label="Xem chi tiết đơn hàng"
+                    onClick={() => router.push(`/admin/orders/${o.id}`)}
+                  >
+                    📋
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-
-      {/* Modal: Order Detail & Status Update */}
-      {selectedOrder && (
-        <div className={styles.overlay} onClick={() => setSelectedOrder(null)}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <h3>Chi tiết đơn hàng {selectedOrder.orderCode}</h3>
-              <button className={styles.closeBtn} onClick={() => setSelectedOrder(null)}>✕</button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-              {/* Items */}
-              <div>
-                <h4 style={{ fontSize: 'var(--text-title-sm)', fontWeight: 600, marginBottom: 'var(--space-2)' }}>Sản phẩm</h4>
-                {selectedOrder.items.map(item => (
-                  <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-2) 0', fontSize: 'var(--text-body-md)' }}>
-                    <span>{item.productName} x{item.quantity}</span>
-                    <span style={{ fontWeight: 600 }}>{formatPrice(item.subtotal)}</span>
-                  </div>
-                ))}
-                <div style={{ display: 'flex', justifyContent: 'space-between', padding: 'var(--space-3) 0 0', borderTop: '1px solid rgba(195,198,214,0.15)', fontWeight: 700, fontSize: 'var(--text-title-sm)', color: 'var(--primary)' }}>
-                  <span>Tổng cộng</span>
-                  <span>{formatPrice(selectedOrder.totalAmount)}</span>
-                </div>
-              </div>
-
-              {/* Info */}
-              <div style={{ fontSize: 'var(--text-body-md)', color: 'var(--on-surface-variant)' }}>
-                <p><strong>Khách hàng:</strong> {getUserName(selectedOrder.userId)}</p>
-                <p><strong>Địa chỉ:</strong> {selectedOrder.shippingAddress.street}, {selectedOrder.shippingAddress.district}, {selectedOrder.shippingAddress.city}</p>
-                <p><strong>Thanh toán:</strong> {selectedOrder.paymentMethod} — {selectedOrder.paymentStatus}</p>
-                {selectedOrder.note && <p><strong>Ghi chú:</strong> {selectedOrder.note}</p>}
-              </div>
-
-              {/* Status Update */}
-              <div>
-                <h4 style={{ fontSize: 'var(--text-title-sm)', fontWeight: 600, marginBottom: 'var(--space-2)' }}>Cập nhật trạng thái</h4>
-                <select
-                  value={newStatus}
-                  onChange={e => setNewStatus(e.target.value)}
-                  style={{ width: '100%', padding: 'var(--space-3)', borderRadius: 'var(--radius-lg)', border: '1.5px solid rgba(195,198,214,0.2)', fontSize: 'var(--text-body-md)', fontFamily: 'var(--font-family-body)', background: 'var(--surface-container-lowest)', cursor: 'pointer' }}
-                >
-                  {statusOptions.map(s => <option key={s} value={s}>{statusLabels[s]}</option>)}
-                </select>
-              </div>
-
-              <div className={styles.modalActions}>
-                <Button variant="secondary" onClick={() => setSelectedOrder(null)}>Đóng</Button>
-                <Button onClick={handleUpdateStatus}>Cập nhật</Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
