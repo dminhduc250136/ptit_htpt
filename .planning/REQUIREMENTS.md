@@ -34,7 +34,8 @@ Discovered 2026-04-25 trong khi planning v1.1: **không service nào có `spring
 - [ ] **DB-03**: Mỗi service add `application.yml` datasource config (URL, username, password từ env vars), JPA properties (`ddl-auto: validate` — schema do Flyway control, KHÔNG `create-drop`), Flyway baseline migration `V1__init_schema.sql` reflect existing JPA entities.
 - [ ] **DB-04**: Refactor existing repositories từ in-memory → JPA: convert mỗi `XxxRepository` thành `interface XxxRepository extends JpaRepository<XxxEntity, Long>`; existing service methods reuse signatures; tests update accordingly.
 - [ ] **DB-05**: Seed dev data via Flyway `V2__seed_dev_data.sql` (profile `dev` only), extract từ `sources/frontend/src/mock-data/products.ts` + `orders.ts` + thêm 1 admin user (`admin/admin123`, BCrypt hash) + 5 categories. FE thấy đúng data như khi còn dùng mock → zero UX surprise.
-- [ ] **DB-06**: End-to-end connectivity verify — `docker compose up` → tất cả services start green → gateway round-trip `GET /api/products` qua FE trả seeded products thật từ DB (không phải in-memory). Sau verify: xóa `sources/frontend/src/mock-data/` (đã không cần nữa).
+- [x] **DB-06
+**: End-to-end connectivity verify — `docker compose up` → tất cả services start green → gateway round-trip `GET /api/products` qua FE trả seeded products thật từ DB (không phải in-memory). Sau verify: xóa `sources/frontend/src/mock-data/` (đã không cần nữa).
 
 ### C1. Auth Flow Thật
 
