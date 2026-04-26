@@ -15,6 +15,8 @@ import org.hibernate.annotations.SQLRestriction;
  * Refactor từ record `UserProfile` cũ (fullName/phone/blocked) sang model auth-focused
  * (username/passwordHash/roles) — phục vụ Phase 6 login/JWT.
  *
+ * Phase 7 / Plan 03 (D-04): Thêm fullName + phone fields + setters + touch().
+ *
  * Soft-delete qua @SQLRestriction + @SQLDelete (Hibernate 6).
  * Accessor giữ record-style (`username()`, `email()`, ...) để giảm churn cho service layer.
  */
@@ -40,6 +42,12 @@ public class UserEntity {
   @Column(nullable = false, length = 200)
   private String roles;
 
+  @Column(name = "full_name", length = 120)
+  private String fullName;
+
+  @Column(length = 20)
+  private String phone;
+
   @Column(nullable = false)
   private boolean deleted = false;
 
@@ -53,12 +61,15 @@ public class UserEntity {
   protected UserEntity() {}
 
   protected UserEntity(String id, String username, String email, String passwordHash,
-                       String roles, boolean deleted, Instant createdAt, Instant updatedAt) {
+                       String roles, String fullName, String phone,
+                       boolean deleted, Instant createdAt, Instant updatedAt) {
     this.id = id;
     this.username = username;
     this.email = email;
     this.passwordHash = passwordHash;
     this.roles = roles;
+    this.fullName = fullName;
+    this.phone = phone;
     this.deleted = deleted;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
@@ -67,7 +78,7 @@ public class UserEntity {
   public static UserEntity create(String username, String email, String passwordHash, String roles) {
     Instant now = Instant.now();
     return new UserEntity(UUID.randomUUID().toString(), username, email, passwordHash,
-        roles == null || roles.isBlank() ? "USER" : roles, false, now, now);
+        roles == null || roles.isBlank() ? "USER" : roles, null, null, false, now, now);
   }
 
   public void update(String username, String email, String roles) {
@@ -82,6 +93,25 @@ public class UserEntity {
     this.updatedAt = Instant.now();
   }
 
+  public void setFullName(String fullName) {
+    this.fullName = fullName;
+    this.updatedAt = Instant.now();
+  }
+
+  public void setPhone(String phone) {
+    this.phone = phone;
+    this.updatedAt = Instant.now();
+  }
+
+  public void setRoles(String roles) {
+    this.roles = roles;
+    this.updatedAt = Instant.now();
+  }
+
+  public void touch() {
+    this.updatedAt = Instant.now();
+  }
+
   public void softDelete() {
     this.deleted = true;
     this.updatedAt = Instant.now();
@@ -92,6 +122,8 @@ public class UserEntity {
   public String email() { return email; }
   public String passwordHash() { return passwordHash; }
   public String roles() { return roles; }
+  public String fullName() { return fullName; }
+  public String phone() { return phone; }
   public boolean deleted() { return deleted; }
   public Instant createdAt() { return createdAt; }
   public Instant updatedAt() { return updatedAt; }
