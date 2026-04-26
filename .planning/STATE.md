@@ -4,14 +4,14 @@ milestone: v1.1
 milestone_name: Real End-User Experience
 current_plan: 05-wave3-in-progress
 status: phase5-executing
-last_updated: "2026-04-26T01:30:00.000Z"
-last_activity: "2026-04-26 -- Phase 5 EXECUTING. Wave 1 (Plan 01 preflight) + Wave 2 (Plan 02 Postgres infra) DONE và đã merge vào develop. Wave 3 (Plans 03-07: 5 services JPA refactor parallel) đang chạy 5 background agents trong worktrees riêng. Critical fix giữa Wave 1↔3: BCrypt hash trong RESEARCH §Decision #6 SAI (encode 'password' không phải 'admin123'); Plan 01 fail-fast caught, Plan 04 PLAN.md đã update sang verified hash $2a$10$TMH2spmmPRD90vJz8w5yz.G0o4AR/Hio2RU1yBwjjT1ClTLqF5lFu (commit 5dfa026). Wave 4 (Plan 08 integration smoke) + Wave 5 (Plan 09 FE cleanup) chưa bắt đầu."
+last_updated: "2026-04-26T04:30:00.000Z"
+last_activity: "2026-04-26 04:30Z -- Phase 5 Wave 3 RESUMED sau usage-limit reset. Plan 06 (payment) đã COMPLETE và MERGED. Plans 03/04/05/07 partial commits đã merged về develop, sau đó respawn 4 background gsd-executor agents để continue từ chỗ stopped. Base commit: 098cc1b. Agents đang chạy."
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 9
-  completed_plans: 2
-  percent: 22
+  completed_plans: 3
+  percent: 33
 ---
 
 ## Current Position
@@ -23,35 +23,27 @@ Last activity: 2026-04-26 01:30Z — Wave 3 spawned 5 parallel agents trên base
 
 ## Resume Instructions (Phase 5 Execute)
 
-**Last orchestrator commit on develop**: `1ddf478` (Wave 2 Plan 02 merge: postgres + 5 schemas + docker-compose updates).
+**Last orchestrator commit on develop**: `098cc1b` (post merge of Plan 06 + 4 partial worktrees Plans 03/04/05/07).
 
-**Wave 3 background agent ENDED status (2026-04-26 ~01:37Z) — ALL 5 agents stopped, work likely PARTIAL:**
-- Plan 03 product-service: `ad7b3d0814aedeeb2` — ENDED **usage limit hit** (resets 4:20am Asia/Saigon). Worktree: `D:\SYP_PROJECT\gsd-learning\tmdt-use-gsd\.claude\worktrees\agent-ad7b3d0814aedeeb2`. Branch: `worktree-agent-ad7b3d0814aedeeb2`. Status uncertain — verify SUMMARY.md trước khi merge.
-- Plan 04 user-service: `aeef4b198f3b5587b` — ENDED **usage limit hit**. Worktree: `D:\...\agent-aeef4b198f3b5587b`. Branch: `worktree-agent-aeef4b198f3b5587b`.
-- Plan 05 order-service: `a56f0b03c6deb3627` — ENDED **usage limit hit**. Worktree: `D:\...\agent-a56f0b03c6deb3627`. Branch: `worktree-agent-a56f0b03c6deb3627`.
-- Plan 06 payment-service: `a6478588edc9ff3ec` — ENDED **usage limit hit**. Worktree: `D:\...\agent-a6478588edc9ff3ec`. Branch: `worktree-agent-a6478588edc9ff3ec`.
-- Plan 07 inventory-service: `a9f0daf00af104c9b` — ENDED **STALLED 600s watchdog**. Last result note: "File written successfully. Test created in same session. Need to also create test-only V1 migration. Test uses `db/migration-test` location - tạo dir đó với V1 copy." → partial work, cần tiếp tục manually hoặc respawn.
+**Wave 3 status (2026-04-26 04:30Z — RESUMED after 4:20am limit reset):**
+- ✅ Plan 06 payment-service — COMPLETE + MERGED (4 commits + SUMMARY)
+- 🟡 Plan 03 product-service — partial deps merged, RESUMED via agent `a2c438f03a64ac616` (background)
+- 🟡 Plan 04 user-service — partial deps merged, RESUMED via agent `a4f92d7394f404216` (background)
+- 🟡 Plan 05 order-service — deps + entity merged, RESUMED via agent `aa4191a483af4dd1c` (background)
+- 🟡 Plan 07 inventory-service — partial deps merged, RESUMED via agent `a9fe5aacf93a96951` (background)
 
-**Resume steps khi mở session mới (sau 4:20am Asia/Saigon reset):**
+**Resume steps NEW SESSION nếu cần:**
 
-1. **Inventory worktrees**: `git worktree list` (paths trên đã list). Tất cả 5 worktrees có thể vẫn còn locked.
-2. **Per-plan triage** (cho mỗi của 5 plans 03-07):
-   ```bash
-   WT=.claude/worktrees/agent-<id>
-   git -C "$WT" log --oneline -10
-   git -C "$WT" status
-   # Check SUMMARY.md
-   ls "$WT/.planning/phases/05-database-foundation/05-0X-SUMMARY.md" 2>/dev/null
-   ```
-   - **Nếu SUMMARY.md committed**: agent finished — pre-merge snapshot STATE.md/ROADMAP.md, merge `git merge worktree-agent-<id> --no-ff --no-edit`, restore STATE/ROADMAP, cleanup worktree.
-   - **Nếu SUMMARY.md MISSING nhưng có commits**: agent partial. Đọc commits, decide: (a) finish manually trong main repo từ branch base, hoặc (b) respawn `gsd-executor` cho plan đó với prompt note rằng "previous attempt partial — review commits trên `worktree-agent-<id>` rồi continue từ chỗ stopped".
-   - **Nếu zero commits**: respawn fresh từ scratch.
-3. **Plan 07 đặc biệt**: agent đã note cần tạo `db/migration-test/V1__init_schema.sql` (test-only Flyway location vì JPA test xài `@DynamicPropertySource` set `spring.flyway.locations=classpath:db/migration-test`). Check trong worktree commits xem đã làm chưa.
-4. **Post all merges**: post-merge test gate (`mvn test` mỗi service, hoặc full stack `docker compose up`).
-5. **Update tracking**: `gsd-sdk query roadmap.update-plan-progress 05 0X complete` cho từng plan PASS. STATE.md update completed_plans count.
-6. **Continue Wave 4**: Plan 08 integration smoke (full stack up + OpenAPI diff vs baselines + cross-service orphan check).
-7. **Wave 5**: Plan 09 FE mock-data cleanup.
-8. **Phase verify**: spawn `gsd-verifier` để check DB-01..06 success criteria.
+1. `git worktree list` → check 4 resume worktrees `agent-{a2c438f03a64ac616, a4f92d7394f404216, aa4191a483af4dd1c, a9fe5aacf93a96951}`.
+2. Per worktree: `git -C "$WT" log --oneline 098cc1b..HEAD` để xem commits added; `ls "$WT/.planning/phases/05-database-foundation/05-0X-SUMMARY.md"`.
+3. Pre-merge: `cp .planning/STATE.md /tmp/state.bak && cp .planning/ROADMAP.md /tmp/roadmap.bak`.
+4. Merge: `git merge worktree-agent-<id> --no-ff --no-edit -m "chore: merge resumed Wave 3 worktree (Plan 05-0X)"`.
+5. Restore: `cp /tmp/state.bak .planning/STATE.md && cp /tmp/roadmap.bak .planning/ROADMAP.md`.
+6. Try worktree cleanup: `git worktree remove <path> --force; git branch -D <branch>` (may fail if locked — non-blocking).
+7. Sau khi merge cả 4: post-merge test gate (`mvn test` mỗi service hoặc `docker compose up` smoke).
+8. Continue Wave 4 (Plan 08 integration smoke), Wave 5 (Plan 09 FE), then phase verifier.
+
+**Stale worktrees (locked, non-blocking):** `agent-a8422e9616c369b6c` (W1), `agent-a60a38734b1d51504` (W2), and old Wave 3 batch (`ad7b3d0814aedeeb2`, `aeef4b198f3b5587b`, `a56f0b03c6deb3627`, `a6478588edc9ff3ec`, `a9f0daf00af104c9b`) — đã merge xong, có thể remove sau session khi unlocked.
 
 **Critical context cho Wave 3 → Wave 4 chain:**
 - Cross-service IDs: admin user = `00000000-0000-0000-0000-000000000001`, demo_user = `00000000-0000-0000-0000-000000000002`. Order seed (Plan 05) reference demo_user. Inventory seed (Plan 07) reference `prod-001`..`prod-010` (Plan 03 product seed pattern).
