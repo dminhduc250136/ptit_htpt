@@ -1,13 +1,11 @@
 'use client';
 
 import React from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button/Button';
-import Badge from '@/components/ui/Badge/Badge';
-import { mockOrders } from '@/mock-data/orders';
 import { formatPrice } from '@/services/api';
+import type { Order } from '@/types';
 
 const statusMap: Record<string, { label: string; variant: 'default' | 'new' | 'hot' | 'sale' | 'out-of-stock' }> = {
   PENDING: { label: 'Chờ xác nhận', variant: 'default' },
@@ -30,21 +28,30 @@ const paymentStatusMap: Record<string, string> = {
   REFUNDED: 'Đã hoàn tiền',
 };
 
-const steps = ['PENDING', 'CONFIRMED', 'SHIPPING', 'DELIVERED'];
+// TODO Phase 8 (PERSIST-01..03): wire getOrderById(id) qua gateway để hiển thị đơn hàng thật.
+// Phase 5 chỉ cam kết render-without-crash; page hiển thị placeholder do persistence chưa wire.
+function loadOrder(_id: string): Order | undefined {
+  // Phase 8 PERSIST-02 sẽ thay bằng: return await getOrderById(id);
+  return undefined;
+}
 
 export default function OrderDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
-  const order = mockOrders.find(o => o.id === id);
+  const order = loadOrder(id);
 
   if (!order) {
     return (
       <div className={styles.notFound}>
         <h2>Đơn hàng không tồn tại</h2>
+        <p style={{ color: 'var(--on-surface-variant)', marginBottom: 'var(--space-4)' }}>
+          Mã đơn: {id} — Chi tiết đơn hàng sẽ khả dụng ở Phase 8.
+        </p>
         <Button href="/profile">Quay lại tài khoản</Button>
       </div>
     );
   }
 
+  const steps = ['PENDING', 'CONFIRMED', 'SHIPPING', 'DELIVERED'];
   const currentStep = steps.indexOf(order.orderStatus);
   const addr = order.shippingAddress;
 
@@ -58,15 +65,11 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
               <h1 className={styles.pageTitle}>Đơn hàng {order.orderCode}</h1>
               <p className={styles.pageSubtitle}>Đặt ngày {new Date(order.createdAt).toLocaleDateString('vi-VN')}</p>
             </div>
-            <Badge variant={statusMap[order.orderStatus]?.variant || 'default'}>
-              {statusMap[order.orderStatus]?.label}
-            </Badge>
           </div>
         </div>
       </div>
 
       <div className={`${styles.container} ${styles.content}`}>
-        {/* Progress Tracker */}
         {!['CANCELLED', 'RETURNED'].includes(order.orderStatus) && (
           <div className={styles.tracker}>
             {steps.map((step, i) => (
@@ -80,15 +83,11 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
         )}
 
         <div className={styles.grid}>
-          {/* Order Items */}
           <div className={styles.section}>
             <h3 className={styles.sectionTitle}>Sản phẩm</h3>
             <div className={styles.itemList}>
               {order.items.map(item => (
                 <div key={item.id} className={styles.item}>
-                  <div className={styles.itemImg}>
-                    <Image src={item.productImage} alt={item.productName} fill sizes="80px" style={{ objectFit: 'cover' }} />
-                  </div>
                   <div className={styles.itemInfo}>
                     <span className={styles.itemName}>{item.productName}</span>
                     <span className={styles.itemQty}>Số lượng: {item.quantity}</span>
@@ -105,7 +104,6 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
             </div>
           </div>
 
-          {/* Sidebar Info */}
           <div className={styles.infoColumn}>
             <div className={styles.infoCard}>
               <h4 className={styles.infoCardTitle}>Địa chỉ giao hàng</h4>

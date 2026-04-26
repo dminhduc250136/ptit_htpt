@@ -4,10 +4,13 @@ import React, { useState } from 'react';
 import styles from '../products/page.module.css';
 import Button from '@/components/ui/Button/Button';
 import Badge from '@/components/ui/Badge/Badge';
-import { mockUsers } from '@/mock-data/orders';
+import type { User } from '@/types';
+
+// TODO Phase 7 (UI-04): wire to listUsers(admin scope) qua gateway
+const _stubUsers: User[] = [];
 
 export default function AdminUsersPage() {
-  const [users, setUsers] = useState(mockUsers);
+  const [users, setUsers] = useState(_stubUsers);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const handleDelete = () => {
