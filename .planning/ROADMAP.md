@@ -23,7 +23,7 @@ Mục tiêu: biến demo flow từ "stub-verified" thành "real visible end-to-e
 ## Phases (v1.1)
 
 - [ ] **Phase 5: Database Foundation** — Đưa Postgres + JPA + Flyway vào stack, refactor in-memory repos, seed dev data từ FE mocks (block các phase sau)
-- [ ] **Phase 6: Real Auth Flow** — Backend ship `/api/users/auth/{register,login,logout}` thật + FE form gỡ mock, session persist sau reload
+- [x] **Phase 6: Real Auth Flow** — Backend ship `/api/users/auth/{register,login,logout}` thật + FE form gỡ mock, session persist sau reload (completed 2026-04-26)
 - [ ] **Phase 7: Search + Admin Real Data** — `/search` rewire + admin/products/orders/users migrate khỏi mock sang CRUD thật qua gateway
 - [ ] **Phase 8: Cart → Order Persistence Visible** — ProductEntity.stock persist + OrderEntity per-item rows + shippingAddress/paymentMethod, FE order detail render full breakdown thật
 
@@ -63,9 +63,9 @@ Plans:
   5. Protected routes (`/account/*`, `/checkout/*`, `/admin/*`) middleware redirect khi không có session; admin role check (`roles` array contains `ADMIN`) gate `/admin/*` đúng
 **Plans:** 3 plans
 Plans:
-- [ ] 06-01-PLAN.md — Backend auth infra: pom.xml + JWT config + PasswordEncoderConfig + JwtUtils + AuthService + AuthController (AUTH-01, AUTH-02, AUTH-03)
-- [ ] 06-02-PLAN.md — FE types + token/auth services: RegisterRequest/AuthResponse/User type fixes + setUserRole/clearUserRole + auth.ts wiring (AUTH-04, AUTH-05, AUTH-06)
-- [ ] 06-03-PLAN.md — FE pages + middleware + /403: login/register wire real backend, middleware /account/* + admin role check, /403 page (AUTH-03, AUTH-04, AUTH-05, AUTH-06)
+- [x] 06-01-PLAN.md — Backend auth infra: pom.xml + JWT config + PasswordEncoderConfig + JwtUtils + AuthService + AuthController (AUTH-01, AUTH-02, AUTH-03)
+- [x] 06-02-PLAN.md — FE types + token/auth services: RegisterRequest/AuthResponse/User type fixes + setUserRole/clearUserRole + auth.ts wiring (AUTH-04, AUTH-05, AUTH-06)
+- [x] 06-03-PLAN.md — FE pages + middleware + /403: login/register wire real backend, middleware /account/* + admin role check, /403 page (AUTH-03, AUTH-04, AUTH-05, AUTH-06)
 
 ### Phase 7: Search + Admin Real Data
 **Goal**: FE `/search` page và toàn bộ `admin/*` pages migrate khỏi mock sang CRUD thật qua gateway; admin có thể quản lý products/orders/users với data thật từ Postgres.
@@ -97,13 +97,13 @@ Plans:
 | Milestone | Phases Complete | Status | Shipped |
 |-----------|-----------------|--------|---------|
 | v1.0 MVP Stabilization | 4/4 | Shipped | 2026-04-25 |
-| v1.1 Real End-User Experience | 0/4 | Active | — |
+| v1.1 Real End-User Experience | 1/4 | Active | — |
 
 ### v1.1 Phase Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 5. Database Foundation | 0/9 | Planned | — |
-| 6. Real Auth Flow | 0/3 | Planned | — |
+| 5. Database Foundation | 9/9 | ✅ Complete | 2026-04-26 |
+| 6. Real Auth Flow | 3/3 | ✅ Complete | 2026-04-26 |
 | 7. Search + Admin Real Data | 0/TBD | Not started | — |
 | 8. Cart → Order Persistence Visible | 0/TBD | Not started | — |

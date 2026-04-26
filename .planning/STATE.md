@@ -2,23 +2,23 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Real End-User Experience
-status: phase5-complete
-last_updated: "2026-04-26T05:00:00.000Z"
-last_activity: "2026-04-26 05:00Z — Phase 5 Database Foundation VERIFIED PASS (6/6 DB-01..DB-06). 9/9 plans complete. gsd-verifier report: .planning/phases/05-database-foundation/05-VERIFICATION.md. Ready for Phase 6 Real Auth Flow."
+status: phase6-complete
+last_updated: "2026-04-26T10:00:00.000Z"
+last_activity: "2026-04-26 10:00Z — Phase 6 Real Auth Flow COMPLETE. 3/3 plans. 17/17 automated checks PASS. Human UAT 6 items pending docker smoke. Next: Phase 7 Search + Admin Real Data."
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 9
-  completed_plans: 9
-  percent: 100
+  completed_plans: 12
+  percent: 50
 ---
 
 ## Current Position
 
-Phase: 5 — Database Foundation ✅ COMPLETE (9/9 plans, all waves done)
-Plan: 9/9 — ✅ Wave 1 (01) → ✅ Wave 2 (02) → ✅ Wave 3 (03-07) → ✅ Wave 4 (08) → ✅ Wave 5 (09)
-Status: Phase 5 COMPLETE. mock-data deleted; FE build green; visible flow PASS (browse/detail/cart via Postgres seeded data). Next: Phase 6 Real Auth Flow (AUTH-01..06).
-Last activity: 2026-04-26 04:45Z — Plan 09 COMPLETE. Phase 5 Database Foundation DONE.
+Phase: 6 — Real Auth Flow ✅ COMPLETE (3/3 plans, Wave 1+2 done)
+Plan: 3/3 — ✅ Wave 1 (06-01 backend + 06-02 FE services) → ✅ Wave 2 (06-03 FE pages + middleware + /403)
+Status: Phase 6 COMPLETE. 17/17 automated checks PASS. 6 human UAT items pending docker smoke (06-HUMAN-UAT.md). Next: Phase 7 Search + Admin Real Data.
+Last activity: 2026-04-26 10:00Z — Phase 6 Real Auth Flow DONE. JJWT+BCrypt backend + FE pages wired.
 
 ## Resume Instructions (Phase 5 Execute)
 
