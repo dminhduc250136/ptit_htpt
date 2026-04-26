@@ -1,40 +1,123 @@
 package com.ptit.htpt.productservice.domain;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Objects;
 import java.util.UUID;
 
-public record ProductEntity(
-    String id,
-    String name,
-    String slug,
-    String categoryId,
-    BigDecimal price,
-    String status,
-    boolean deleted,
-    Instant createdAt,
-    Instant updatedAt
-) {
-  public static ProductEntity create(
-      String name,
-      String slug,
-      String categoryId,
-      BigDecimal price,
-      String status
-  ) {
+/**
+ * JPA @Entity cho bảng product_svc.products.
+ *
+ * <p>Dùng accessor naming dạng record (`name()`, `slug()`, ...) để service layer
+ * không phải đổi gọi khi migrate từ in-memory record cũ.
+ *
+ * <p>Soft-delete qua @SQLRestriction + @SQLDelete: findAll/findById tự động loại
+ * record có deleted=true; delete(entity) sẽ trigger UPDATE thay vì DELETE.
+ */
+@Entity
+@Table(name = "products", schema = "product_svc")
+@SQLRestriction("deleted = false")
+@SQLDelete(sql = "UPDATE product_svc.products SET deleted = true, updated_at = NOW() WHERE id = ?")
+public class ProductEntity {
+
+  @Id
+  @Column(length = 36, nullable = false, updatable = false)
+  private String id;
+
+  @Column(nullable = false, length = 300)
+  private String name;
+
+  @Column(nullable = false, length = 320, unique = true)
+  private String slug;
+
+  @Column(name = "category_id", nullable = false, length = 36)
+  private String categoryId;
+
+  @Column(nullable = false, precision = 12, scale = 2)
+  private BigDecimal price;
+
+  @Column(nullable = false, length = 20)
+  private String status;
+
+  @Column(nullable = false)
+  private boolean deleted = false;
+
+  @Column(name = "created_at", nullable = false, updatable = false)
+  private Instant createdAt;
+
+  @Column(name = "updated_at", nullable = false)
+  private Instant updatedAt;
+
+  /** JPA proxy: protected no-arg constructor (Pitfall 1, RESEARCH §Risks). */
+  protected ProductEntity() {}
+
+  protected ProductEntity(String id, String name, String slug, String categoryId,
+                          BigDecimal price, String status, boolean deleted,
+                          Instant createdAt, Instant updatedAt) {
+    this.id = id;
+    this.name = name;
+    this.slug = slug;
+    this.categoryId = categoryId;
+    this.price = price;
+    this.status = status;
+    this.deleted = deleted;
+    this.createdAt = createdAt;
+    this.updatedAt = updatedAt;
+  }
+
+  public static ProductEntity create(String name, String slug, String categoryId,
+                                     BigDecimal price, String status) {
     Instant now = Instant.now();
-    return new ProductEntity(UUID.randomUUID().toString(), name, slug, categoryId, price, status, false, now, now);
+    return new ProductEntity(UUID.randomUUID().toString(), name, slug, categoryId,
+        price, status, false, now, now);
   }
 
-  public ProductEntity update(String name, String slug, String categoryId, BigDecimal price, String status) {
-    return new ProductEntity(id, name, slug, categoryId, price, status, deleted, createdAt, Instant.now());
+  public void update(String name, String slug, String categoryId, BigDecimal price, String status) {
+    this.name = name;
+    this.slug = slug;
+    this.categoryId = categoryId;
+    this.price = price;
+    this.status = status;
+    this.updatedAt = Instant.now();
   }
 
-  public ProductEntity setStatus(String status) {
-    return new ProductEntity(id, name, slug, categoryId, price, status, deleted, createdAt, Instant.now());
+  public void setStatus(String status) {
+    this.status = status;
+    this.updatedAt = Instant.now();
   }
 
-  public ProductEntity softDelete() {
-    return new ProductEntity(id, name, slug, categoryId, price, status, true, createdAt, Instant.now());
+  public void softDelete() {
+    this.deleted = true;
+    this.updatedAt = Instant.now();
+  }
+
+  public String id() { return id; }
+  public String name() { return name; }
+  public String slug() { return slug; }
+  public String categoryId() { return categoryId; }
+  public BigDecimal price() { return price; }
+  public String status() { return status; }
+  public boolean deleted() { return deleted; }
+  public Instant createdAt() { return createdAt; }
+  public Instant updatedAt() { return updatedAt; }
+
+  /** equals/hashCode by id only (Pitfall 2 — Hibernate proxy / pre-persist safety). */
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof ProductEntity that)) return false;
+    return Objects.equals(id, that.id);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(id);
   }
 }
