@@ -25,7 +25,7 @@
   - `GET /api/products/stats` → `{totalProducts: int}`
   - `GET /api/orders/stats` → `{totalOrders: int, pendingOrders: int}`
   - `GET /api/users/stats` → `{totalUsers: int}`
-- **D-05:** Admin-only gating: `@PreAuthorize("hasRole('ADMIN')")` per controller method ở mỗi service. Consistent với pattern admin CRUD v1.1. Non-admin call → 403.
+- **D-05 [REVISED 2026-04-26]:** Admin-only gating qua **path convention `/admin/*/stats` + manual JWT role check** trong controller (parse Bearer token → reject 403 nếu role!=ADMIN). KHÔNG dùng `@PreAuthorize` vì codebase chưa setup Spring Security (verified: zero `@PreAuthorize` hits trong user-svc, không có `SecurityFilterChain`). Endpoints: `/api/products/admin/stats`, `/api/orders/admin/stats`, `/api/users/admin/stats` (gateway match `/api/{svc}/admin/**` đã có). Spring Security setup defer cho future hardening phase. Intent admin-only của D-05 vẫn được đáp ứng. Non-admin call → 403.
 - **D-06:** "Pending orders" = `orderStatus = PENDING` ONLY (không gộp SHIPPING/PAID). Field name `pendingOrders` rõ ràng.
 - **D-07:** Endpoint scope service-level (mỗi service expose `/stats` riêng) — KHÔNG cross-service backend aggregation. FE Promise.allSettled 3 endpoints qua gateway.
 

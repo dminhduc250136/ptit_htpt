@@ -69,7 +69,12 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
   2. User logged-in submit form đổi password ở `/profile/settings` với 3 fields (current/new/confirm) → backend BCrypt verify oldPassword đúng → success toast; sai oldPassword → error `AUTH_INVALID_PASSWORD` hiển thị field-level.
   3. Admin login vào `/admin` thấy 4 KPI cards với số thật (Total products, Total orders, Total users, Pending orders) thay vì 0; Promise.all 3 endpoints `/api/{products,orders,users}/stats` parallel; loading skeleton + error fallback per card.
   4. Playwright E2E suite (existing 12 tests v1.1 features) pass 100% trên fresh `docker compose up` stack — selectors stable, no flaky.
-**Plans:** TBD
+**Plans:** 5 plans
+- [ ] 09-01-PLAN.md — AUTH-06 middleware consolidation (xóa root duplicate, mở matcher 4 routes)
+- [ ] 09-02-PLAN.md — UI-02 backend stats endpoints (3 services /admin/stats + manual JWT role check, D-05 REVISED)
+- [ ] 09-03-PLAN.md — AUTH-07 backend POST /api/users/me/password (BCrypt verify + AUTH_INVALID_PASSWORD)
+- [ ] 09-04-PLAN.md — UI-02 + AUTH-07 frontend (4 KPI cards + retry, password form 3 fields)
+- [ ] 09-05-PLAN.md — TEST-01 Playwright re-baseline (6 specs ~14 tests + global storageState)
 **UI hint:** yes
 
 ### Phase 10: User-Svc Schema Cluster + Profile Editing
@@ -161,7 +166,7 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 9. Residual Closure & Verification | 0/? | Not started | - |
+| 9. Residual Closure & Verification | 0/5 | Planned | - |
 | 10. User-Svc Schema + Profile Editing | 0/? | Not started | - |
 | 11. Address Book + Order Filtering | 0/? | Not started | - |
 | 12. Wishlist | 0/? | Not started | - |
