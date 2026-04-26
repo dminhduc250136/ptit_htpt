@@ -166,24 +166,23 @@ test('A4 — Add product to cart; /cart shows item from localStorage', async ({ 
   // Reset cart
   await page.goto('/products');
   await page.evaluate(() => localStorage.removeItem('cart'));
-  // Visit detail page to verify slug 200 (04-04 backend fix) — page should render product
-  // even though Add-to-Cart button is disabled because backend ProductEntity does not
-  // yet persist stock (seed has stock=0; Phase 5 deferred). We seed the cart directly
-  // to verify the cart page rendering path, matching the A5/B1/B2/B3/B5 pattern.
-  await page.goto('/products/ao-thun-cotton-trang');
+  // Phase 5 Plan 09 update: slug updated to match Phase 3 seed data (V2__seed_dev_data.sql).
+  // Old slug 'ao-thun-cotton-trang' was from mock-data (deleted). New slug: 'ao-thun-cotton-basic' (prod-003).
+  // Stock is seeded as ACTIVE — Add-to-Cart should now work. Cart seed kept as fallback.
+  await page.goto('/products/ao-thun-cotton-basic');
   await page.waitForLoadState('domcontentloaded');
   await page.waitForResponse(
-    (res) => res.url().includes('/api/products/products/slug/ao-thun-cotton-trang') && res.status() === 200,
+    (res) => res.url().includes('/api/products/products') && res.status() === 200,
     { timeout: 10000 },
   ).catch(() => null);
   await page.waitForTimeout(500);
-  const slugRendered = await page.getByText('Ao thun cotton trang').first().isVisible().catch(() => false);
-  // Seed cart directly (since backend stock=0 disables the Add button — Phase 5 fix).
+  const slugRendered = await page.getByText('Áo thun cotton basic').first().isVisible().catch(() => false);
+  // Seed cart directly as fallback (Add-to-Cart may be disabled if stock not wired yet).
   await page.evaluate(() => {
     localStorage.setItem(
       'cart',
       JSON.stringify([
-        { productId: 'f7cacdfb-56a6-4d7d-b0c2-fea4b186db88', name: 'Ao thun cotton trang', thumbnailUrl: '', price: 150000, quantity: 1 },
+        { productId: 'prod-003', name: 'Áo thun cotton basic', thumbnailUrl: '', price: 199000, quantity: 1 },
       ]),
     );
   });
@@ -192,17 +191,17 @@ test('A4 — Add product to cart; /cart shows item from localStorage', async ({ 
   await page.evaluate(() => window.dispatchEvent(new CustomEvent('cart:change')));
   await page.waitForTimeout(500);
   const cartLs = await page.evaluate(() => localStorage.getItem('cart'));
-  const itemNameVisible = await page.getByText('Ao thun cotton trang').first().isVisible().catch(() => false);
+  const itemNameVisible = await page.getByText('Áo thun cotton basic').first().isVisible().catch(() => false);
   const checkoutBtn = page.getByRole('link', { name: /Tiến hành thanh toán/ });
   const ckVisible = await checkoutBtn.isVisible().catch(() => false);
   const screenshot = await shot(page, 'A4');
   record({
     id: 'A4',
-    step: 'Visit /products/[slug] (04-04 fix); seed cart; navigate /cart',
-    expected: 'Slug 200 with rich shape; cart page shows item from localStorage; checkout CTA visible',
+    step: 'Visit /products/[slug] with real seed slug (Phase 5); seed cart; navigate /cart',
+    expected: 'Slug 200 with seeded product data; cart page shows item from localStorage; checkout CTA visible',
     actual: `slugPage rendered=${slugRendered}; localStorage.cart=${cartLs?.slice(0, 80)}; cart UI shows item=${itemNameVisible}; checkout btn=${ckVisible}`,
     pass: slugRendered && itemNameVisible && ckVisible ? 'PASS' : 'FAIL',
-    notes: 'Backend ProductEntity does not yet persist stock (default 0) → /products/[slug] Add-to-Cart button disabled. Phase 5 deferred. Cart seed verifies cart page render path (A5/B1/B2/B3/B5 use the same pattern).',
+    notes: 'Phase 5 Plan 09: slug updated from mock ao-thun-cotton-trang → seed ao-thun-cotton-basic (prod-003, 199000 VND).',
     screenshot,
   });
 });
