@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Real End-User Experience
-status: phase7-context-captured
+status: phase7-ready-to-execute
 last_updated: "2026-04-26T00:00:00.000Z"
-last_activity: "2026-04-26 — Phase 7 context captured. Decisions: gateway per-service admin routes, ProductUpsertRequest extension, admin orders detail page, UserEntity fullName+phone (Flyway V3), admin user PATCH endpoint. Resume: /gsd-plan-phase 7."
+last_activity: "2026-04-26 — Phase 7 planning complete. 6 plans in 2 waves. Wave 1: 07-01 (gateway+search), 07-02 (product Flyway+UpsertRequest), 07-03 (user Flyway+PATCH). Wave 2: 07-04 (FE services+ToastProvider), 07-05 (admin products/orders pages), 07-06 (admin users page). All 4 requirements covered (UI-01..04). Resume: /gsd-execute-phase 7."
 progress:
   total_phases: 4
   completed_phases: 2
