@@ -33,15 +33,35 @@ Dự án thử nghiệm GSD workflow trên codebase e-commerce laptop (Spring Bo
 ✓ **Admin + Search real CRUD** — `/search` keyword + admin/products|orders|users qua gateway (UI-01, UI-03, UI-04) — v1.1
 ✓ **Cart → Order persistence** — ProductEntity.stock persist + OrderItemEntity per-row + shippingAddress/paymentMethod + FE order detail full breakdown (PERSIST-01..03) — v1.1
 
-### Active (v1.2 — TBD)
+### Active (v1.2 — UI/UX Completion)
 
-_Run `/gsd-new-milestone` để define scope. Carry-over candidates từ v1.1 partial gaps:_
-
+**Residual closure (carry-over từ v1.1):**
 - [ ] **AUTH-06 closure** — middleware.ts matcher mở rộng `/account|/profile|/checkout` (currently chỉ `/admin`)
-- [ ] **UI-02 closure** — admin landing dashboard (`app/admin/page.tsx`) rewire sang real services (currently KPI = 0 trên empty mock)
-- [ ] **Nyquist VALIDATION.md** — Phase 6 + Phase 8 (defer được nếu visible-first vẫn priority)
+- [ ] **UI-02 closure** — admin landing dashboard (`app/admin/page.tsx`) rewire sang real services (currently KPI = 0)
+- [ ] **Playwright E2E re-baseline** — update suite cho v1.1 features (auth/admin/order detail)
+
+**Account features:**
+- [ ] **Wishlist / Favorites** — save sản phẩm, trang wishlist, move to cart
+- [ ] **Order history filtering** — filter theo status/date, search trong /profile/orders
+- [ ] **User profile editing** — edit fullName/phone/avatar/password trong /profile/settings
+
+**Discovery features:**
+- [ ] **Product reviews & ratings** — sao + comment trên product detail, average rating
+- [ ] **Advanced search filters** — brand/price range/rating/in-stock filter trên /search và /products
+
+**Checkout:**
+- [ ] **Address book** — save nhiều địa chỉ, chọn từ saved list khi checkout
+
+**Public polish:**
+- [ ] **Homepage redesign** — hero banner, featured products, categories, new arrivals
+- [ ] **Product detail enhancements** — image gallery, specs table, stock badge, breadcrumb
+
+### Deferred (v1.3+)
+
+- [ ] **Nyquist VALIDATION.md** — Phase 6 + Phase 8 + future phases
 - [ ] **Backend hardening carry-over** — D1, D2, D6, D7, D8, D9, D10, D12, D13, D14, D17 (chỉ pick visible)
-- [ ] **Behavioral E2E re-baseline** — Playwright suite update cho v1.1 features (auth/admin/order detail)
+- [ ] **Multi-step checkout** — tách Shipping → Payment → Review (loại khỏi v1.2 scope)
+- [ ] **Recently viewed / Related products** — rule-based recommendations (loại khỏi v1.2 scope)
 
 ### Out of Scope
 
@@ -98,6 +118,19 @@ From codebase analysis, areas worth monitoring:
 - Performance optimization (N+1 queries, caching)
 - Comprehensive test coverage (currently minimal)
 
+## Current Milestone: v1.2 UI/UX Completion
+
+**Goal:** Hoàn thiện trải nghiệm UI/UX end-user — close residual gaps từ v1.1 + thêm 8 visible feature mới (account / discovery / checkout address book / public polish), nâng demo flow từ "real data ở mọi điểm visible" lên "trải nghiệm UX gần production-ready".
+
+**Target features (11 items, 5 nhóm):**
+- *Residual gaps:* AUTH-06 middleware mở rộng, UI-02 admin landing dashboard, Playwright E2E re-baseline
+- *Account:* Wishlist, Order history filtering, User profile editing
+- *Discovery:* Product reviews & ratings, Advanced search filters
+- *Checkout:* Address book
+- *Public polish:* Homepage redesign, Product detail enhancements
+
+**Phase numbering:** tiếp tục từ Phase 9 (KHÔNG reset).
+
 ## Current State
 
 **Last shipped:** v1.1 — Real End-User Experience (2026-04-26)
@@ -114,15 +147,15 @@ Foundation đã có (cumulative v1.0 + v1.1):
 - FE typed HTTP tier + ApiError dispatcher (5 failure branches) + cart stock snapshot/clamp
 - 2 git tags: `v1.0`, `v1.1`
 
-## Next Milestone Goals (v1.2 — TBD)
+## Next Milestone Goals (v1.2 — Active)
 
-Run `/gsd-new-milestone` để define scope. Suggested directions (visible-first priority):
+Đã define qua `/gsd-new-milestone` (2026-04-26). Scope visible-first priority:
 
-- **AUTH-06 + UI-02 closure** — middleware matcher mở rộng + admin landing dashboard rewire (residual gaps từ v1.1)
-- **Visible feature additions** — wishlist? product reviews? order history filtering? advanced search filters? — TBD theo user feedback
-- **Backend hardening (chọn lọc)** — pick từ D1..D17 nếu có visible impact; defer phần invisible
-- **Nyquist VALIDATION.md** — Phase 6 + Phase 8 + future phases (cân nhắc ưu tiên)
-- **Playwright E2E re-baseline** — update suite cho v1.1 features (auth/admin/order detail)
+- **Residual closure** — AUTH-06 middleware mở rộng, UI-02 admin dashboard, Playwright E2E re-baseline
+- **Account features** — Wishlist, Order history filtering, User profile editing
+- **Discovery features** — Product reviews & ratings, Advanced search filters
+- **Checkout** — Address book
+- **Public polish** — Homepage redesign, Product detail enhancements
 
 <details>
 <summary>Previous milestones (shipped)</summary>
@@ -160,4 +193,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-26 — Milestone v1.1 Real End-User Experience SHIPPED (15/19 SATISFIED + 4 PARTIAL deferred v1.2).*
+*Last updated: 2026-04-26 — Milestone v1.2 UI/UX Completion STARTED (11 target features, 5 nhóm; visible-first priority; phase numbering tiếp tục từ Phase 9).*
