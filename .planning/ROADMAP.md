@@ -61,8 +61,11 @@ Plans:
   3. Sau login: token + user lưu localStorage + middleware-readable cookie; user reload page vẫn còn session, không bị kick về `/login`
   4. Logout endpoint invalidate token (blacklist hoặc client-side discard); sau logout user truy cập `/account/*` bị redirect về `/login` đúng
   5. Protected routes (`/account/*`, `/checkout/*`, `/admin/*`) middleware redirect khi không có session; admin role check (`roles` array contains `ADMIN`) gate `/admin/*` đúng
-**Plans**: TBD
-**UI hint**: yes
+**Plans:** 3 plans
+Plans:
+- [ ] 06-01-PLAN.md — Backend auth infra: pom.xml + JWT config + PasswordEncoderConfig + JwtUtils + AuthService + AuthController (AUTH-01, AUTH-02, AUTH-03)
+- [ ] 06-02-PLAN.md — FE types + token/auth services: RegisterRequest/AuthResponse/User type fixes + setUserRole/clearUserRole + auth.ts wiring (AUTH-04, AUTH-05, AUTH-06)
+- [ ] 06-03-PLAN.md — FE pages + middleware + /403: login/register wire real backend, middleware /account/* + admin role check, /403 page (AUTH-03, AUTH-04, AUTH-05, AUTH-06)
 
 ### Phase 7: Search + Admin Real Data
 **Goal**: FE `/search` page và toàn bộ `admin/*` pages migrate khỏi mock sang CRUD thật qua gateway; admin có thể quản lý products/orders/users với data thật từ Postgres.
@@ -101,6 +104,6 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 5. Database Foundation | 0/9 | Planned | — |
-| 6. Real Auth Flow | 0/TBD | Not started | — |
+| 6. Real Auth Flow | 0/3 | Planned | — |
 | 7. Search + Admin Real Data | 0/TBD | Not started | — |
 | 8. Cart → Order Persistence Visible | 0/TBD | Not started | — |
