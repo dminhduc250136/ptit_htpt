@@ -95,18 +95,36 @@
 
 ## Traceability (Phase Mapping)
 
-_Filled by gsd-roadmapper trong Step 10. Synthesizer recommended split: 7 phases (9-15)._
+_Filled by gsd-roadmapper 2026-04-26. Final split: 7 phases (Phase 9-15). 23/23 REQs mapped — no orphans, no duplicates._
 
-| REQ-ID | Phase | Plan |
-|--------|-------|------|
-| AUTH-06, AUTH-07 (TBD), UI-02, TEST-01 | Phase 9 (Residual Closure) | TBD |
-| ACCT-03, ACCT-04, AUTH-07 (TBD) | Phase 10 (User-Svc Schema + Profile) | TBD |
-| ACCT-02, ACCT-05, ACCT-06 | Phase 11 (Address Book + Order Filter) | TBD |
-| ACCT-01 | Phase 12 (Wishlist) | TBD |
-| REV-01, REV-02, REV-03, REV-04 | Phase 13 (Reviews) | TBD |
-| SEARCH-01, SEARCH-02, SEARCH-03, SEARCH-04 | Phase 14 (Search Filters) | TBD |
-| PUB-01, PUB-02, PUB-03, PUB-04, TEST-02 | Phase 15 (Public Polish + Audit) | TBD |
+| REQ-ID | Phase | Status | Plan |
+|--------|-------|--------|------|
+| AUTH-06 | Phase 9 (Residual Closure & Verification) | Pending | TBD |
+| AUTH-07 | Phase 9 (Residual Closure & Verification) | Pending | TBD |
+| UI-02 | Phase 9 (Residual Closure & Verification) | Pending | TBD |
+| TEST-01 | Phase 9 (Residual Closure & Verification) | Pending | TBD |
+| ACCT-03 | Phase 10 (User-Svc Schema + Profile Editing) | Pending | TBD |
+| ACCT-04 | Phase 10 (User-Svc Schema + Profile Editing) | Pending | TBD |
+| ACCT-02 | Phase 11 (Address Book + Order Filtering) | Pending | TBD |
+| ACCT-05 | Phase 11 (Address Book + Order Filtering) | Pending | TBD |
+| ACCT-06 | Phase 11 (Address Book + Order Filtering) | Pending | TBD |
+| ACCT-01 | Phase 12 (Wishlist) | Pending | TBD |
+| REV-01 | Phase 13 (Reviews & Ratings) | Pending | TBD |
+| REV-02 | Phase 13 (Reviews & Ratings) | Pending | TBD |
+| REV-03 | Phase 13 (Reviews & Ratings) | Pending | TBD |
+| REV-04 | Phase 13 (Reviews & Ratings) | Pending | TBD |
+| SEARCH-01 | Phase 14 (Advanced Search Filters) | Pending | TBD |
+| SEARCH-02 | Phase 14 (Advanced Search Filters) | Pending | TBD |
+| SEARCH-03 | Phase 14 (Advanced Search Filters) | Pending | TBD |
+| SEARCH-04 | Phase 14 (Advanced Search Filters) | Pending | TBD |
+| PUB-01 | Phase 15 (Public Polish + Milestone Audit) | Pending | TBD |
+| PUB-02 | Phase 15 (Public Polish + Milestone Audit) | Pending | TBD |
+| PUB-03 | Phase 15 (Public Polish + Milestone Audit) | Pending | TBD |
+| PUB-04 | Phase 15 (Public Polish + Milestone Audit) | Pending | TBD |
+| TEST-02 | Phase 15 (Public Polish + Milestone Audit) | Pending | TBD |
+
+**Coverage check:** 23/23 REQs mapped ✓ · 0 orphans ✓ · 0 duplicates ✓
 
 ---
 
-*Tổng: 23 REQs across 7 categories. Estimated 7 phases (Phase 9-15). Research artifacts: `.planning/research/` (STACK, FEATURES, ARCHITECTURE, PITFALLS, SUMMARY).*
+*Tổng: 23 REQs across 7 categories. Final: 7 phases (Phase 9-15). Research artifacts: `.planning/research/` (STACK, FEATURES, ARCHITECTURE, PITFALLS, SUMMARY). Roadmap: `.planning/ROADMAP.md`.*
