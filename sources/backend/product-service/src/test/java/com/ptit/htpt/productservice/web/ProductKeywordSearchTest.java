@@ -80,15 +80,18 @@ class ProductKeywordSearchTest {
     // Sản phẩm có "laptop" trong tên
     productRepository.saveAndFlush(
         ProductEntity.create("Dell Laptop XPS 13", "dell-laptop-xps-13",
-            category.id(), new BigDecimal("25000000"), "ACTIVE"));
+            category.id(), new BigDecimal("25000000"), "ACTIVE",
+            "Dell", null, null, new BigDecimal("27000000")));
     productRepository.saveAndFlush(
         ProductEntity.create("HP Laptop 15", "hp-laptop-15",
-            category.id(), new BigDecimal("15000000"), "ACTIVE"));
+            category.id(), new BigDecimal("15000000"), "ACTIVE",
+            "HP", null, null, new BigDecimal("16000000")));
 
     // Sản phẩm KHÔNG có "laptop" trong tên
     productRepository.saveAndFlush(
         ProductEntity.create("Apple MacBook Pro", "apple-macbook-pro",
-            category.id(), new BigDecimal("40000000"), "ACTIVE"));
+            category.id(), new BigDecimal("40000000"), "ACTIVE",
+            "Apple", null, null, new BigDecimal("42000000")));
   }
 
   @Test

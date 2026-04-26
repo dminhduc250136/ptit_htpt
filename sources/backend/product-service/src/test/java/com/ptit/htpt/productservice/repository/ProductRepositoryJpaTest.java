@@ -80,7 +80,7 @@ class ProductRepositoryJpaTest {
 
     ProductEntity entity = ProductEntity.create(
         "Sản phẩm test", "san-pham-test-" + System.nanoTime(),
-        "cat-test-1", new BigDecimal("100000.00"), "ACTIVE");
+        "cat-test-1", new BigDecimal("100000.00"), "ACTIVE", null, null, null, null);
     String id = entity.id();
     productRepository.save(entity);
     productRepository.flush();
@@ -89,7 +89,7 @@ class ProductRepositoryJpaTest {
     assertThat(found).isPresent();
     assertThat(found.get().id()).isEqualTo(id);
     assertThat(found.get().name()).isEqualTo("Sản phẩm test");
-    assertThat(found.get().status()).isEqualTo("ACTIVE");
+    assertThat(found.get().status()).isEqualTo("ACTIVE", null, null, null, null);
   }
 
   @Test
@@ -97,7 +97,7 @@ class ProductRepositoryJpaTest {
     insertCategory("cat-test-2", "Test Cat 2", "test-cat-2");
     String slug = "unique-slug-" + System.nanoTime();
     ProductEntity entity = ProductEntity.create("X", slug, "cat-test-2",
-        new BigDecimal("50000"), "ACTIVE");
+        new BigDecimal("50000"), "ACTIVE", null, null, null, null);
     productRepository.save(entity);
     productRepository.flush();
 
@@ -109,9 +109,9 @@ class ProductRepositoryJpaTest {
   void softDelete_filtersFromFindAll() throws Exception {
     insertCategory("cat-test-3", "Test Cat 3", "test-cat-3");
     ProductEntity p1 = ProductEntity.create("P1", "slug-p1-" + System.nanoTime(),
-        "cat-test-3", new BigDecimal("100"), "ACTIVE");
+        "cat-test-3", new BigDecimal("100"), "ACTIVE", null, null, null, null);
     ProductEntity p2 = ProductEntity.create("P2", "slug-p2-" + System.nanoTime(),
-        "cat-test-3", new BigDecimal("200"), "ACTIVE");
+        "cat-test-3", new BigDecimal("200"), "ACTIVE", null, null, null, null);
     productRepository.save(p1);
     productRepository.save(p2);
     productRepository.flush();
@@ -134,7 +134,7 @@ class ProductRepositoryJpaTest {
     insertCategory("cat-test-4", "Test Cat 4", "test-cat-4");
     ProductEntity entity = ProductEntity.create("Mapper test",
         "mapper-test-" + System.nanoTime(), "cat-test-4",
-        new BigDecimal("1234.56"), "ACTIVE");
+        new BigDecimal("1234.56"), "ACTIVE", null, null, null, null);
     productRepository.saveAndFlush(entity);
 
     var dto = ProductMapper.toDto(entity);

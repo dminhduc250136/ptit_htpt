@@ -19,6 +19,20 @@ spring:
               - "*"
             allowCredentials: true
       routes:
+        # user-service auth: /api/users/auth → /auth (must come before /api/users/**)
+        - id: user-service-auth-base
+          uri: http://user-service:8080
+          predicates:
+            - Path=/api/users/auth
+          filters:
+            - RewritePath=/api/users/auth, /auth
+        - id: user-service-auth
+          uri: http://user-service:8080
+          predicates:
+            - Path=/api/users/auth/**
+          filters:
+            - RewritePath=/api/users/auth/(?<seg>.*), /auth/${seg}
+
         # user-service admin: /api/users/admin → /admin/users
         - id: user-service-admin-base
           uri: http://user-service:8080

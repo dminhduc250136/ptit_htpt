@@ -81,8 +81,7 @@ class ProductControllerSlugTest {
         SEED_SLUG + "-" + System.nanoTime(),
         category.id(),
         new BigDecimal("99000"),
-        "ACTIVE"
-    );
+        "ACTIVE", null, null, null, null);
     // Override slug để cố định cho test:
     productRepository.saveAndFlush(reseedSlug(product, category.id()));
   }
@@ -99,7 +98,7 @@ class ProductControllerSlugTest {
         SEED_SLUG,
         categoryId,
         new BigDecimal("99000"),
-        "ACTIVE");
+        "ACTIVE", null, null, null, null);
   }
 
   @Test
