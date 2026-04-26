@@ -1,10 +1,12 @@
 package com.ptit.htpt.userservice.service;
 
-import com.ptit.htpt.userservice.domain.UserAddress;
-import com.ptit.htpt.userservice.domain.UserProfile;
-import com.ptit.htpt.userservice.repository.InMemoryUserRepository;
+import com.ptit.htpt.userservice.domain.UserDto;
+import com.ptit.htpt.userservice.domain.UserEntity;
+import com.ptit.htpt.userservice.domain.UserMapper;
+import com.ptit.htpt.userservice.repository.UserRepository;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -12,124 +14,89 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+/**
+ * Phase 5 / Plan 04: refactor in-memory -> JPA. Schema mới (username/passwordHash/roles)
+ * thay cho UserProfile cũ (fullName/phone/blocked) — phục vụ Phase 6 auth.
+ *
+ * Address logic + block/unblock + listProfiles legacy: REMOVED khỏi user-service
+ * (PATTERNS §scope-cut: UserAddress defer Phase 8; block/unblock không tương thích
+ * model auth-focused — chuyển sang admin disable qua roles="DISABLED" nếu cần).
+ *
+ * Service trả `UserDto` ra controller (boundary tại đây) — entity KHÔNG leak.
+ */
 @Service
+@Transactional
 public class UserCrudService {
-  private final InMemoryUserRepository repository;
+  private final UserRepository userRepo;
 
-  public UserCrudService(InMemoryUserRepository repository) {
-    this.repository = repository;
+  public UserCrudService(UserRepository userRepo) {
+    this.userRepo = userRepo;
   }
 
-  public Map<String, Object> listProfiles(int page, int size, String sort, boolean includeDeleted) {
-    List<UserProfile> all = repository.findAllProfiles().stream()
-        .filter(profile -> includeDeleted || !profile.deleted())
-        .sorted(profileComparator(sort))
+  @Transactional(readOnly = true)
+  public Map<String, Object> listUsers(int page, int size, String sort) {
+    List<UserEntity> all = userRepo.findAll().stream()
+        .sorted(userComparator(sort))
         .toList();
-    return paginate(all, page, size);
+    return paginate(all.stream().map(UserMapper::toDto).toList(), page, size);
   }
 
-  public UserProfile getProfile(String id, boolean includeDeleted) {
-    UserProfile profile = repository.findProfileById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User profile not found"));
-    if (!includeDeleted && profile.deleted()) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User profile not found");
+  @Transactional(readOnly = true)
+  public UserDto getUser(String id) {
+    return UserMapper.toDto(loadUser(id));
+  }
+
+  public UserDto createUser(UserUpsertRequest request) {
+    if (userRepo.findByUsername(request.username()).isPresent()) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already exists");
     }
-    return profile;
-  }
-
-  public UserProfile createProfile(ProfileUpsertRequest request) {
-    UserProfile profile = UserProfile.create(request.email(), request.fullName(), request.phone());
-    return repository.saveProfile(profile);
-  }
-
-  public UserProfile updateProfile(String id, ProfileUpsertRequest request) {
-    UserProfile current = getProfile(id, true);
-    UserProfile updated = current.update(request.email(), request.fullName(), request.phone());
-    return repository.saveProfile(updated);
-  }
-
-  public void deleteProfile(String id) {
-    UserProfile current = getProfile(id, true);
-    repository.saveProfile(current.softDelete());
-  }
-
-  public UserProfile blockProfile(String id) {
-    UserProfile current = getProfile(id, true);
-    return repository.saveProfile(current.setBlocked(true));
-  }
-
-  public UserProfile unblockProfile(String id) {
-    UserProfile current = getProfile(id, true);
-    return repository.saveProfile(current.setBlocked(false));
-  }
-
-  public Map<String, Object> listAddresses(String userId, int page, int size, String sort, boolean includeDeleted) {
-    List<UserAddress> all = repository.findAllAddresses().stream()
-        .filter(address -> userId == null || userId.isBlank() || userId.equals(address.userId()))
-        .filter(address -> includeDeleted || !address.deleted())
-        .sorted(addressComparator(sort))
-        .toList();
-    return paginate(all, page, size);
-  }
-
-  public UserAddress getAddress(String id, boolean includeDeleted) {
-    UserAddress address = repository.findAddressById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User address not found"));
-    if (!includeDeleted && address.deleted()) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "User address not found");
+    if (userRepo.findByEmail(request.email()).isPresent()) {
+      throw new ResponseStatusException(HttpStatus.CONFLICT, "Email already exists");
     }
-    return address;
-  }
-
-  public UserAddress createAddress(AddressUpsertRequest request) {
-    UserAddress address = UserAddress.create(
-        request.userId(),
-        request.label(),
-        request.addressLine(),
-        request.city(),
-        request.defaultAddress()
+    UserEntity entity = UserEntity.create(
+        request.username(),
+        request.email(),
+        // Plain text accepted at this layer; Phase 6 auth-service sẽ wrap với BCryptPasswordEncoder.
+        // Plan 04 scope: chỉ persistence; admin tạo user qua admin tool có hash sẵn,
+        // hoặc Phase 6 register endpoint sẽ hash trước khi gọi service này.
+        request.passwordHash(),
+        request.roles() == null || request.roles().isBlank() ? "USER" : request.roles()
     );
-    return repository.saveAddress(address);
+    return UserMapper.toDto(userRepo.save(entity));
   }
 
-  public UserAddress updateAddress(String id, AddressUpsertRequest request) {
-    UserAddress current = getAddress(id, true);
-    UserAddress updated = current.update(
-        request.userId(),
-        request.label(),
-        request.addressLine(),
-        request.city(),
-        request.defaultAddress()
-    );
-    return repository.saveAddress(updated);
+  public UserDto updateUser(String id, UserUpsertRequest request) {
+    UserEntity current = loadUser(id);
+    current.update(request.username(), request.email(),
+        request.roles() == null || request.roles().isBlank() ? current.roles() : request.roles());
+    if (request.passwordHash() != null && !request.passwordHash().isBlank()) {
+      current.changePasswordHash(request.passwordHash());
+    }
+    return UserMapper.toDto(userRepo.save(current));
   }
 
-  public void deleteAddress(String id) {
-    UserAddress current = getAddress(id, true);
-    repository.saveAddress(current.softDelete());
+  public void deleteUser(String id) {
+    UserEntity current = loadUser(id);
+    current.softDelete();
+    userRepo.save(current);
   }
 
-  private Comparator<UserProfile> profileComparator(String sort) {
+  private UserEntity loadUser(String id) {
+    return userRepo.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+  }
+
+  private Comparator<UserEntity> userComparator(String sort) {
     if (sort == null || sort.isBlank()) {
-      return Comparator.comparing(UserProfile::updatedAt).reversed();
+      return Comparator.comparing(UserEntity::updatedAt).reversed();
     }
     boolean desc = sort.endsWith(",desc");
-    Comparator<UserProfile> comparator = sort.startsWith("fullName")
-        ? Comparator.comparing(UserProfile::fullName, String.CASE_INSENSITIVE_ORDER)
-        : Comparator.comparing(UserProfile::id);
-    return desc ? comparator.reversed() : comparator;
-  }
-
-  private Comparator<UserAddress> addressComparator(String sort) {
-    if (sort == null || sort.isBlank()) {
-      return Comparator.comparing(UserAddress::updatedAt).reversed();
-    }
-    boolean desc = sort.endsWith(",desc");
-    Comparator<UserAddress> comparator = sort.startsWith("city")
-        ? Comparator.comparing(UserAddress::city, String.CASE_INSENSITIVE_ORDER)
-        : Comparator.comparing(UserAddress::id);
+    Comparator<UserEntity> comparator = sort.startsWith("username")
+        ? Comparator.comparing(UserEntity::username, String.CASE_INSENSITIVE_ORDER)
+        : Comparator.comparing(UserEntity::id);
     return desc ? comparator.reversed() : comparator;
   }
 
@@ -153,13 +120,10 @@ public class UserCrudService {
     return result;
   }
 
-  public record ProfileUpsertRequest(@Email @NotBlank String email, @NotBlank String fullName, @NotBlank String phone) {}
-
-  public record AddressUpsertRequest(
-      @NotBlank String userId,
-      @NotBlank String label,
-      @NotBlank String addressLine,
-      @NotBlank String city,
-      boolean defaultAddress
+  public record UserUpsertRequest(
+      @NotBlank @Size(max = 80) String username,
+      @Email @NotBlank @Size(max = 200) String email,
+      @NotBlank @Size(max = 120) String passwordHash,
+      String roles
   ) {}
 }
