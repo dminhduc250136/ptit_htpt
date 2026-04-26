@@ -6,11 +6,14 @@ import styles from './page.module.css';
 import Button from '@/components/ui/Button/Button';
 import Input from '@/components/ui/Input/Input';
 import Badge from '@/components/ui/Badge/Badge';
-import { mockProducts } from '@/mock-data/products';
 import { formatPrice } from '@/services/api';
+import type { Product } from '@/types';
+
+// TODO Phase 7 (UI-02): wire to listProducts(admin scope) qua gateway
+const _stubProducts: Product[] = [];
 
 export default function AdminProductsPage() {
-  const [products, setProducts] = useState(mockProducts);
+  const [products, setProducts] = useState(_stubProducts);
   const [showAddModal, setShowAddModal] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [search, setSearch] = useState('');

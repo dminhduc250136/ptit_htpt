@@ -1,8 +1,11 @@
 import styles from './page.module.css';
-import { mockOrders } from '@/mock-data/orders';
-import { mockProducts } from '@/mock-data/products';
-import { mockUsers } from '@/mock-data/orders';
 import { formatPrice } from '@/services/api';
+import type { Order, Product, User } from '@/types';
+
+// TODO Phase 7 (UI-02): wire stats to listOrders(admin scope) + listProducts(admin scope) + listUsers qua gateway
+const mockOrders: Order[] = [];
+const mockProducts: Product[] = [];
+const mockUsers: User[] = [];
 
 export default function AdminDashboard() {
   const totalRevenue = mockOrders.reduce((s, o) => s + o.totalAmount, 0);
@@ -37,21 +40,27 @@ export default function AdminDashboard() {
         {/* Recent Orders */}
         <div className={styles.card}>
           <h3 className={styles.cardTitle}>Đơn hàng gần đây</h3>
-          <table className={styles.table}>
-            <thead>
-              <tr><th>Mã đơn</th><th>Trạng thái</th><th>Tổng tiền</th><th>Ngày</th></tr>
-            </thead>
-            <tbody>
-              {mockOrders.slice(0, 5).map(o => (
-                <tr key={o.id}>
-                  <td className={styles.tdBold}>{o.orderCode}</td>
-                  <td><span className={`${styles.statusBadge} ${styles['status_' + o.orderStatus]}`}>{o.orderStatus}</span></td>
-                  <td>{formatPrice(o.totalAmount)}</td>
-                  <td className={styles.tdMuted}>{new Date(o.createdAt).toLocaleDateString('vi-VN')}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {mockOrders.length === 0 ? (
+            <p style={{ color: 'var(--on-surface-variant)', padding: 'var(--space-4)' }}>
+              Chưa có dữ liệu — Phase 7 UI-02 sẽ wire API thật.
+            </p>
+          ) : (
+            <table className={styles.table}>
+              <thead>
+                <tr><th>Mã đơn</th><th>Trạng thái</th><th>Tổng tiền</th><th>Ngày</th></tr>
+              </thead>
+              <tbody>
+                {mockOrders.slice(0, 5).map(o => (
+                  <tr key={o.id}>
+                    <td className={styles.tdBold}>{o.orderCode}</td>
+                    <td><span className={`${styles.statusBadge} ${styles['status_' + o.orderStatus]}`}>{o.orderStatus}</span></td>
+                    <td>{formatPrice(o.totalAmount)}</td>
+                    <td className={styles.tdMuted}>{new Date(o.createdAt).toLocaleDateString('vi-VN')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
 
         {/* Quick Stats */}

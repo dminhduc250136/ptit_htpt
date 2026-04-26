@@ -4,16 +4,19 @@ import React, { useState } from 'react';
 import styles from '../products/page.module.css';
 import Button from '@/components/ui/Button/Button';
 import Badge from '@/components/ui/Badge/Badge';
-import { mockOrders, mockUsers } from '@/mock-data/orders';
 import { formatPrice } from '@/services/api';
-import type { Order } from '@/types';
+import type { Order, User } from '@/types';
+
+// TODO Phase 7 (UI-03): wire to listOrders(admin scope) qua gateway + listUsers for name lookup
+const _stubOrders: Order[] = [];
+const _stubUsers: User[] = [];
 
 const statusOptions = ['PENDING', 'CONFIRMED', 'SHIPPING', 'DELIVERED', 'CANCELLED'] as const;
 const statusLabels: Record<string, string> = { PENDING: 'Chờ xác nhận', CONFIRMED: 'Đã xác nhận', SHIPPING: 'Đang giao', DELIVERED: 'Đã giao', CANCELLED: 'Đã hủy' };
 const statusVariants: Record<string, 'default' | 'new' | 'hot' | 'sale' | 'out-of-stock'> = { PENDING: 'default', CONFIRMED: 'new', SHIPPING: 'hot', DELIVERED: 'sale', CANCELLED: 'out-of-stock' };
 
 export default function AdminOrdersPage() {
-  const [orders, setOrders] = useState(mockOrders);
+  const [orders, setOrders] = useState(_stubOrders);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [newStatus, setNewStatus] = useState('');
 
@@ -24,7 +27,7 @@ export default function AdminOrdersPage() {
     }
   };
 
-  const getUserName = (userId: string) => mockUsers.find(u => u.id === userId)?.fullName || userId;
+  const getUserName = (userId: string) => _stubUsers.find(u => u.id === userId)?.fullName || userId;
 
   return (
     <div className={styles.page}>
