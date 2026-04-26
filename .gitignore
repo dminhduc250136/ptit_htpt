@@ -37,6 +37,7 @@ build/
 
 # Java/Spring Boot (Backend)
 target/
+.mvn-cache/
 *.class
 *.jar
 *.war

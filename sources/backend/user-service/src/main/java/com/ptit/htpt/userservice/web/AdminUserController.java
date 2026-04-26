@@ -2,7 +2,7 @@ package com.ptit.htpt.userservice.web;
 
 import com.ptit.htpt.userservice.api.ApiResponse;
 import com.ptit.htpt.userservice.service.UserCrudService;
-import com.ptit.htpt.userservice.service.UserCrudService.ProfileUpsertRequest;
+import com.ptit.htpt.userservice.service.UserCrudService.UserUpsertRequest;
 import jakarta.validation.Valid;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -30,41 +30,30 @@ public class AdminUserController {
   public ApiResponse<Map<String, Object>> listUsers(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
-      @RequestParam(defaultValue = "updatedAt,desc") String sort,
-      @RequestParam(defaultValue = "true") boolean includeDeleted
+      @RequestParam(defaultValue = "updatedAt,desc") String sort
   ) {
-    return ApiResponse.of(200, "Admin users listed", userCrudService.listProfiles(page, size, sort, includeDeleted));
+    return ApiResponse.of(200, "Admin users listed", userCrudService.listUsers(page, size, sort));
   }
 
   @GetMapping("/{id}")
   public ApiResponse<Object> getUser(@PathVariable String id) {
-    return ApiResponse.of(200, "Admin user loaded", userCrudService.getProfile(id, true));
+    return ApiResponse.of(200, "Admin user loaded", userCrudService.getUser(id));
   }
 
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
-  public ApiResponse<Object> createUser(@Valid @RequestBody ProfileUpsertRequest request) {
-    return ApiResponse.of(201, "Admin user created", userCrudService.createProfile(request));
+  public ApiResponse<Object> createUser(@Valid @RequestBody UserUpsertRequest request) {
+    return ApiResponse.of(201, "Admin user created", userCrudService.createUser(request));
   }
 
   @PutMapping("/{id}")
-  public ApiResponse<Object> updateUser(@PathVariable String id, @Valid @RequestBody ProfileUpsertRequest request) {
-    return ApiResponse.of(200, "Admin user updated", userCrudService.updateProfile(id, request));
+  public ApiResponse<Object> updateUser(@PathVariable String id, @Valid @RequestBody UserUpsertRequest request) {
+    return ApiResponse.of(200, "Admin user updated", userCrudService.updateUser(id, request));
   }
 
   @DeleteMapping("/{id}")
   public ApiResponse<Map<String, Object>> deleteUser(@PathVariable String id) {
-    userCrudService.deleteProfile(id);
+    userCrudService.deleteUser(id);
     return ApiResponse.of(200, "Admin user soft deleted", Map.of("id", id, "deleted", true));
-  }
-
-  @PostMapping("/{id}/block")
-  public ApiResponse<Object> blockUser(@PathVariable String id) {
-    return ApiResponse.of(200, "Admin user blocked", userCrudService.blockProfile(id));
-  }
-
-  @PostMapping("/{id}/unblock")
-  public ApiResponse<Object> unblockUser(@PathVariable String id) {
-    return ApiResponse.of(200, "Admin user unblocked", userCrudService.unblockProfile(id));
   }
 }
