@@ -13,9 +13,30 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.junit.jupiter.Testcontainers;
 
+@Testcontainers
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class OrderControllerCreateOrderCommandTest {
+
+  @Container
+  static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
+      .withDatabaseName("tmdt")
+      .withUsername("tmdt")
+      .withPassword("tmdt")
+      .withInitScript("test-init/01-schemas.sql");
+
+  @DynamicPropertySource
+  static void datasourceProps(DynamicPropertyRegistry registry) {
+    registry.add("spring.datasource.url",
+        () -> postgres.getJdbcUrl() + "?currentSchema=order_svc");
+    registry.add("spring.datasource.username", postgres::getUsername);
+    registry.add("spring.datasource.password", postgres::getPassword);
+  }
 
   @LocalServerPort
   private int port;
@@ -61,8 +82,7 @@ class OrderControllerCreateOrderCommandTest {
     assertThat(body).contains("\"data\":");
     assertThat(body).contains("\"userId\":\"user-uat-1\"");
     assertThat(body).contains("\"status\":\"PENDING\"");
-    // totalAmount = 2 * 99000 = 198000 (relaxed substring assertion to avoid Jackson BigDecimal
-    // serialization variants like 198000.0 / "198000")
+    // total = 2 * 99000 = 198000
     assertThat(body).contains("198000");
   }
 
@@ -99,6 +119,6 @@ class OrderControllerCreateOrderCommandTest {
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     String body = response.getBody();
     assertThat(body).contains("\"code\":\"VALIDATION_ERROR\"");
-    assertThat(body).contains("\"items\"");   // fieldErrors entry references items
+    assertThat(body).contains("\"items\"");
   }
 }
