@@ -94,7 +94,7 @@ export default function CheckoutPage() {
         note: form.note || undefined,
       }, user?.id);                     // Phase 4-06: userId → X-User-Id header (Phase 5: JWT-claim derivation)
       clearCart();
-      router.push('/account/orders/' + order.id);
+      router.push('/profile/orders/' + order.id);
     } catch (err) {
       if (!isApiError(err)) {
         // Network / unexpected — D-10 toast. No auto-retry.
