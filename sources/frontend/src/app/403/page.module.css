@@ -1,0 +1,41 @@
+/* /403 Forbidden Page
+ * Per UI-SPEC: centered vertically + horizontally, full viewport height.
+ * Max-width 440px. Background --surface (không dùng gradient).
+ * Không có header/footer navigation.
+ */
+
+.page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--surface);
+  padding: var(--space-4);   /* 24px */
+}
+
+.container {
+  max-width: 440px;
+  width: 100%;
+  text-align: center;
+}
+
+.title {
+  font-size: var(--text-headline-md);   /* 28px */
+  font-weight: var(--weight-bold);      /* 700 */
+  line-height: var(--leading-tight);    /* 1.2 */
+  color: var(--on-surface);
+}
+
+.body {
+  font-size: var(--text-body-lg);       /* 16px */
+  font-weight: var(--weight-regular);   /* 400 */
+  line-height: var(--leading-relaxed);  /* 1.6 */
+  color: var(--on-surface-variant);
+  margin-top: var(--space-3);           /* 16px */
+}
+
+.link {
+  display: block;
+  margin-top: var(--space-5);           /* 32px */
+  text-decoration: none;
+}
