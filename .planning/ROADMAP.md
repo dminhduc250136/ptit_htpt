@@ -74,10 +74,16 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. User nhập keyword vào `/search` → FE call `listProducts({keyword, page, size})` qua gateway → render kết quả thật từ DB; empty state hiện "Không tìm thấy sản phẩm cho '{keyword}'", loading state hiện skeleton
   2. Admin login → vào `admin/products` → list từ backend; create/edit/delete product qua form/dialog → success toast → list refresh; gỡ hoàn toàn mock data
-  3. Admin vào `admin/orders` → list orders thật; click row mở detail page show full order với line items + status; admin update status (`PENDING → SHIPPED → DELIVERED`) persist trong DB
-  4. Admin vào `admin/users` → list users thật; admin xem detail + soft-delete user qua existing CRUD endpoints, list refresh đúng sau action
-**Plans**: TBD
-**UI hint**: yes
+  3. Admin vào `admin/orders` → list orders thật; click row mở detail page show full order với line items + status; admin update status (`PENDING → SHIPPING → DELIVERED`) persist trong DB
+  4. Admin vào `admin/users` → list users thật; admin edit fullName/phone/roles + soft-delete user (CUSTOMER only), list refresh đúng sau action
+**Plans:** 6 plans
+Plans:
+- [ ] 07-01-PLAN.md — Gateway admin routes (D-01, 6 routes mới) + Backend keyword search fix (D-02) (UI-01, UI-02, UI-03, UI-04)
+- [ ] 07-02-PLAN.md — Product-service Flyway V2 migration + ProductEntity extension + ProductUpsertRequest (D-03) (UI-02)
+- [ ] 07-03-PLAN.md — User-service Flyway V2 migration + UserEntity chain + PATCH /admin/users/{id} (D-04, D-05) (UI-04)
+- [ ] 07-04-PLAN.md — FE admin services (products.ts, orders.ts, users.ts new) + ToastProvider in admin layout (UI-01, UI-02, UI-03, UI-04)
+- [ ] 07-05-PLAN.md — Admin Products page wire + modal add/edit (D-06, D-07) + Admin Orders list + detail page (D-08) (UI-02, UI-03)
+- [ ] 07-06-PLAN.md — Admin Users page wire + column adapt (D-09) + UserEditModal PATCH (D-10) (UI-04)
 
 ### Phase 8: Cart → Order Persistence Visible
 **Goal**: ProductEntity.stock persist trong DB (gỡ "cart-seed via localStorage"); OrderEntity persist per-item OrderItem rows + shippingAddress + paymentMethod; FE order confirmation + order detail render full breakdown thật từ backend payload.
@@ -105,5 +111,5 @@ Plans:
 |-------|----------------|--------|-----------|
 | 5. Database Foundation | 9/9 | ✅ Complete | 2026-04-26 |
 | 6. Real Auth Flow | 3/3 | ✅ Complete | 2026-04-26 |
-| 7. Search + Admin Real Data | 0/TBD | Not started | — |
+| 7. Search + Admin Real Data | 0/6 | In Progress | — |
 | 8. Cart → Order Persistence Visible | 0/TBD | Not started | — |
