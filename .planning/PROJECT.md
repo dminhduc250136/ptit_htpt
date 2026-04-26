@@ -1,17 +1,17 @@
-# PTIT HTPT E-Commerce Platform — Project Charter
+# tmdt-use-gsd — Project Charter
 
 ## What This Is
 
-A laptop e-commerce platform built with Spring Boot microservices and Next.js frontend. Demonstrates distributed architecture patterns for university assignment, supporting complete shopping flow from product browsing through checkout and payment.
+Dự án thử nghiệm GSD workflow trên codebase e-commerce laptop (Spring Boot microservices + Next.js). Mục đích: stress-test multi-milestone / multi-phase / audit-verify loop của GSD trên một hệ thống e-commerce realistic — codebase là vehicle để demo workflow, không phải production product.
 
-**Core Value:** Enable students to understand and implement modern microservices architecture in a realistic e-commerce context.
+**Core Value:** Demo end-to-end shopping experience hoạt động với real data ở mọi điểm user nhìn thấy, đồng thời rèn quy trình GSD từ planning → execute → verify → archive.
 
 ## Context
 
 - **Domain:** E-commerce (B2C — individual consumers)
-- **Stage:** Early/MVP — core features needed
-- **Key Users:** Laptop buyers browsing, comparing, ordering online
-- **Tech Stack:** Spring Boot (microservices), Next.js (frontend), Docker, PostgreSQL
+- **Stage:** Post-v1.0 MVP — đã có shopping flow stub-verified end-to-end, đang nâng dần lên real-data
+- **Key Users:** Laptop buyers (browse → cart → checkout → payment) + Admin (CRUD catalog/orders)
+- **Tech Stack:** Spring Boot (microservices), Next.js (frontend), Docker Compose, PostgreSQL
 - **Existing Codebase:** 7 microservices, frontend app, complete docker-compose setup
 
 ## Requirements
@@ -28,32 +28,31 @@ A laptop e-commerce platform built with Spring Boot microservices and Next.js fr
 ✓ **Frontend App** — Existing. Next.js UI with product pages, checkout, admin panels  
 ✓ **CRUD Completeness Baseline** — Completed in Phase 02 across User/Product/Order/Payment/Inventory/Notification services
 
-### Active
+### Active (v1.1 — Real End-User Experience)
 
-- [ ] Full end-to-end shopping flow validation (browse → add to cart → checkout → payment → order confirmation)
-- [ ] Proper error handling and validation across all services
-- [ ] Inter-service communication patterns (synchronous/asynchronous)
-- [ ] Database schema consistency and migrations
-- [ ] Frontend-backend API contract alignment
-- [ ] Docker deployment and orchestration
-- [ ] Unit and integration test coverage
-- [ ] API documentation (Swagger/OpenAPI)
-- [ ] Input validation and security (SQL injection, XSS prevention)
+- [ ] **DB-01..06**: Database Foundation — Postgres trong docker-compose + JPA cho 5 services + Flyway baseline + seed từ FE mocks + E2E connectivity verify (audit phát hiện v1.0 chạy in-memory, không có DB layer)
+- [ ] **AUTH-01..06**: Real auth flow (backend `/api/users/auth/{login,register,logout}` + JWT + FE form thật call backend + session persist sau reload)
+- [ ] **UI-01..04**: `/search` rewire + admin/products + admin/orders + admin/users migrate khỏi mock → CRUD thật qua gateway
+- [ ] **PERSIST-01**: ProductEntity.stock persisted (A4 add-to-cart respect stock thật, hết "cart-seed via localStorage")
+- [ ] **PERSIST-02**: OrderEntity persist per-item OrderItem rows + shippingAddress + paymentMethod
+- [ ] **PERSIST-03**: FE order confirmation + order detail render full breakdown thật từ backend payload
 
 ### Out of Scope
 
-- Real payment gateway integration (mock is sufficient for assignment) — focus is on architecture, not commerce
-- Advanced features (recommendations, analytics, AI) — keep scope focused on core patterns
-- Production-grade infrastructure (load balancing, failover) — MVP sufficient
+- Real payment gateway integration (mock đủ cho dự án thử nghiệm) — focus là architecture pattern, không phải commerce thật
+- Advanced features (recommendations, analytics, AI) — giữ scope tập trung core patterns
+- Production-grade infrastructure (load balancing, failover) — MVP đủ
 - Mobile app — web-only MVP
-- Real-time features (WebSockets, live notifications) — polling/events sufficient
+- Real-time features (WebSockets, live notifications) — polling/events đủ
+- Backend hardening invisible to end-user (CSP, server-side price re-fetch, gateway JWT claim verification, observability/tracing) — defer cho đến khi visible features đủ
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Microservices over monolith | Demonstrates distributed patterns for assignment | Chosen |
-| Spring Boot + Java | Industry standard, matches assignment requirements | Locked |
+| Microservices over monolith | Demo được distributed pattern cho mục đích thử nghiệm GSD trên hệ thống realistic | Chosen |
+| Spring Boot + Java | Industry standard, codebase đã có sẵn | Locked |
+| **v1.1 visible-first priority** | Dự án thử nghiệm — ưu tiên cái user nhìn thấy, defer backend hardening invisible | Locked v1.1 |
 | Next.js for frontend | Modern React, SSR capability, good developer experience | Locked |
 | PostgreSQL | Relational data model fits e-commerce well | Locked |
 | Docker/Compose for local dev | Replicates production patterns locally | Locked |
@@ -74,15 +73,15 @@ A laptop e-commerce platform built with Spring Boot microservices and Next.js fr
 ## Constraints & Assumptions
 
 **Constraints:**
-- University assignment timeline (weeks, not months)
-- Team is students learning the pattern (not production ops experience)
-- Local development environment (Docker Compose, not K8s)
+- Dự án thử nghiệm GSD — KHÔNG cần production-grade hardening
+- Ưu tiên features end-user nhìn thấy; defer backend hardening / security / observability nếu invisible
+- Local development environment (Docker Compose, không K8s)
 
 **Assumptions:**
-- Existing codebase has proper project structure
-- Database migrations are handled
-- Frontend/backend communication is REST-based
-- No external API integrations needed (mock data sufficient)
+- Existing codebase có project structure đúng
+- Database migrations handled
+- Frontend/backend communication REST-based
+- Mock data acceptable cho external integrations (payment gateway giả lập)
 
 ## Backlog Observations
 
@@ -106,15 +105,17 @@ Foundation đã có:
 - Validation & error handling hardened (gateway pass-through + common-code taxonomy)
 - FE typed HTTP tier + ApiError dispatcher (5 failure branches) + middleware route protection
 
-## Next Milestone Goals
+## Current Milestone: v1.1 Real End-User Experience
 
-Carry-over từ v1.0 đã được phân loại thành 4 cluster (xem `.planning/milestones/v1.0-REQUIREMENTS.md` §Future):
-- **Auth thật:** Backend `/auth/{login,register,logout}` + JWT enforcement
-- **Backend persistence + service integration:** ProductEntity.stock, OrderItem rows, inventory.reserve, payment-service vào checkout chain
-- **Security hardening:** JWT claim verification ở gateway, server-side price re-fetch, CSP
-- **Cleanup + Observability:** FE `/search`, `admin/*` migrate, sibling-service handleFallback rollout, integration test suite, centralized tracing
+**Goal:** Biến demo flow từ "stub-verified" thành "real visible end-to-end" — mọi thứ user click trên UI phải hoạt động với real data thay vì mock/seeded.
 
-Định hình milestone tiếp theo qua `/gsd-new-milestone`.
+**Target features (visible-first):**
+- **C0. Database Foundation** ⚠ — Postgres + JPA + Flyway + seed từ FE mocks. Audit phát hiện v1.0 không có DB layer (in-memory only). C0 block C1/C2/C3.
+- **C1. Auth flow thật** — Backend `/api/users/auth/{login,register,logout}` + JWT issuance + FE login/register/logout call backend, session persist sau reload
+- **C2. Admin + Search real data** — `/search` page rewire `listProducts({keyword})` real; `admin/*` pages migrate khỏi mock → CRUD thật qua gateway
+- **C3. Cart → Order persistence visible** — ProductEntity.stock persist (hết "cart-seed via localStorage"); OrderEntity persist per-item rows + shippingAddress + paymentMethod (order detail page show full breakdown đúng)
+
+**Deferred sang v1.2** (invisible to end-user, xem `.planning/v1.0-MILESTONE-AUDIT.md` D1/D2/D6/D7/D8/D9/D10/D12/D13/D14/D17): inventory.reserve real, payment-service vào checkout chain, CSP, server-side price re-fetch, gateway JWT claim verification, observability/tracing (OBS-01), integration test suite (TEST-01), sibling handleFallback rollout, code review WR/IN carry-over, FE legacy types cleanup.
 
 <details>
 <summary>Previous milestone target features (v1.0 — shipped)</summary>
@@ -143,4 +144,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-25 — Milestone v1.0 MVP Stabilization SHIPPED (4 phases, 14 plans, 57 commits, Playwright 12/12 PASS)*
+*Last updated: 2026-04-25 — Milestone v1.1 Real End-User Experience STARTED (visible-first scope: Auth real + Admin/Search real data + Cart→Order persistence visible).*

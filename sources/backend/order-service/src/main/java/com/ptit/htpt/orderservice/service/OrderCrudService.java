@@ -1,8 +1,11 @@
 package com.ptit.htpt.orderservice.service;
 
 import com.ptit.htpt.orderservice.domain.CartEntity;
+import com.ptit.htpt.orderservice.domain.OrderDto;
 import com.ptit.htpt.orderservice.domain.OrderEntity;
-import com.ptit.htpt.orderservice.repository.InMemoryOrderRepository;
+import com.ptit.htpt.orderservice.domain.OrderMapper;
+import com.ptit.htpt.orderservice.repository.InMemoryCartRepository;
+import com.ptit.htpt.orderservice.repository.OrderRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
@@ -21,14 +24,16 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class OrderCrudService {
-  private final InMemoryOrderRepository repository;
+  private final InMemoryCartRepository cartRepository;
+  private final OrderRepository orderRepository;
 
-  public OrderCrudService(InMemoryOrderRepository repository) {
-    this.repository = repository;
+  public OrderCrudService(InMemoryCartRepository cartRepository, OrderRepository orderRepository) {
+    this.cartRepository = cartRepository;
+    this.orderRepository = orderRepository;
   }
 
   public Map<String, Object> listCarts(int page, int size, String sort, boolean includeDeleted) {
-    List<CartEntity> all = repository.findAllCarts().stream()
+    List<CartEntity> all = cartRepository.findAllCarts().stream()
         .filter(cart -> includeDeleted || !cart.deleted())
         .sorted(cartComparator(sort))
         .toList();
@@ -36,7 +41,7 @@ public class OrderCrudService {
   }
 
   public CartEntity getCart(String id, boolean includeDeleted) {
-    CartEntity cart = repository.findCartById(id)
+    CartEntity cart = cartRepository.findCartById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart item not found"));
     if (!includeDeleted && cart.deleted()) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart item not found");
@@ -46,49 +51,47 @@ public class OrderCrudService {
 
   public CartEntity createCart(CartUpsertRequest request) {
     CartEntity cart = CartEntity.create(request.userId(), request.productId(), request.quantity(), request.status());
-    return repository.saveCart(cart);
+    return cartRepository.saveCart(cart);
   }
 
   public CartEntity updateCart(String id, CartUpsertRequest request) {
     CartEntity current = getCart(id, true);
     CartEntity updated = current.update(request.userId(), request.productId(), request.quantity(), request.status());
-    return repository.saveCart(updated);
+    return cartRepository.saveCart(updated);
   }
 
   public void deleteCart(String id) {
     CartEntity current = getCart(id, true);
-    repository.saveCart(current.softDelete());
+    cartRepository.saveCart(current.softDelete());
   }
 
   public Map<String, Object> listOrders(int page, int size, String sort, boolean includeDeleted) {
-    List<OrderEntity> all = repository.findAllOrders().stream()
-        .filter(order -> includeDeleted || !order.deleted())
+    // @SQLRestriction filters deleted=false at JPA layer; includeDeleted=true cần native query.
+    // Phase 5: nếu includeDeleted=true vẫn chỉ trả non-deleted (admin endpoints có thể dùng
+    // native query Phase 8). Behavior này document trong SUMMARY.
+    List<OrderEntity> all = orderRepository.findAll().stream()
         .sorted(orderComparator(sort))
         .toList();
-    return paginate(all, page, size);
+    return paginate(all.stream().map(OrderMapper::toDto).toList(), page, size);
   }
 
-  public OrderEntity getOrder(String id, boolean includeDeleted) {
-    OrderEntity order = repository.findOrderById(id)
+  public OrderDto getOrder(String id, boolean includeDeleted) {
+    OrderEntity order = orderRepository.findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
-    if (!includeDeleted && order.deleted()) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found");
-    }
-    return order;
+    return OrderMapper.toDto(order);
   }
 
-  public OrderEntity createOrder(OrderUpsertRequest request) {
+  public OrderDto createOrder(OrderUpsertRequest request) {
     OrderEntity order = OrderEntity.create(request.userId(), request.totalAmount(), request.status(), request.note());
-    return repository.saveOrder(order);
+    return OrderMapper.toDto(orderRepository.save(order));
   }
 
   /**
    * Domain entry point for the FE checkout flow. Derives totalAmount from items, defaults status
-   * to PENDING, persists via the existing OrderEntity factory. The userId is supplied by the
-   * controller after reading the X-User-Id session header — the service treats it as already
-   * trusted (Phase 5: replace header trust with JWT claim verification at the gateway).
+   * to PENDING, persists via OrderEntity factory. userId supplied by controller after reading
+   * X-User-Id session header — Phase 6 sẽ replace với JWT claim verification at gateway.
    */
-  public OrderEntity createOrderFromCommand(String userId, CreateOrderCommand command) {
+  public OrderDto createOrderFromCommand(String userId, CreateOrderCommand command) {
     if (userId == null || userId.isBlank()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing X-User-Id session header");
     }
@@ -97,26 +100,37 @@ public class OrderCrudService {
         .map(item -> item.unitPrice().multiply(BigDecimal.valueOf(item.quantity())))
         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-    String note = command.note();   // null is fine — OrderEntity.note is nullable
+    String note = command.note();   // null OK — OrderEntity.note nullable
 
     OrderEntity order = OrderEntity.create(userId, totalAmount, "PENDING", note);
-    return repository.saveOrder(order);
+    return OrderMapper.toDto(orderRepository.save(order));
   }
 
-  public OrderEntity updateOrder(String id, OrderUpsertRequest request) {
-    OrderEntity current = getOrder(id, true);
-    OrderEntity updated = current.update(request.userId(), request.totalAmount(), request.status(), request.note());
-    return repository.saveOrder(updated);
+  public OrderDto updateOrder(String id, OrderUpsertRequest request) {
+    OrderEntity current = orderRepository.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+    current.update(request.userId(), request.totalAmount(), request.status(), request.note());
+    return OrderMapper.toDto(orderRepository.save(current));
   }
 
-  public OrderEntity updateOrderState(String id, OrderStateRequest request) {
-    OrderEntity current = getOrder(id, true);
-    return repository.saveOrder(current.setStatus(request.state()));
+  public OrderDto updateOrderState(String id, OrderStateRequest request) {
+    OrderEntity current = orderRepository.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+    current.setStatus(request.state());
+    return OrderMapper.toDto(orderRepository.save(current));
   }
 
   public void deleteOrder(String id) {
-    OrderEntity current = getOrder(id, true);
-    repository.saveOrder(current.softDelete());
+    OrderEntity current = orderRepository.findById(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+    // @SQLDelete annotation → soft-delete (UPDATE deleted=true)
+    orderRepository.delete(current);
+  }
+
+  public List<OrderDto> findOrdersByUserId(String userId) {
+    return orderRepository.findByUserId(userId).stream()
+        .map(OrderMapper::toDto)
+        .toList();
   }
 
   private Comparator<CartEntity> cartComparator(String sort) {
@@ -178,14 +192,9 @@ public class OrderCrudService {
   public record OrderStateRequest(@NotBlank String state) {}
 
   /**
-   * Domain command shape consumed by the FE checkout page (sources/frontend/src/app/checkout/page.tsx).
-   * userId is NOT in the body — the controller derives it from the X-User-Id header so the FE never
-   * has to know its own user id (consistent with the typical session/JWT pattern; full JWT-claim
-   * derivation is a Phase 5 follow-up).
-   * status is NOT in the body — service layer defaults it to PENDING.
-   * totalAmount is NOT in the body — service layer computes it from items[].quantity * items[].unitPrice
-   * (the FE sends the cart's price snapshot; mismatch with current product-service price is allowed for
-   * this MVP — Phase 5 candidate to re-fetch authoritative price server-side).
+   * Domain command shape consumed by FE checkout page (sources/frontend/src/app/checkout/page.tsx).
+   * Phase 5 chỉ persist OrderEntity basic — shippingAddress + paymentMethod KHÔNG persist (Phase 8
+   * PERSIST-02 sẽ thêm OrderItemEntity per-row + shippingAddress + paymentMethod).
    */
   public record CreateOrderCommand(
       @NotEmpty List<@Valid OrderItemRequest> items,

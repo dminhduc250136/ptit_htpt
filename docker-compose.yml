@@ -1,4 +1,21 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: tmdt
+      POSTGRES_USER: tmdt
+      POSTGRES_PASSWORD: tmdt
+    volumes:
+      - tmdt-pgdata:/var/lib/postgresql/data
+      - ./db/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tmdt -d tmdt"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+
   api-gateway:
     build: ./sources/backend/api-gateway
     ports:
@@ -13,26 +30,76 @@ services:
 
   user-service:
     build: ./sources/backend/user-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: tmdt
+      DB_USER: tmdt
+      DB_PASSWORD: tmdt
     ports:
       - "8081:8080"
 
   product-service:
     build: ./sources/backend/product-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: tmdt
+      DB_USER: tmdt
+      DB_PASSWORD: tmdt
     ports:
       - "8082:8080"
 
   order-service:
     build: ./sources/backend/order-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: tmdt
+      DB_USER: tmdt
+      DB_PASSWORD: tmdt
     ports:
       - "8083:8080"
 
   payment-service:
     build: ./sources/backend/payment-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: tmdt
+      DB_USER: tmdt
+      DB_PASSWORD: tmdt
     ports:
       - "8084:8080"
 
   inventory-service:
     build: ./sources/backend/inventory-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: tmdt
+      DB_USER: tmdt
+      DB_PASSWORD: tmdt
     ports:
       - "8085:8080"
 
@@ -47,3 +114,6 @@ services:
         - "3000:3000"
       depends_on:
         - api-gateway
+
+volumes:
+  tmdt-pgdata:
