@@ -2,12 +2,14 @@ package com.ptit.htpt.userservice.web;
 
 import com.ptit.htpt.userservice.api.ApiResponse;
 import com.ptit.htpt.userservice.service.UserCrudService;
+import com.ptit.htpt.userservice.service.UserCrudService.AdminUserPatchRequest;
 import com.ptit.htpt.userservice.service.UserCrudService.UserUpsertRequest;
 import jakarta.validation.Valid;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -55,5 +57,14 @@ public class AdminUserController {
   public ApiResponse<Map<String, Object>> deleteUser(@PathVariable String id) {
     userCrudService.deleteUser(id);
     return ApiResponse.of(200, "Admin user soft deleted", Map.of("id", id, "deleted", true));
+  }
+
+  // D-05: Partial update — dùng cho admin edit modal (không yêu cầu passwordHash)
+  @PatchMapping("/{id}")
+  public ApiResponse<Object> patchUser(
+      @PathVariable String id,
+      @RequestBody AdminUserPatchRequest request     // không dùng @Valid — tất cả fields nullable
+  ) {
+    return ApiResponse.of(200, "Admin user patched", userCrudService.patchUser(id, request));
   }
 }
