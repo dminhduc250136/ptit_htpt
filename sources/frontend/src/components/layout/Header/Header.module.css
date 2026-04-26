@@ -284,6 +284,102 @@
   }
 }
 
+/* --- User Menu Dropdown --- */
+.userMenu { position: relative; }
+
+.userBtn {
+  display: flex;
+  align-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  justify-content: center;
+}
+
+.userAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: var(--weight-bold);
+  font-family: var(--font-family-body);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 210px;
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  z-index: 200;
+  animation: fadeIn var(--transition-fast) ease;
+}
+
+.dropdownUser {
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.dropdownName {
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-body-md);
+  color: var(--on-surface);
+  margin: 0;
+}
+
+.dropdownEmail {
+  font-size: var(--text-body-sm);
+  color: var(--on-surface-variant);
+  margin: 2px 0 0;
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-body-md);
+  color: var(--on-surface-variant);
+  text-decoration: none;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-family-body);
+  transition: background-color var(--transition-fast);
+}
+
+.dropdownItem:hover {
+  background-color: var(--surface-container-low);
+  color: var(--on-surface);
+}
+
+.dropdownItemDanger { color: var(--error); }
+.dropdownItemDanger:hover {
+  background-color: color-mix(in srgb, var(--error) 10%, transparent);
+  color: var(--error);
+}
+
+.dropdownDivider {
+  height: 1px;
+  background: var(--glass-border);
+  margin: var(--space-1) 0;
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }

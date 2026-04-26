@@ -30,6 +30,7 @@ export default function ProductDetailPage() {
   const [selectedImage, setSelectedImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'description' | 'specs' | 'reviews'>('description');
+  const [addingToCart, setAddingToCart] = useState(false);
 
   const load = useCallback(async () => {
     if (!slug) return;
@@ -224,28 +225,36 @@ export default function ProductDetailPage() {
                   <span className={styles.qtyValue}>{quantity}</span>
                   <button
                     className={styles.qtyBtn}
-                    onClick={() => setQuantity(Math.min(product.stock ?? 99, quantity + 1))}
-                    disabled={quantity >= (product.stock ?? 99)}
+                    onClick={() => setQuantity(Math.min(product.stock || 1, quantity + 1))}
+                    disabled={quantity >= (product.stock || 1)}
                   >+</button>
                 </div>
                 <Button
                   size="lg"
                   fullWidth
-                  disabled={(product.stock ?? 0) === 0}
-                  onClick={() => {
-                    addToCart(
-                      {
-                        id: product.id,
-                        name: product.name,
-                        thumbnailUrl: product.thumbnailUrl,
-                        price: product.price,
-                      },
-                      quantity,
-                    );
-                    showToast('Đã thêm vào giỏ hàng', 'success');
+                  disabled={product.stock === 0}
+                  loading={addingToCart}
+                  onClick={async () => {
+                    setAddingToCart(true);
+                    try {
+                      addToCart(
+                        {
+                          id: product.id,
+                          name: product.name,
+                          thumbnailUrl: product.thumbnailUrl,
+                          price: product.price,
+                        },
+                        quantity,
+                      );
+                      showToast('Đã thêm vào giỏ hàng', 'success');
+                    } catch {
+                      showToast('Không thể thêm vào giỏ hàng', 'error');
+                    } finally {
+                      setAddingToCart(false);
+                    }
                   }}
                 >
-                  Thêm vào giỏ hàng
+                  {product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ hàng'}
                 </Button>
               </div>
 

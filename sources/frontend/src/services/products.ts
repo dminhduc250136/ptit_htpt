@@ -21,7 +21,7 @@
 
 import type { paths as _ProductsPaths } from '@/types/api/products.generated';
 import type { Product, Category, PaginatedResponse } from '@/types';
-import { httpGet } from './http';
+import { httpGet, httpPost, httpPut, httpDelete } from './http';
 
 export type _PathsSurface = _ProductsPaths;
 
@@ -61,4 +61,48 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 
 export function listCategories(): Promise<PaginatedResponse<Category>> {
   return httpGet<PaginatedResponse<Category>>(`/api/products/categories`);
+}
+
+// Admin product create/update body — D-03 extended fields
+export interface ProductUpsertBody {
+  name: string;
+  slug?: string;          // optional — nếu không cung cấp, backend hoặc FE auto-gen từ name
+  categoryId: string;
+  price: number;
+  status: string;         // "ACTIVE" | "INACTIVE" | "OUT_OF_STOCK"
+  stock?: number;
+  brand?: string;
+  thumbnailUrl?: string;
+  shortDescription?: string;
+  originalPrice?: number;
+}
+
+// ============================================================
+// Admin product functions — gateway: /api/products/admin → /admin/products
+// ============================================================
+
+export function listAdminProducts(params?: ListProductsParams): Promise<PaginatedResponse<Product>> {
+  const qs = new URLSearchParams();
+  if (params?.page !== undefined) qs.set('page', String(params.page));
+  if (params?.size  !== undefined) qs.set('size',  String(params.size));
+  if (params?.sort)                qs.set('sort',  params.sort);
+  if (params?.keyword)             qs.set('keyword', params.keyword);
+  const suffix = qs.toString() ? `?${qs}` : '';
+  return httpGet<PaginatedResponse<Product>>(`/api/products/admin${suffix}`);
+}
+
+export function createProduct(body: ProductUpsertBody): Promise<Product> {
+  return httpPost<Product>('/api/products/admin', body);
+}
+
+export function updateProduct(id: string, body: ProductUpsertBody): Promise<Product> {
+  return httpPut<Product>(`/api/products/admin/${encodeURIComponent(id)}`, body);
+}
+
+export function deleteProduct(id: string): Promise<void> {
+  return httpDelete<void>(`/api/products/admin/${encodeURIComponent(id)}`);
+}
+
+export function listAdminCategories(): Promise<PaginatedResponse<Category>> {
+  return httpGet<PaginatedResponse<Category>>('/api/products/admin/categories');
 }

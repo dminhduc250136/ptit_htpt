@@ -156,17 +156,19 @@ export interface Cart {
 
 export interface Order {
   id: string;
-  orderCode: string;
+  orderCode?: string;      // FE legacy — backend dùng id làm orderCode
   userId: string;
   items: OrderItem[];
   shippingAddress: Address;
-  paymentMethod: 'COD' | 'BANK_TRANSFER' | 'E_WALLET';
-  paymentStatus: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
-  orderStatus: 'PENDING' | 'CONFIRMED' | 'SHIPPING' | 'DELIVERED' | 'CANCELLED' | 'RETURNED';
-  subtotal: number;
-  shippingFee: number;
-  discount: number;
-  totalAmount: number;
+  paymentMethod: 'COD' | 'BANK_TRANSFER' | 'E_WALLET' | string;
+  paymentStatus?: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
+  orderStatus?: string;    // optional — backend trả 'status' không phải 'orderStatus'
+  status?: string;         // D-10: backend field name
+  subtotal?: number;
+  shippingFee?: number;
+  discount?: number;
+  totalAmount?: number;    // FE legacy alias cho total
+  total?: number;          // D-10: backend field name
   note?: string;
   createdAt: string;
   updatedAt: string;
@@ -176,17 +178,19 @@ export interface OrderItem {
   id: string;
   productId: string;
   productName: string;
-  productImage: string;
-  price: number;
+  productImage?: string;   // optional — backend không trả, FE có thể bỏ trống
+  price: number;           // alias cho unitPrice — giữ cho compat
+  unitPrice?: number;      // D-10: backend OrderItemDto trả unitPrice
   quantity: number;
-  subtotal: number;
+  subtotal: number;        // alias cho lineTotal — giữ cho compat
+  lineTotal?: number;      // D-10: backend OrderItemDto trả lineTotal
 }
 
 export interface CreateOrderRequest {
   // Phase 4-06: per-item unitPrice required by backend CreateOrderCommand (04-05).
   // Cart already carries `price` per item — checkout passes it through as a snapshot
   // so the backend can compute totalAmount server-side.
-  items: { productId: string; quantity: number; unitPrice: number }[];
+  items: { productId: string; productName: string; quantity: number; unitPrice: number }[];   // D-06: productName snapshot
   shippingAddress: Address;
   paymentMethod: 'COD' | 'BANK_TRANSFER' | 'E_WALLET';
   note?: string;

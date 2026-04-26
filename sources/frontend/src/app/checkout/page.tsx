@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button/Button';
 import Input from '@/components/ui/Input/Input';
@@ -31,6 +32,7 @@ interface StockConflictItem {
 export default function CheckoutPage() {
   const { showToast } = useToast();
   const { user } = useAuth();
+  const router = useRouter();
 
   // Hydrate cart via lazy initializer (SSR-safe, avoids set-state-in-effect lint).
   const [cartItems, setCartItems] = useState<CartItem[]>(() =>
@@ -57,7 +59,6 @@ export default function CheckoutPage() {
     note: '',
     paymentMethod: 'COD' as 'COD' | 'BANK_TRANSFER' | 'E_WALLET',
   });
-  const [showSuccess, setShowSuccess] = useState<{ orderCode: string } | null>(null);
   const [loading, setLoading] = useState(false);
 
   // --- Error recovery state (Shared Pattern 5: error-dispatcher contract) ---
@@ -79,8 +80,9 @@ export default function CheckoutPage() {
       const order = await createOrder({
         items: cartItems.map((i) => ({
           productId: i.productId,
+          productName: i.name,           // D-06: cart item có field 'name' — truyền làm productName snapshot
           quantity: i.quantity,
-          unitPrice: i.price,           // Phase 4-06: cart price snapshot → backend CreateOrderCommand totalAmount
+          unitPrice: i.price,            // Phase 4-06: cart price snapshot → backend CreateOrderCommand totalAmount
         })),
         shippingAddress: {
           street: form.street,
@@ -92,12 +94,7 @@ export default function CheckoutPage() {
         note: form.note || undefined,
       }, user?.id);                     // Phase 4-06: userId → X-User-Id header (Phase 5: JWT-claim derivation)
       clearCart();
-      setShowSuccess({
-        orderCode:
-          order?.orderCode ??
-          (order as { code?: string } | undefined)?.code ??
-          '—',
-      });
+      router.push('/profile/orders/' + order.id);
     } catch (err) {
       if (!isApiError(err)) {
         // Network / unexpected — D-10 toast. No auto-retry.
@@ -151,33 +148,6 @@ export default function CheckoutPage() {
     }
     await submitOrder();
   };
-
-  // --- Order Success Modal (existing) ---
-  if (showSuccess) {
-    return (
-      <div className={styles.page}>
-        <div className={styles.successOverlay}>
-          <div className={styles.successModal}>
-            <div className={styles.successIcon}>
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                <polyline points="22 4 12 14.01 9 11.01" />
-              </svg>
-            </div>
-            <h2 className={styles.successTitle}>Đặt hàng thành công!</h2>
-            <p className={styles.successDesc}>
-              Mã đơn hàng: <strong>{showSuccess.orderCode}</strong><br />
-              Cảm ơn bạn đã mua sắm tại The Digital Atélier.
-            </p>
-            <div className={styles.successActions}>
-              <Button href="/profile">Xem đơn hàng</Button>
-              <Button href="/products" variant="secondary">Tiếp tục mua sắm</Button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className={styles.page}>

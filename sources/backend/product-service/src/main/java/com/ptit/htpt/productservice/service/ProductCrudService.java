@@ -1,10 +1,12 @@
 package com.ptit.htpt.productservice.service;
 
 import com.ptit.htpt.productservice.domain.CategoryEntity;
+import com.ptit.htpt.productservice.domain.CategoryMapper;
 import com.ptit.htpt.productservice.domain.ProductEntity;
 import com.ptit.htpt.productservice.repository.CategoryRepository;
 import com.ptit.htpt.productservice.repository.ProductRepository;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -29,11 +31,18 @@ public class ProductCrudService {
   }
 
   public Map<String, Object> listProducts(int page, int size, String sort, boolean includeDeleted) {
+    return listProducts(page, size, sort, includeDeleted, null);
+  }
+
+  public Map<String, Object> listProducts(int page, int size, String sort,
+                                          boolean includeDeleted, String keyword) {
     // Note: @SQLRestriction("deleted = false") filters soft-deleted at SQL layer.
     // includeDeleted=true path không trả về deleted records nữa (acceptable Phase 5 — admin
     // soft-delete recovery defer Phase 8). Filter giữ lại để keep API contract.
     List<ProductEntity> all = productRepo.findAll().stream()
         .filter(product -> includeDeleted || !product.deleted())
+        .filter(product -> keyword == null || keyword.isBlank() ||
+            product.name().toLowerCase().contains(keyword.toLowerCase()))  // D-02: keyword filter
         .sorted(productComparator(sort))
         .toList();
     Map<String, Object> page0 = paginate(all, page, size);
@@ -66,8 +75,13 @@ public class ProductCrudService {
         request.slug(),
         request.categoryId(),
         request.price(),
-        request.status()
+        request.status(),
+        request.brand(),
+        request.thumbnailUrl(),
+        request.shortDescription(),
+        request.originalPrice()
     );
+    product.setStock(request.stock());
     return productRepo.save(product);
   }
 
@@ -78,7 +92,12 @@ public class ProductCrudService {
         request.slug(),
         request.categoryId(),
         request.price(),
-        request.status()
+        request.status(),
+        request.brand(),
+        request.thumbnailUrl(),
+        request.shortDescription(),
+        request.originalPrice(),
+        request.stock()
     );
     return productRepo.save(current);
   }
@@ -100,7 +119,11 @@ public class ProductCrudService {
         .filter(category -> includeDeleted || !category.deleted())
         .sorted(categoryComparator(sort))
         .toList();
-    return paginate(all, page, size);
+    Map<String, Object> page0 = paginate(all, page, size);
+    @SuppressWarnings("unchecked")
+    List<CategoryEntity> content = (List<CategoryEntity>) page0.get("content");
+    page0.put("content", content.stream().map(CategoryMapper::toDto).toList());
+    return page0;
   }
 
   public CategoryEntity getCategory(String id, boolean includeDeleted) {
@@ -145,17 +168,17 @@ public class ProductCrudService {
         product.name(),
         product.slug(),
         "",                                            // description default
-        "",                                            // shortDescription default
+        product.shortDescription() != null ? product.shortDescription() : "",
         product.price(),
-        null,                                          // originalPrice
+        product.originalPrice(),
         null,                                          // discount
         Collections.emptyList(),                       // images default
-        "",                                            // thumbnailUrl default
+        product.thumbnailUrl() != null ? product.thumbnailUrl() : "",
         categoryRef,
-        null,                                          // brand default
+        product.brand(),
         BigDecimal.ZERO,                               // rating default
         0,                                             // reviewCount default
-        0,                                             // stock default — read from inventory-service
+        product.stock(),                               // D-02: đọc từ ProductEntity.stock (Phase 8 PERSIST-01)
         product.status(),
         Collections.emptyList(),                       // tags default
         product.createdAt(),
@@ -210,7 +233,12 @@ public class ProductCrudService {
       @NotBlank String slug,
       @NotBlank String categoryId,
       @DecimalMin("0.0") BigDecimal price,
-      @NotBlank String status
+      @NotBlank String status,
+      String brand,               // nullable — D-03
+      String thumbnailUrl,        // nullable — D-03
+      String shortDescription,    // nullable — D-03
+      BigDecimal originalPrice,   // nullable — D-03
+      @Min(0) int stock           // D-01: stock field cho admin set/update (Phase 8)
   ) {}
 
   public record ProductStatusRequest(@NotBlank String status) {}

@@ -126,4 +126,20 @@ public class UserCrudService {
       @NotBlank @Size(max = 120) String passwordHash,
       String roles
   ) {}
+
+  // D-05: AdminUserPatchRequest — partial update (không expose passwordHash)
+  public record AdminUserPatchRequest(
+      String fullName,   // nullable — update nếu not null
+      String phone,      // nullable — update nếu not null
+      String roles       // nullable — update nếu not null và not blank
+  ) {}
+
+  public UserDto patchUser(String id, AdminUserPatchRequest request) {
+    UserEntity user = loadUser(id);
+    if (request.fullName() != null) user.setFullName(request.fullName());
+    if (request.phone() != null) user.setPhone(request.phone());
+    if (request.roles() != null && !request.roles().isBlank()) user.setRoles(request.roles());
+    user.touch();
+    return UserMapper.toDto(userRepo.save(user));
+  }
 }

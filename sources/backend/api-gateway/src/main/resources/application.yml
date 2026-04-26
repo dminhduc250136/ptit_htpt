@@ -19,6 +19,34 @@ spring:
               - "*"
             allowCredentials: true
       routes:
+        # user-service auth: /api/users/auth → /auth (must come before /api/users/**)
+        - id: user-service-auth-base
+          uri: http://user-service:8080
+          predicates:
+            - Path=/api/users/auth
+          filters:
+            - RewritePath=/api/users/auth, /auth
+        - id: user-service-auth
+          uri: http://user-service:8080
+          predicates:
+            - Path=/api/users/auth/**
+          filters:
+            - RewritePath=/api/users/auth/(?<seg>.*), /auth/${seg}
+
+        # user-service admin: /api/users/admin → /admin/users
+        - id: user-service-admin-base
+          uri: http://user-service:8080
+          predicates:
+            - Path=/api/users/admin
+          filters:
+            - RewritePath=/api/users/admin, /admin/users
+        - id: user-service-admin
+          uri: http://user-service:8080
+          predicates:
+            - Path=/api/users/admin/**
+          filters:
+            - RewritePath=/api/users/admin/(?<seg>.*), /admin/users/${seg}
+
         # user-service: /api/users -> /users, /api/users/{id} -> /users/{id}
         - id: user-service-base
           uri: http://user-service:8080
@@ -33,6 +61,20 @@ spring:
           filters:
             - RewritePath=/api/users/(?<seg>.*), /users/${seg}
 
+        # product-service admin: /api/products/admin → /admin/products
+        - id: product-service-admin-base
+          uri: http://product-service:8080
+          predicates:
+            - Path=/api/products/admin
+          filters:
+            - RewritePath=/api/products/admin, /admin/products
+        - id: product-service-admin
+          uri: http://product-service:8080
+          predicates:
+            - Path=/api/products/admin/**
+          filters:
+            - RewritePath=/api/products/admin/(?<seg>.*), /admin/products/${seg}
+
         # product-service: /api/products -> /products, /api/products/{id} -> /products/{id}
         - id: product-service-base
           uri: http://product-service:8080
@@ -46,6 +88,20 @@ spring:
             - Path=/api/products/**
           filters:
             - RewritePath=/api/products/(?<seg>.*), /products/${seg}
+
+        # order-service admin: /api/orders/admin → /admin/orders
+        - id: order-service-admin-base
+          uri: http://order-service:8080
+          predicates:
+            - Path=/api/orders/admin
+          filters:
+            - RewritePath=/api/orders/admin, /admin/orders
+        - id: order-service-admin
+          uri: http://order-service:8080
+          predicates:
+            - Path=/api/orders/admin/**
+          filters:
+            - RewritePath=/api/orders/admin/(?<seg>.*), /admin/orders/${seg}
 
         # order-service
         - id: order-service-base

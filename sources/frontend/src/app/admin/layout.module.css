@@ -27,6 +27,17 @@
 .adminName { font-size: var(--text-body-md); font-weight: var(--weight-medium); }
 .mainContent { flex: 1; padding: var(--space-5); overflow-y: auto; }
 
+/* Topbar user menu */
+.userMenu { position: relative; display: flex; align-items: center; gap: var(--space-2); cursor: pointer; }
+.userMenuBtn { display: flex; align-items: center; gap: var(--space-2); background: none; border: none; cursor: pointer; padding: var(--space-1) var(--space-2); border-radius: var(--radius-lg); transition: background var(--transition-fast); }
+.userMenuBtn:hover { background: var(--surface-container-low); }
+.dropdown { position: absolute; top: calc(100% + 8px); right: 0; min-width: 180px; background: var(--surface-container-lowest); border: 1px solid rgba(195,198,214,0.15); border-radius: var(--radius-xl); box-shadow: 0 8px 32px rgba(0,0,0,0.18); overflow: hidden; z-index: 300; }
+.dropdownItem { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-2) var(--space-4); font-size: var(--text-body-md); color: var(--on-surface-variant); text-decoration: none; background: none; border: none; width: 100%; text-align: left; cursor: pointer; font-family: var(--font-family-body); transition: background var(--transition-fast); }
+.dropdownItem:hover { background: var(--surface-container-low); color: var(--on-surface); }
+.dropdownDanger { color: var(--error); }
+.dropdownDanger:hover { background: color-mix(in srgb, var(--error) 10%, transparent); color: var(--error); }
+.dropdownDivider { height: 1px; background: rgba(195,198,214,0.15); }
+
 @media (max-width: 768px) {
   .sidebar { width: 72px; }
   .sidebar .navLink span, .sidebar .logo span, .sidebarFooter .navLink span { display: none; }
