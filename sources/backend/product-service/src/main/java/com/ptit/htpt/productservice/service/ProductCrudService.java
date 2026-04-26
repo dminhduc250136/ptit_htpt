@@ -6,6 +6,7 @@ import com.ptit.htpt.productservice.domain.ProductEntity;
 import com.ptit.htpt.productservice.repository.CategoryRepository;
 import com.ptit.htpt.productservice.repository.ProductRepository;
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -80,6 +81,7 @@ public class ProductCrudService {
         request.shortDescription(),
         request.originalPrice()
     );
+    product.setStock(request.stock());
     return productRepo.save(product);
   }
 
@@ -94,7 +96,8 @@ public class ProductCrudService {
         request.brand(),
         request.thumbnailUrl(),
         request.shortDescription(),
-        request.originalPrice()
+        request.originalPrice(),
+        request.stock()
     );
     return productRepo.save(current);
   }
@@ -175,7 +178,7 @@ public class ProductCrudService {
         product.brand(),
         BigDecimal.ZERO,                               // rating default
         0,                                             // reviewCount default
-        0,                                             // stock default — read from inventory-service
+        product.stock(),                               // D-02: đọc từ ProductEntity.stock (Phase 8 PERSIST-01)
         product.status(),
         Collections.emptyList(),                       // tags default
         product.createdAt(),
@@ -234,7 +237,8 @@ public class ProductCrudService {
       String brand,               // nullable — D-03
       String thumbnailUrl,        // nullable — D-03
       String shortDescription,    // nullable — D-03
-      BigDecimal originalPrice    // nullable — D-03
+      BigDecimal originalPrice,   // nullable — D-03
+      @Min(0) int stock           // D-01: stock field cho admin set/update (Phase 8)
   ) {}
 
   public record ProductStatusRequest(@NotBlank String status) {}

@@ -1,15 +1,22 @@
 package com.ptit.htpt.orderservice.domain;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "orders", schema = "order_svc")
@@ -33,6 +40,16 @@ public class OrderEntity {
   // Cross-cutting note #3 (PATTERNS.md): preserve `note` field từ record cũ — nullable
   @Column(length = 500)
   private String note;
+
+  @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+  private List<OrderItemEntity> items = new ArrayList<>();
+
+  @JdbcTypeCode(SqlTypes.JSON)
+  @Column(name = "shipping_address", columnDefinition = "jsonb")
+  private String shippingAddress;
+
+  @Column(name = "payment_method", length = 30)
+  private String paymentMethod;
 
   @Column(nullable = false)
   private boolean deleted = false;
@@ -89,6 +106,22 @@ public class OrderEntity {
   public BigDecimal totalAmount() { return total; }
   public String status() { return status; }
   public String note() { return note; }
+  public List<OrderItemEntity> items() { return items; }
+  public String shippingAddress() { return shippingAddress; }
+  public String paymentMethod() { return paymentMethod; }
+
+  public void addItem(OrderItemEntity item) {
+    this.items.add(item);
+  }
+
+  public void setShippingAddress(String shippingAddress) {
+    this.shippingAddress = shippingAddress;
+  }
+
+  public void setPaymentMethod(String paymentMethod) {
+    this.paymentMethod = paymentMethod;
+  }
+
   public boolean deleted() { return deleted; }
   public Instant createdAt() { return createdAt; }
   public Instant updatedAt() { return updatedAt; }

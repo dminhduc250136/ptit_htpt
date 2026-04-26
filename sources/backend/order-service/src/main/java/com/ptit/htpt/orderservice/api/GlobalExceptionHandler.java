@@ -1,11 +1,14 @@
 package com.ptit.htpt.orderservice.api;
 
+import com.ptit.htpt.orderservice.exception.StockShortageException;
 import com.ptit.htpt.orderservice.web.TraceIdFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
@@ -92,6 +95,27 @@ public class GlobalExceptionHandler {
         getTraceId(request),
         List.of()
     ));
+  }
+
+  @ExceptionHandler(StockShortageException.class)
+  public ResponseEntity<Object> handleStockShortage(
+      StockShortageException ex,
+      HttpServletRequest request) {
+    // FE discriminate bởi: err.code === 'CONFLICT' && d?.domainCode === 'STOCK_SHORTAGE'
+    var body = Map.of(
+        "code", "CONFLICT",
+        "domainCode", "STOCK_SHORTAGE",
+        "message", "Một số sản phẩm không đủ số lượng trong kho",
+        "path", request.getRequestURI(),
+        "traceId", getTraceId(request),
+        "items", ex.shortageItems().stream().map(i -> Map.of(
+            "productId", i.productId(),
+            "productName", i.productName(),
+            "requested", i.requested(),
+            "available", i.available()
+        )).toList()
+    );
+    return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
   }
 
   @ExceptionHandler(Exception.class)
