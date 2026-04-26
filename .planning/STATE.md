@@ -2,23 +2,23 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Phase Progress
-status: "Plan 08 integration smoke PASS. Commits: 69c8884 (Task 8.1), 4a6afe1 (Task 8.2). Next: Plan 09 FE rewire (xóa mock-data, wire FE → real backend)."
-last_updated: "2026-04-26T04:17:57.017Z"
-last_activity: "2026-04-26 04:15Z — Plan 08 COMPLETE. Stack verified green."
+status: "Phase 5 COMPLETE (9/9 plans). Plan 09 FE cleanup DONE: mock-data deleted, FE build green, visible flow PASS. Next: Phase 6 Real Auth Flow."
+last_updated: "2026-04-26T04:45:00.000Z"
+last_activity: "2026-04-26 04:45Z — Plan 09 COMPLETE. Phase 5 Database Foundation DONE."
 progress:
   total_phases: 4
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 9
-  completed_plans: 8
-  percent: 89
+  completed_plans: 9
+  percent: 100
 ---
 
 ## Current Position
 
-Phase: 5 — Database Foundation (Wave 4 COMPLETE — Wave 5 ready)
-Plan: 9 plans / 5 waves — ✅ Wave 1 (Plan 01) DONE → ✅ Wave 2 (Plan 02) DONE → ✅ Wave 3 (Plans 03-07) DONE → ✅ Wave 4 (Plan 08) DONE → ⏳ Wave 5 (Plan 09)
-Status: Plan 08 integration smoke PASS. Commits: 69c8884 (Task 8.1), 4a6afe1 (Task 8.2). Next: Plan 09 FE rewire (xóa mock-data, wire FE → real backend).
-Last activity: 2026-04-26 04:15Z — Plan 08 COMPLETE. Stack verified green.
+Phase: 5 — Database Foundation ✅ COMPLETE (9/9 plans, all waves done)
+Plan: 9/9 — ✅ Wave 1 (01) → ✅ Wave 2 (02) → ✅ Wave 3 (03-07) → ✅ Wave 4 (08) → ✅ Wave 5 (09)
+Status: Phase 5 COMPLETE. mock-data deleted; FE build green; visible flow PASS (browse/detail/cart via Postgres seeded data). Next: Phase 6 Real Auth Flow (AUTH-01..06).
+Last activity: 2026-04-26 04:45Z — Plan 09 COMPLETE. Phase 5 Database Foundation DONE.
 
 ## Resume Instructions (Phase 5 Execute)
 
@@ -82,6 +82,7 @@ Last activity (history): 2026-04-26 — Phase 5 planning complete (research + pa
 - Skip research step: stack đã locked, patterns auth/CRUD đã có sẵn từ v1.0 foundation.
 - **2026-04-25 audit finding**: v1.0 không có DB layer thật. → **Thêm cluster C0 Database Foundation (DB-01..06) vào v1.1** đứng trước C1/C2/C3, dùng Postgres + Flyway + seed từ FE mocks.
 - **2026-04-25 roadmap split**: Gộp C1 (Auth backend + FE) vào MỘT phase (Phase 6) thay vì split — 6 REQs là kích thước hợp lý 1 phase, backend/FE cùng feature nên ship cùng. C2/C3 mỗi cluster 1 phase riêng (Phase 7, Phase 8). Tổng 4 phases (vs 5-6 nếu split) giúp giữ granularity standard.
+- Phase 5 Plan 09: FE gateway paths corrected (double-path /api/products/products → /api/products); slug lookup via client-side filter (backend ignores slug param)
 
 ## Blockers
 
