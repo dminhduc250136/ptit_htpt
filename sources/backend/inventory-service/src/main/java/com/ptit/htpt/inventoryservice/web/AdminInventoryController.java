@@ -4,7 +4,6 @@ import com.ptit.htpt.inventoryservice.api.ApiResponse;
 import com.ptit.htpt.inventoryservice.service.InventoryCrudService;
 import com.ptit.htpt.inventoryservice.service.InventoryCrudService.ItemUpsertRequest;
 import com.ptit.htpt.inventoryservice.service.InventoryCrudService.QuantityAdjustRequest;
-import com.ptit.htpt.inventoryservice.service.InventoryCrudService.ReservationUpsertRequest;
 import jakarta.validation.Valid;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -20,6 +19,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+/**
+ * Admin inventory endpoints. Phase 5 scope-cut: reservation paths removed (Phase 8 sẽ re-add).
+ */
 @RestController
 @RequestMapping("/admin/inventory")
 public class AdminInventoryController {
@@ -33,10 +35,9 @@ public class AdminInventoryController {
   public ApiResponse<Map<String, Object>> listItems(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
-      @RequestParam(defaultValue = "updatedAt,desc") String sort,
-      @RequestParam(defaultValue = "true") boolean includeDeleted
+      @RequestParam(defaultValue = "updatedAt,desc") String sort
   ) {
-    return ApiResponse.of(200, "Admin inventory items listed", inventoryCrudService.listItems(page, size, sort, includeDeleted));
+    return ApiResponse.of(200, "Admin inventory items listed", inventoryCrudService.listItems(page, size, sort));
   }
 
   @PostMapping("/items")
@@ -58,40 +59,6 @@ public class AdminInventoryController {
   @DeleteMapping("/items/{id}")
   public ApiResponse<Map<String, Object>> deleteItem(@PathVariable String id) {
     inventoryCrudService.deleteItem(id);
-    return ApiResponse.of(200, "Admin inventory item soft deleted", Map.of("id", id, "deleted", true));
-  }
-
-  @GetMapping("/reservations")
-  public ApiResponse<Map<String, Object>> listReservations(
-      @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "20") int size,
-      @RequestParam(defaultValue = "updatedAt,desc") String sort,
-      @RequestParam(defaultValue = "true") boolean includeDeleted
-  ) {
-    return ApiResponse.of(
-        200,
-        "Admin inventory reservations listed",
-        inventoryCrudService.listReservations(page, size, sort, includeDeleted)
-    );
-  }
-
-  @PostMapping("/reservations")
-  @ResponseStatus(HttpStatus.CREATED)
-  public ApiResponse<Object> createReservation(@Valid @RequestBody ReservationUpsertRequest request) {
-    return ApiResponse.of(201, "Admin reservation created", inventoryCrudService.createReservation(request));
-  }
-
-  @PutMapping("/reservations/{id}")
-  public ApiResponse<Object> updateReservation(
-      @PathVariable String id,
-      @Valid @RequestBody ReservationUpsertRequest request
-  ) {
-    return ApiResponse.of(200, "Admin reservation updated", inventoryCrudService.updateReservation(id, request));
-  }
-
-  @DeleteMapping("/reservations/{id}")
-  public ApiResponse<Map<String, Object>> deleteReservation(@PathVariable String id) {
-    inventoryCrudService.deleteReservation(id);
-    return ApiResponse.of(200, "Admin reservation soft deleted", Map.of("id", id, "deleted", true));
+    return ApiResponse.of(200, "Admin inventory item deleted", Map.of("id", id, "deleted", true));
   }
 }
