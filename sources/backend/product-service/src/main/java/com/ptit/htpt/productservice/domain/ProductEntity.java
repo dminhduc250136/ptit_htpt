@@ -59,6 +59,9 @@ public class ProductEntity {
   private BigDecimal originalPrice;
 
   @Column(nullable = false)
+  private int stock = 0;
+
+  @Column(nullable = false)
   private boolean deleted = false;
 
   @Column(name = "created_at", nullable = false, updatable = false)
@@ -100,7 +103,7 @@ public class ProductEntity {
 
   public void update(String name, String slug, String categoryId, BigDecimal price, String status,
                      String brand, String thumbnailUrl,
-                     String shortDescription, BigDecimal originalPrice) {
+                     String shortDescription, BigDecimal originalPrice, int stock) {
     this.name = name;
     this.slug = slug;
     this.categoryId = categoryId;
@@ -110,11 +113,17 @@ public class ProductEntity {
     this.thumbnailUrl = thumbnailUrl;
     this.shortDescription = shortDescription;
     this.originalPrice = originalPrice;
+    this.stock = stock;
     this.updatedAt = Instant.now();
   }
 
   public void setStatus(String status) {
     this.status = status;
+    this.updatedAt = Instant.now();
+  }
+
+  public void setStock(int stock) {
+    this.stock = Math.max(0, stock);
     this.updatedAt = Instant.now();
   }
 
@@ -133,6 +142,7 @@ public class ProductEntity {
   public String thumbnailUrl() { return thumbnailUrl; }
   public String shortDescription() { return shortDescription; }
   public BigDecimal originalPrice() { return originalPrice; }
+  public int stock() { return stock; }
   public boolean deleted() { return deleted; }
   public Instant createdAt() { return createdAt; }
   public Instant updatedAt() { return updatedAt; }
