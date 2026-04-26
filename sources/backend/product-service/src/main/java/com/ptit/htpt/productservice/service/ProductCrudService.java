@@ -2,7 +2,8 @@ package com.ptit.htpt.productservice.service;
 
 import com.ptit.htpt.productservice.domain.CategoryEntity;
 import com.ptit.htpt.productservice.domain.ProductEntity;
-import com.ptit.htpt.productservice.repository.InMemoryProductRepository;
+import com.ptit.htpt.productservice.repository.CategoryRepository;
+import com.ptit.htpt.productservice.repository.ProductRepository;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;
@@ -12,7 +13,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -20,18 +20,22 @@ import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class ProductCrudService {
-  private final InMemoryProductRepository repository;
+  private final ProductRepository productRepo;
+  private final CategoryRepository categoryRepo;
 
-  public ProductCrudService(InMemoryProductRepository repository) {
-    this.repository = repository;
+  public ProductCrudService(ProductRepository productRepo, CategoryRepository categoryRepo) {
+    this.productRepo = productRepo;
+    this.categoryRepo = categoryRepo;
   }
 
   public Map<String, Object> listProducts(int page, int size, String sort, boolean includeDeleted) {
-    List<ProductEntity> all = repository.findAllProducts().stream()
+    // Note: @SQLRestriction("deleted = false") filters soft-deleted at SQL layer.
+    // includeDeleted=true path không trả về deleted records nữa (acceptable Phase 5 — admin
+    // soft-delete recovery defer Phase 8). Filter giữ lại để keep API contract.
+    List<ProductEntity> all = productRepo.findAll().stream()
         .filter(product -> includeDeleted || !product.deleted())
         .sorted(productComparator(sort))
         .toList();
-    // Convert paginate output's content list to ProductResponse — keep envelope keys identical.
     Map<String, Object> page0 = paginate(all, page, size);
     @SuppressWarnings("unchecked")
     List<ProductEntity> content = (List<ProductEntity>) page0.get("content");
@@ -40,7 +44,7 @@ public class ProductCrudService {
   }
 
   public ProductEntity getProduct(String id, boolean includeDeleted) {
-    ProductEntity product = repository.findProductById(id)
+    ProductEntity product = productRepo.findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
     if (!includeDeleted && product.deleted()) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found");
@@ -52,9 +56,7 @@ public class ProductCrudService {
     if (slug == null || slug.isBlank()) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found");
     }
-    return repository.findAllProducts().stream()
-        .filter(product -> !product.deleted() && slug.equals(product.slug()))
-        .findFirst()
+    return productRepo.findBySlug(slug)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Product not found"));
   }
 
@@ -66,33 +68,35 @@ public class ProductCrudService {
         request.price(),
         request.status()
     );
-    return repository.saveProduct(product);
+    return productRepo.save(product);
   }
 
   public ProductEntity updateProduct(String id, ProductUpsertRequest request) {
     ProductEntity current = getProduct(id, true);
-    ProductEntity updated = current.update(
+    current.update(
         request.name(),
         request.slug(),
         request.categoryId(),
         request.price(),
         request.status()
     );
-    return repository.saveProduct(updated);
+    return productRepo.save(current);
   }
 
   public ProductEntity updateProductStatus(String id, ProductStatusRequest request) {
     ProductEntity current = getProduct(id, true);
-    return repository.saveProduct(current.setStatus(request.status()));
+    current.setStatus(request.status());
+    return productRepo.save(current);
   }
 
   public void deleteProduct(String id) {
     ProductEntity current = getProduct(id, true);
-    repository.saveProduct(current.softDelete());
+    current.softDelete();
+    productRepo.save(current);
   }
 
   public Map<String, Object> listCategories(int page, int size, String sort, boolean includeDeleted) {
-    List<CategoryEntity> all = repository.findAllCategories().stream()
+    List<CategoryEntity> all = categoryRepo.findAll().stream()
         .filter(category -> includeDeleted || !category.deleted())
         .sorted(categoryComparator(sort))
         .toList();
@@ -100,7 +104,7 @@ public class ProductCrudService {
   }
 
   public CategoryEntity getCategory(String id, boolean includeDeleted) {
-    CategoryEntity category = repository.findCategoryById(id)
+    CategoryEntity category = categoryRepo.findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
     if (!includeDeleted && category.deleted()) {
       throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found");
@@ -109,65 +113,54 @@ public class ProductCrudService {
   }
 
   public CategoryEntity createCategory(CategoryUpsertRequest request) {
-    CategoryEntity category = CategoryEntity.create(request.name(), request.parentId(), request.status());
-    return repository.saveCategory(category);
+    CategoryEntity category = CategoryEntity.create(request.name(), request.slug());
+    return categoryRepo.save(category);
   }
 
   public CategoryEntity updateCategory(String id, CategoryUpsertRequest request) {
     CategoryEntity current = getCategory(id, true);
-    CategoryEntity updated = current.update(request.name(), request.parentId(), request.status());
-    return repository.saveCategory(updated);
+    current.update(request.name(), request.slug());
+    return categoryRepo.save(current);
   }
 
   public void deleteCategory(String id) {
     CategoryEntity current = getCategory(id, true);
-    repository.saveCategory(current.softDelete());
+    current.softDelete();
+    categoryRepo.save(current);
   }
 
   /**
    * Map a ProductEntity to the rich ProductResponse the frontend consumes. Defaults
-   * applied for fields not yet persisted on the in-memory entity. Category lookup uses
-   * the existing repository.findCategoryById path; if the category has been deleted or
-   * is missing, emit a placeholder CategoryRef with the raw categoryId so the FE can
-   * still render `Category` link without crashing.
+   * applied for fields not yet persisted on the entity. Category lookup uses
+   * categoryRepo.findById; if the category has been deleted or is missing, emit a
+   * placeholder CategoryRef with the raw categoryId so the FE can still render.
    */
   public ProductResponse toResponse(ProductEntity product) {
-    CategoryRef categoryRef = repository.findCategoryById(product.categoryId())
-        .map(c -> new CategoryRef(c.id(), c.name(), categorySlugFor(c)))
+    CategoryRef categoryRef = categoryRepo.findById(product.categoryId())
+        .map(c -> new CategoryRef(c.id(), c.name(), c.slug()))
         .orElseGet(() -> new CategoryRef(product.categoryId(), "—", product.categoryId()));
 
     return new ProductResponse(
         product.id(),
         product.name(),
         product.slug(),
-        "",                                            // description default — Phase 5: persist
-        "",                                            // shortDescription default — Phase 5
+        "",                                            // description default
+        "",                                            // shortDescription default
         product.price(),
-        null,                                          // originalPrice — null = "no discount"
-        null,                                          // discount — null = "no discount"
+        null,                                          // originalPrice
+        null,                                          // discount
         Collections.emptyList(),                       // images default
-        "",                                            // thumbnailUrl default (FE applies '/placeholder.png' fallback)
+        "",                                            // thumbnailUrl default
         categoryRef,
         null,                                          // brand default
-        BigDecimal.ZERO,                               // rating default 0
-        0,                                             // reviewCount default 0
-        0,                                             // stock default 0 — Phase 5: read from inventory-service
+        BigDecimal.ZERO,                               // rating default
+        0,                                             // reviewCount default
+        0,                                             // stock default — read from inventory-service
         product.status(),
         Collections.emptyList(),                       // tags default
         product.createdAt(),
         product.updatedAt()
     );
-  }
-
-  /**
-   * Derive a slug for a CategoryEntity. CategoryEntity does not currently expose a slug()
-   * accessor, so we fall back to a lowercase-hyphenated transform of name(). When a real
-   * datastore lands in Phase 5, persist a slug column on Category and call c.slug() here.
-   */
-  private String categorySlugFor(CategoryEntity c) {
-    return c.name() == null ? c.id() : c.name().toLowerCase(Locale.ROOT)
-        .replaceAll("[^a-z0-9]+", "-")
-        .replaceAll("^-+|-+$", "");
   }
 
   private Comparator<ProductEntity> productComparator(String sort) {
@@ -222,13 +215,9 @@ public class ProductCrudService {
 
   public record ProductStatusRequest(@NotBlank String status) {}
 
-  public record CategoryUpsertRequest(@NotBlank String name, String parentId, @NotBlank String status) {}
+  /** Phase 5: schema mới cho category — drop {@code parentId, status}, thêm {@code slug}. */
+  public record CategoryUpsertRequest(@NotBlank String name, @NotBlank String slug) {}
 
-  /**
-   * Rich product shape consumed by the FE (sources/frontend/src/types/index.ts Product).
-   * Defaults applied where the in-memory entity does not yet carry the field. Phase 5
-   * candidate: persist the new fields in ProductEntity once a real datastore lands.
-   */
   public record ProductResponse(
       String id,
       String name,
