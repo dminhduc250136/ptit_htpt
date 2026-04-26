@@ -19,42 +19,89 @@ spring:
               - "*"
             allowCredentials: true
       routes:
+        # user-service: /api/users -> /users, /api/users/{id} -> /users/{id}
+        - id: user-service-base
+          uri: http://user-service:8080
+          predicates:
+            - Path=/api/users
+          filters:
+            - RewritePath=/api/users, /users
         - id: user-service
           uri: http://user-service:8080
           predicates:
             - Path=/api/users/**
           filters:
-            - RewritePath=/api/users/(?<segment>.*), /${segment}
+            - RewritePath=/api/users/(?<seg>.*), /users/${seg}
+
+        # product-service: /api/products -> /products, /api/products/{id} -> /products/{id}
+        - id: product-service-base
+          uri: http://product-service:8080
+          predicates:
+            - Path=/api/products
+          filters:
+            - RewritePath=/api/products, /products
         - id: product-service
           uri: http://product-service:8080
           predicates:
             - Path=/api/products/**
           filters:
-            - RewritePath=/api/products/(?<segment>.*), /${segment}
+            - RewritePath=/api/products/(?<seg>.*), /products/${seg}
+
+        # order-service
+        - id: order-service-base
+          uri: http://order-service:8080
+          predicates:
+            - Path=/api/orders
+          filters:
+            - RewritePath=/api/orders, /orders
         - id: order-service
           uri: http://order-service:8080
           predicates:
             - Path=/api/orders/**
           filters:
-            - RewritePath=/api/orders/(?<segment>.*), /${segment}
+            - RewritePath=/api/orders/(?<seg>.*), /orders/${seg}
+
+        # payment-service
+        - id: payment-service-base
+          uri: http://payment-service:8080
+          predicates:
+            - Path=/api/payments
+          filters:
+            - RewritePath=/api/payments, /payments
         - id: payment-service
           uri: http://payment-service:8080
           predicates:
             - Path=/api/payments/**
           filters:
-            - RewritePath=/api/payments/(?<segment>.*), /${segment}
+            - RewritePath=/api/payments/(?<seg>.*), /payments/${seg}
+
+        # inventory-service
+        - id: inventory-service-base
+          uri: http://inventory-service:8080
+          predicates:
+            - Path=/api/inventory
+          filters:
+            - RewritePath=/api/inventory, /inventory
         - id: inventory-service
           uri: http://inventory-service:8080
           predicates:
             - Path=/api/inventory/**
           filters:
-            - RewritePath=/api/inventory/(?<segment>.*), /${segment}
+            - RewritePath=/api/inventory/(?<seg>.*), /inventory/${seg}
+
+        # notification-service
+        - id: notification-service-base
+          uri: http://notification-service:8080
+          predicates:
+            - Path=/api/notifications
+          filters:
+            - RewritePath=/api/notifications, /notifications
         - id: notification-service
           uri: http://notification-service:8080
           predicates:
             - Path=/api/notifications/**
           filters:
-            - RewritePath=/api/notifications/(?<segment>.*), /${segment}
+            - RewritePath=/api/notifications/(?<seg>.*), /notifications/${seg}
 
 server:
   port: 8080
