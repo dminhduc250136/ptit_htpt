@@ -1,10 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import styles from './layout.module.css';
 import { ToastProvider } from '@/components/ui/Toast/Toast';
+import { useAuth } from '@/providers/AuthProvider';
+import { logout as apiLogout } from '@/services/auth';
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', icon: <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> },
@@ -15,12 +17,35 @@ const navItems = [
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { user, logout } = useAuth();
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    apiLogout();
+    logout();
+    router.push('/login');
+  };
+
+  const initials = user?.name
+    ? user.name.split(' ').map((w: string) => w[0]).slice(0, 2).join('').toUpperCase()
+    : 'A';
 
   return (
     <ToastProvider>
     <div className={styles.adminLayout}>
-      {/* Sidebar */}
       <aside className={`${styles.sidebar} ${sidebarCollapsed ? styles.collapsed : ''}`}>
         <div className={styles.sidebarHeader}>
           <Link href="/admin" className={styles.logo}>
@@ -36,9 +61,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         <nav className={styles.nav}>
           {navItems.map(item => (
-            <Link
-              key={item.href}
-              href={item.href}
+            <Link key={item.href} href={item.href}
               className={`${styles.navLink} ${pathname === item.href ? styles.navActive : ''}`}
               title={sidebarCollapsed ? item.label : undefined}
             >
@@ -56,15 +79,32 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
       </aside>
 
-      {/* Main */}
       <div className={styles.mainArea}>
         <header className={styles.topbar}>
           <div className={styles.topbarLeft}>
             <h2 className={styles.topbarTitle}>Quản trị</h2>
           </div>
           <div className={styles.topbarRight}>
-            <div className={styles.adminAvatar}>A</div>
-            <span className={styles.adminName}>Admin</span>
+            <div className={styles.userMenu} ref={menuRef}>
+              <button className={styles.userMenuBtn} onClick={() => setDropdownOpen(!dropdownOpen)}>
+                <div className={styles.adminAvatar}>{initials}</div>
+                {!sidebarCollapsed && <span className={styles.adminName}>{user?.name || 'Admin'}</span>}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              {dropdownOpen && (
+                <div className={styles.dropdown}>
+                  <Link href="/profile" className={styles.dropdownItem} onClick={() => setDropdownOpen(false)}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Thông tin tài khoản
+                  </Link>
+                  <div className={styles.dropdownDivider} />
+                  <button className={`${styles.dropdownItem} ${styles.dropdownDanger}`} onClick={handleLogout}>
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Đăng xuất
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </header>
         <main className={styles.mainContent}>{children}</main>

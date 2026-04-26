@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
-import Header from "@/components/layout/Header/Header";
-import Footer from "@/components/layout/Footer/Footer";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { ToastProvider } from "@/components/ui/Toast/Toast";
+import { ConditionalShell } from "@/components/layout/ConditionalShell";
 
 const beVietnamPro = Be_Vietnam_Pro({
   variable: "--font-be-vietnam-pro",
@@ -30,9 +29,7 @@ export default function RootLayout({
       <body>
         <AuthProvider>
           <ToastProvider>
-            <Header />
-            <main style={{ flex: 1 }}>{children}</main>
-            <Footer />
+            <ConditionalShell>{children}</ConditionalShell>
           </ToastProvider>
         </AuthProvider>
       </body>

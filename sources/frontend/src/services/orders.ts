@@ -65,5 +65,5 @@ export function getAdminOrderById(id: string): Promise<Order> {
 }
 
 export function updateOrderState(id: string, status: string): Promise<Order> {
-  return httpPatch<Order>(`/api/orders/admin/${encodeURIComponent(id)}/state`, { status });
+  return httpPatch<Order>(`/api/orders/admin/${encodeURIComponent(id)}/state`, { state: status });
 }

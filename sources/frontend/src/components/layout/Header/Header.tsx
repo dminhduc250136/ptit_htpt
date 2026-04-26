@@ -1,12 +1,40 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import styles from './Header.module.css';
+import { useAuth } from '@/providers/AuthProvider';
+import { logout as apiLogout } from '@/services/auth';
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const { isAuthenticated, user, logout } = useAuth();
+  const router = useRouter();
+  const userMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    apiLogout();
+    logout();
+    setIsUserMenuOpen(false);
+    router.push('/login');
+  };
+
+  const initials = user?.name
+    ? user.name.split(' ').map(w => w[0]).slice(0, 2).join('').toUpperCase()
+    : 'U';
 
   return (
     <header className={styles.header}>
@@ -39,13 +67,46 @@ export default function Header() {
             </svg>
           </button>
 
-          {/* Account */}
-          <Link href="/account" className={styles.actionBtn} aria-label="Tài khoản">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-              <circle cx="12" cy="7" r="4" />
-            </svg>
-          </Link>
+          {/* Account / User Menu */}
+          {isAuthenticated && user ? (
+            <div className={styles.userMenu} ref={userMenuRef}>
+              <button
+                className={styles.userBtn}
+                onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                aria-label="Menu tài khoản"
+              >
+                <div className={styles.userAvatar}>{initials}</div>
+              </button>
+              {isUserMenuOpen && (
+                <div className={styles.dropdown}>
+                  <div className={styles.dropdownUser}>
+                    <p className={styles.dropdownName}>{user.name || 'Người dùng'}</p>
+                    <p className={styles.dropdownEmail}>{user.email}</p>
+                  </div>
+                  <Link href="/profile" className={styles.dropdownItem} onClick={() => setIsUserMenuOpen(false)}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Thông tin tài khoản
+                  </Link>
+                  <Link href="/profile/orders" className={styles.dropdownItem} onClick={() => setIsUserMenuOpen(false)}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                    Đơn hàng của tôi
+                  </Link>
+                  <div className={styles.dropdownDivider} />
+                  <button className={`${styles.dropdownItem} ${styles.dropdownItemDanger}`} onClick={handleLogout}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Đăng xuất
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link href="/login" className={styles.actionBtn} aria-label="Đăng nhập">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </Link>
+          )}
 
           {/* Cart */}
           <Link href="/cart" className={styles.actionBtn} aria-label="Giỏ hàng">
@@ -70,7 +131,7 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Search Bar (expandable) */}
+      {/* Search Bar */}
       {isSearchOpen && (
         <div className={styles.searchOverlay}>
           <div className={styles.searchContainer}>
@@ -84,14 +145,9 @@ export default function Header() {
               className={styles.searchInput}
               autoFocus
             />
-            <button
-              className={styles.searchClose}
-              onClick={() => setIsSearchOpen(false)}
-              aria-label="Đóng tìm kiếm"
-            >
+            <button className={styles.searchClose} onClick={() => setIsSearchOpen(false)} aria-label="Đóng">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18" />
-                <line x1="6" y1="6" x2="18" y2="18" />
+                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
               </svg>
             </button>
           </div>
@@ -102,18 +158,17 @@ export default function Header() {
       {isMobileMenuOpen && (
         <div className={styles.mobileOverlay} onClick={() => setIsMobileMenuOpen(false)}>
           <nav className={styles.mobileMenu} onClick={e => e.stopPropagation()}>
-            <Link href="/products" className={styles.mobileLink} onClick={() => setIsMobileMenuOpen(false)}>
-              Sản phẩm
-            </Link>
-            <Link href="/collections" className={styles.mobileLink} onClick={() => setIsMobileMenuOpen(false)}>
-              Bộ sưu tập
-            </Link>
-            <Link href="/deals" className={styles.mobileLink} onClick={() => setIsMobileMenuOpen(false)}>
-              Ưu đãi
-            </Link>
-            <Link href="/about" className={styles.mobileLink} onClick={() => setIsMobileMenuOpen(false)}>
-              Về chúng tôi
-            </Link>
+            <Link href="/products" className={styles.mobileLink} onClick={() => setIsMobileMenuOpen(false)}>Sản phẩm</Link>
+            <Link href="/collections" className={styles.mobileLink} onClick={() => setIsMobileMenuOpen(false)}>Bộ sưu tập</Link>
+            <Link href="/deals" className={styles.mobileLink} onClick={() => setIsMobileMenuOpen(false)}>Ưu đãi</Link>
+            <Link href="/about" className={styles.mobileLink} onClick={() => setIsMobileMenuOpen(false)}>Về chúng tôi</Link>
+            {isAuthenticated ? (
+              <button className={styles.mobileLink} onClick={handleLogout} style={{ background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left', width: '100%', color: 'var(--error)' }}>
+                Đăng xuất
+              </button>
+            ) : (
+              <Link href="/login" className={styles.mobileLink} onClick={() => setIsMobileMenuOpen(false)}>Đăng nhập</Link>
+            )}
           </nav>
         </div>
       )}

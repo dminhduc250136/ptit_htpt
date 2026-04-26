@@ -1,6 +1,7 @@
 package com.ptit.htpt.productservice.service;
 
 import com.ptit.htpt.productservice.domain.CategoryEntity;
+import com.ptit.htpt.productservice.domain.CategoryMapper;
 import com.ptit.htpt.productservice.domain.ProductEntity;
 import com.ptit.htpt.productservice.repository.CategoryRepository;
 import com.ptit.htpt.productservice.repository.ProductRepository;
@@ -115,7 +116,11 @@ public class ProductCrudService {
         .filter(category -> includeDeleted || !category.deleted())
         .sorted(categoryComparator(sort))
         .toList();
-    return paginate(all, page, size);
+    Map<String, Object> page0 = paginate(all, page, size);
+    @SuppressWarnings("unchecked")
+    List<CategoryEntity> content = (List<CategoryEntity>) page0.get("content");
+    page0.put("content", content.stream().map(CategoryMapper::toDto).toList());
+    return page0;
   }
 
   public CategoryEntity getCategory(String id, boolean includeDeleted) {
