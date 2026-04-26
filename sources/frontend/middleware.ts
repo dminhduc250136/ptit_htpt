@@ -1,19 +1,16 @@
 /**
- * Route protection middleware — presence-check only.
+ * Route protection middleware — presence-check + admin role check.
  *
- * Source: 04-RESEARCH.md §Pattern 4 + Next.js 16 file-conventions docs.
+ * Source: 04-RESEARCH.md §Pattern 4 + Phase 6 D-07/D-08/D-09.
  *
- * T-04-02 mitigation: matcher enumerates EXACTLY /checkout, /profile, /admin
- * prefixes — no wildcard / whitelist logic. Public routes (/, /products, /login,
- * /register, /cart, /search) are intentionally not matched.
+ * D-07: matcher thêm /account/:path*
+ * D-08: admin role check đọc user_role cookie (non-httpOnly, set khi login)
+ * D-09: non-ADMIN truy cập /admin/* → redirect /403
+ * D-10: unauthenticated → redirect /login?returnTo=<path>
  *
- * Deprecation note: Next.js 16 renamed this convention to proxy.ts and emits a
- * deprecation warning; keeping middleware.ts per D-12 and Pitfall 6. The rename
- * is a Phase-5+ follow-up (`npx @next/codemod@canary middleware-to-proxy .`).
- *
- * NOTE: presence check only. Backend still validates the JWT on every call via
- * the Authorization: Bearer header — this middleware never reads or validates
- * the token itself.
+ * NOTE: Edge Runtime không thể verify JWT signature — dùng user_role cookie
+ * approach (D-08). Cookie chỉ cho UX redirect, không phải security enforcement thật.
+ * Backend vẫn validate JWT trên mỗi API call qua Authorization: Bearer header.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -25,9 +22,21 @@ export function middleware(req: NextRequest) {
     const loginUrl = new URL(`/login?returnTo=${returnTo}`, req.url);
     return NextResponse.redirect(loginUrl);
   }
+
+  // Admin route check — Edge Runtime cannot verify JWT signature (D-08).
+  // user_role cookie set at login by token.ts setUserRole().
+  if (req.nextUrl.pathname.startsWith('/admin')) {
+    const userRole = req.cookies.get('user_role')?.value;
+    // includes() safe cho "ADMIN" single value và "ADMIN,USER" comma-separated
+    if (!userRole?.includes('ADMIN')) {
+      return NextResponse.redirect(new URL('/403', req.url));
+    }
+  }
+
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/checkout/:path*', '/profile/:path*', '/admin/:path*'],
+  // D-07: thêm /account/:path*
+  matcher: ['/checkout/:path*', '/profile/:path*', '/admin/:path*', '/account/:path*'],
 };
