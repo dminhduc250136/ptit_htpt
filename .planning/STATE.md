@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Real End-User Experience
-status: phase6-complete
-last_updated: "2026-04-26T10:00:00.000Z"
-last_activity: "2026-04-26 10:00Z — Phase 6 Real Auth Flow COMPLETE. 3/3 plans. 17/17 automated checks PASS. Human UAT 6 items pending docker smoke. Next: Phase 7 Search + Admin Real Data."
+status: phase7-context-captured
+last_updated: "2026-04-26T00:00:00.000Z"
+last_activity: "2026-04-26 — Phase 7 context captured. Decisions: gateway per-service admin routes, ProductUpsertRequest extension, admin orders detail page, UserEntity fullName+phone (Flyway V3), admin user PATCH endpoint. Resume: /gsd-plan-phase 7."
 progress:
   total_phases: 4
   completed_phases: 2
