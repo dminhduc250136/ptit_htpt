@@ -1,725 +1,390 @@
-# Technology Stack: E-Commerce Microservices Platform
+# Technology Stack — v1.2 UI/UX Completion (Additions Only)
 
-**Domain:** Laptop e-commerce microservices (B2C, MVP stage)  
-**Researched:** 2026-04-22  
-**Confidence Level:** HIGH (verified against official documentation)  
-**Format:** Spring Boot backend + Next.js frontend + Docker containerization
-
----
-
-## Overview
-
-This is the **standard 2025-2026 stack** for consumer e-commerce microservices. All recommendations are current as of April 2026 and balance production-readiness with MVP agility. Each choice is prescriptive (not "options") to enable fast decision-making.
+**Project:** tmdt-use-gsd — milestone v1.2 (subsequent)
+**Researched:** 2026-04-26
+**Confidence Level:** HIGH on backend additions (Spring/JPA standard patterns) · MEDIUM-HIGH on FE library picks (Context7-verified versions)
+**Scope:** ONLY new capabilities required by 11 v1.2 features. Existing v1.0/v1.1 stack (Spring Boot 3.3.2 microservices, Next.js 16.2.3 + React 19.2.4, Postgres 16 + JPA + Flyway, OpenAPI codegen, Playwright 1.59) is locked and NOT re-researched.
 
 ---
 
-## 1. Backend Stack: Spring Boot Microservices
+## TL;DR — What Gets Added
 
-### Core Framework
+| Layer | Add | Reject | Rationale (one-liner) |
+|-------|-----|--------|----------------------|
+| Backend persistence | 4 Flyway V4 migrations + 4 JPA entities (`wishlist_items`, `product_reviews`, `user_addresses`, optional `user_avatars` blob col) | QueryDSL, jOOQ | Search filters bằng Spring Data JPA Specifications đủ — không bloat |
+| Backend search | `JpaSpecificationExecutor<ProductEntity>` + `Specification` builders | QueryDSL APT, Hibernate Search/Lucene | Brand/price/rating/in-stock là 4 predicate AND đơn giản |
+| Backend file upload | `MultipartFile` → resize bằng `Thumbnailator` → lưu bytes vào `users.avatar_blob` (BYTEA) + `avatar_content_type` | S3, presigned URLs, MinIO | Local Docker Compose, không có object store; BYTEA <100KB OK cho avatar |
+| FE form validation | `react-hook-form` 7.55.x + `zod` 3.24.x + `@hookform/resolvers` 5.x | Formik, native HTML only | Profile/address/review forms đa field; zod schema reuse cho client+server contract |
+| FE image gallery | `yet-another-react-lightbox` 3.21.x (thumbnails plugin) | swiper, react-image-gallery, photoswipe | Zero-dep, 11KB gz, có thumbnails plugin built-in, fit Next 16 RSC |
+| FE star rating | Custom 30-LOC component (SVG `<polygon>` + CSS) | react-rating, react-star-ratings | Trivial UI; không kéo lib cho 1 component |
+| FE date range | `<input type="date">` native | react-datepicker, dayjs picker | Order history filter chỉ cần from/to — native đủ + a11y free |
+| Avatar upload UX | Native `<input type=file accept="image/*">` + client preview qua `URL.createObjectURL` | react-dropzone, uppy | 1 file, không drag-drop multi |
+| Homepage carousel | CSS scroll-snap + grid (no JS lib) | swiper, embla-carousel | Hero static; featured/new arrivals = horizontal scroll snap |
+| Backend test | Giữ nguyên Testcontainers Postgres | — | Spec specification tests + repo tests đã có pattern |
 
-| Component | Version | Purpose | Why This Choice |
-|-----------|---------|---------|-----------------|
-| **Java** | 21 (LTS) or 23 | Runtime | LTS stability with modern features; Java 21+ is standard for Spring Boot 4.x |
-| **Spring Boot** | 4.0.x (latest: 4.0.5) | Web framework | Current stable release; requires Java 17+ minimum |
-| **Spring Framework** | 6.2.x | Core framework | Included with Boot 4.0; native compilation ready (GraalVM) |
-| **Jakarta EE** | 11 | J2EE replacement | Included; Spring Boot 4.x uses Jakarta (not javax.* packages) |
-
-### Web & API
-
-| Component | Version | Purpose | Why This Choice |
-|-----------|---------|---------|-----------------|
-| **Spring Web** | 6.2.x | REST APIs | Included with Boot; uses Tomcat 11 (embedded) by default |
-| **Spring Boot Actuator** | 4.0.x | Metrics & health | Built-in; enables /health, /metrics endpoints for monitoring |
-| **SpringDoc OpenAPI** | 2.6.x | API documentation | Replaces Springfox; generates OpenAPI 3.1 schemas automatically |
-| **Jakarta Servlet API** | 6.1 | HTTP handling | Included; Jakarta EE 11 standard |
-
-### Data Persistence
-
-| Component | Version | Purpose | Why This Choice |
-|-----------|---------|---------|-----------------|
-| **Spring Data JPA** | 4.0.x | ORM abstraction | Included with Boot; uses Hibernate 6.6+ under the hood |
-| **Hibernate ORM** | 6.6.x | Object-relational mapping | Industry standard; supports native queries and custom types |
-| **PostgreSQL Driver (JDBC)** | 42.7.x | Database connectivity | Latest stable; fully supports PostgreSQL 18.x |
-| **Spring Data R2DBC** | 4.0.x | Reactive database | Optional; use only if reactive streams needed later |
-| **Liquibase** | 4.30.x | Database migrations | Versioned schema management; paired with Flyway decision below |
-
-**Database Choice: PostgreSQL 18.3**
-- **Version:** 18.3 (latest; released Feb 2026)
-- **Why:** Mature, reliable, ACID-compliant; supports JSON/JSONB for product variants; window functions for analytics
-- **Rationale:** Standard for microservices; no licensing concerns for MVP; PostgreSQL 18 adds performance improvements over 17
-- **Alternative rejected:** MongoDB (schema-less = product schema chaos); MySQL (fewer features for complex e-commerce)
-
-### Database Migration Tools
-
-| Component | Version | Decision |
-|-----------|---------|----------|
-| **Liquibase** | 4.30.x | ✅ **RECOMMENDED** |
-| **Flyway** | 10.x | ❌ Not needed for MVP |
-
-**Why Liquibase?** XML/YAML-based migrations are more maintainable for team assignments; cleaner rollback semantics for university demos.
+**Net-new dependency footprint:** 1 backend lib (Thumbnailator, ~70KB), 3 FE libs (rhf+zod+resolvers ~30KB gz, lightbox ~11KB gz). No new infra, no new services.
 
 ---
 
-## 2. Microservices Architecture Stack
-
-### Service Discovery & Communication
-
-| Component | Version | Purpose | Decision |
-|-----------|---------|---------|----------|
-| **Spring Cloud Eureka** | 4.1.x | Service registration | ✅ For inter-service discovery |
-| **Spring Cloud OpenFeign** | 4.1.x | Service-to-service HTTP calls | ✅ Replaces RestTemplate; cleaner syntax |
-| **Spring Cloud Gateway** | 4.1.x | API Gateway | ✅ Single entry point for client requests |
-
-**Rationale:** Spring Cloud Eureka + Feign is the standard Spring microservices pattern. Gateway routes requests to individual services.
-
-### Configuration Management
-
-| Component | Version | Purpose |
-|-----------|---------|---------|
-| **Spring Cloud Config Server** | 4.1.x | Centralized configuration | Optional; use if managing 5+ microservices |
-| **Spring Boot application.yml** | N/A | Local configuration | ✅ Use for MVP (simpler than Config Server) |
-
-**For MVP:** Use `application.yml` in each service. Upgrade to Config Server only if configuration needs to change without redeployment.
-
-### Asynchronous Messaging (Optional for MVP)
-
-| Component | Version | Purpose | When to Use |
-|-----------|---------|---------|------------|
-| **Spring Cloud Stream** | 4.1.x | Event abstraction | For order→payment→inventory flow |
-| **RabbitMQ** | 4.0.x | Message broker | ✅ Lightweight; easier than Kafka for MVP |
-| **Apache Kafka** | 3.7.x | High-volume event streaming | ❌ Defer to v2.x (overkill for MVP orders) |
-| **Redis** | 7.2.x | Caching + message queues | ✅ Use for session caching, rate limiting |
-
-**MVP Decision:** Use RabbitMQ for order workflows (reliable, AMQP protocol). Defer Kafka for analytics until post-MVP scale.
-
----
-
-## 3. Resilience & Observability
-
-### Circuit Breakers & Retry Logic
-
-| Component | Version | Purpose |
-|-----------|---------|---------|
-| **Resilience4j** | 2.1.x | Circuit breaker, retry, timeout policies |
-| **Spring Cloud CircuitBreaker** | 4.1.x | Abstraction over Resilience4j |
-
-**Usage:** Wrap inter-service Feign calls to handle payment gateway timeouts gracefully.
-
-### Logging & Distributed Tracing
-
-| Component | Version | Purpose | Why |
-|-----------|---------|---------|-----|
-| **SLF4J** | 2.1.x | Logging facade | Included with Spring Boot; universal standard |
-| **Logback** | 1.5.x | Logging implementation | Default in Spring Boot; XML configuration supported |
-| **Spring Cloud Sleuth** | 4.1.x | Distributed tracing context | Adds trace IDs across microservices for debugging |
-| **Micrometer Tracing** | 1.2.x | Tracing abstraction | Modern replacement for Sleuth's core tracing |
-
-**Stack:** SLF4J + Logback + Sleuth for MVP. (Advanced: export traces to Jaeger for post-MVP.)
-
-### Metrics & Monitoring
-
-| Component | Version | Purpose |
-|-----------|---------|---------|
-| **Micrometer** | 1.12.x | Metrics collection (included with Actuator) |
-| **Prometheus** | (external) | Time-series metrics database |
-| **Grafana** | (external) | Visualization dashboard |
-
-**For MVP:** Export Actuator metrics to Prometheus; optional Grafana dashboard for order throughput monitoring.
-
----
-
-## 4. Security Stack
-
-### Authentication & Authorization
-
-| Component | Version | Purpose | MVP Scope |
-|-----------|---------|---------|----------|
-| **Spring Security** | 6.2.x | Authentication/authorization framework | Core; included |
-| **Spring Security OAuth2** | 6.2.x | OAuth2 + OpenID Connect | For "Login with..." (GitHub, Google) - optional for v1 |
-| **JWT (JJWT)** | 0.12.x | Token-based auth | ✅ Stateless auth for microservices |
-| **Spring Security SAML** | 6.2.x | Enterprise SSO | ❌ Not needed for MVP (skip) |
-
-**JWT Strategy:** Use for stateless API auth. Tokens include user ID and roles; verified at each service.
-
-### Data Protection
-
-| Component | Version | Purpose |
-|-----------|---------|---------|
-| **Spring Security Crypto** | 6.2.x | Password hashing (bcrypt) | Included; use for user passwords |
-| **HTTPS/TLS** | 1.2+ | Encrypted transport | Configure in Docker/K8s; not in code |
-
----
-
-## 5. Testing Stack
-
-### Unit & Integration Testing
-
-| Framework | Version | Purpose | MVP Usage |
-|-----------|---------|---------|----------|
-| **JUnit 5** | 5.10.x | Testing framework | ✅ All unit tests; included with Spring Boot Test |
-| **Mockito** | 5.9.x | Object mocking | ✅ Mock external services (payment gateway) |
-| **AssertJ** | 3.25.x | Fluent assertions | ✅ Improves test readability |
-| **Spring Boot Test** | 4.0.x | Spring testing utilities | ✅ @SpringBootTest, @DataJpaTest, @WebMvcTest |
-| **Testcontainers** | 1.19.x | Containerized test databases | ✅ Spin up PostgreSQL in tests without Docker CLI |
-
-### Integration Testing
-
-| Framework | Version | Purpose |
-|-----------|---------|---------|
-| **Spring Boot TestRestTemplate** | 4.0.x | HTTP client for controller tests | ✅ Part of Spring Boot Test |
-| **REST Assured** | 5.4.x | BDD-style HTTP assertions | ✅ Cleaner API tests than TestRestTemplate |
-
-### Test Database
-
-| Component | Version | Decision |
-|-----------|---------|----------|
-| **Testcontainers PostgreSQL** | 1.19.x | ✅ **RECOMMENDED** |
-| **H2 (in-memory)** | 2.2.x | ❌ Not recommended (SQL dialect differs from PostgreSQL) |
-| **Test Fixtures** | N/A | Use SQL scripts in `src/test/resources/data.sql` |
-
----
-
-## 6. Frontend Stack: Next.js
-
-### Framework & Build
-
-| Component | Version | Purpose | Why |
-|-----------|---------|---------|-----|
-| **Next.js** | 15.x (or latest 16) | React framework + routing + SSR | Current standard; App Router (not Pages Router) |
-| **React** | 19.x | Component library | Included with Next.js 15+ |
-| **TypeScript** | 5.3.x | Type safety | ✅ Highly recommended; reduces runtime bugs |
-| **Node.js** | 20 LTS or 22 | Runtime | Matches Spring Boot deployment; stable for production |
-
-**App Router Decision:** Use `app/` directory (not `pages/`). Modern, co-located components with layouts.
-
-### State Management
-
-| Framework | Version | Purpose | MVP Scope |
-|-----------|---------|---------|----------|
-| **TanStack Query (React Query)** | 5.x | Server state management | ✅ API caching, refetching; use for products, orders |
-| **Zustand** | 4.5.x | Client state (lightweight Redux) | ✅ For UI state (cart, filters, modals) |
-| **Redux Toolkit** | 1.9.x | Complex state management | ❌ Overkill for MVP (use Zustand) |
-| **Jotai** | 2.8.x | Atomic state management | Alternative to Zustand; slightly more functional |
-
-**MVP Stack:**
-- **Server state:** TanStack Query (products, orders, users from backend)
-- **UI state:** Zustand (shopping cart, selected filters, modal open/close)
-- **No Redux.** Add only if state tree becomes unmaintainable.
-
-### UI Component Library
-
-| Framework | Version | Decision | Notes |
-|-----------|---------|----------|-------|
-| **shadcn/ui** | Latest | ✅ **RECOMMENDED** | Headless, Radix-based, fully customizable |
-| **Radix UI** | 1.x | ✅ Alternative | Lower-level; pair with Tailwind CSS |
-| **Material-UI (MUI)** | 6.x | ❌ Not recommended | Heavyweight; harder to customize for e-commerce |
-| **Ant Design** | 5.x | ❌ Not recommended | Enterprise-focused; overkill for MVP |
-
-**Choice Rationale:** shadcn/ui gives you copy-paste components with Tailwind styling. Fully owned, fully customizable. Perfect for shipping fast.
-
-### Styling
-
-| Framework | Version | Purpose | Decision |
-|-----------|---------|---------|----------|
-| **Tailwind CSS** | 3.4.x | Utility-first CSS | ✅ Default with shadcn/ui; included in Next.js template |
-| **CSS Modules** | N/A | Component scoping | Use for complex interactive UI (optional secondary) |
-| **SCSS/SASS** | 1.77.x | CSS preprocessing | ❌ Skip (Tailwind covers most needs) |
-
-**Preference:** Tailwind everywhere. CSS Modules only for legacy component compatibility.
-
-### Form Management
-
-| Framework | Version | Purpose |
-|-----------|---------|---------|
-| **React Hook Form** | 7.51.x | Form state & validation | ✅ Lightweight; minimal re-renders |
-| **Zod** | 3.23.x | Runtime schema validation | ✅ Type-safe; works with React Hook Form |
-| **Formik** | 2.4.x | Alternative form library | ❌ Heavier than React Hook Form |
-
-**Stack:** React Hook Form + Zod for checkout, login, product filters.
-
-### HTTP Client
-
-| Framework | Version | Purpose | Decision |
-|-----------|---------|---------|----------|
-| **Axios** | 1.7.x | HTTP client | ✅ Use directly for API calls |
-| **Fetch API** | N/A | Native browser API | ✅ Lightweight alternative; use if no extra features needed |
-| **TanStack Query** | 5.x | Already handles HTTP | Use with Axios as transport layer |
-
-**Recommendation:** Axios + TanStack Query. Axios handles HTTP details; Query handles caching.
-
-### Testing (Frontend)
-
-| Framework | Version | Purpose | MVP Coverage |
-|-----------|---------|---------|--------------|
-| **Vitest** | 1.2.x | Unit test runner (Vite-native) | ✅ Components, hooks, utilities |
-| **Jest** | 29.x | Alternative test runner | ❌ Slower; Vitest preferred for Next.js |
-| **React Testing Library** | 14.x | Component testing | ✅ Test user behavior, not implementation |
-| **Playwright** | 1.43.x | E2E browser testing | ✅ Critical paths (login, checkout flow) |
-| **Cypress** | 13.x | Alternative E2E | ❌ Heavier; Playwright preferred for MVP |
-
-**Stack:**
-- **Unit tests:** Vitest + React Testing Library
-- **E2E tests:** Playwright (critical flows only for MVP)
-- **Target coverage:** 70% for critical paths (auth, cart, checkout)
-
-### Build & Deployment
-
-| Tool | Version | Purpose |
-|------|---------|---------|
-| **Next.js built-in bundler** | N/A | Uses Webpack 5 under the hood; no config needed |
-| **npm** | 10.x | Package manager | Paired with Node.js 20+ |
-| **pnpm** | 9.x | Alternative (faster) | Optional; use if team prefers |
-
----
-
-## 7. Infrastructure & Deployment
-
-### Containerization
-
-| Component | Version | Purpose |
-|-----------|---------|---------|
-| **Docker** | 27.x | Container platform |
-| **Docker Compose** | 2.27.x | Multi-container local dev |
-| **Dockerfile best practices** | N/A | See Section 7.2 below |
-
-### Docker Best Practices for Spring Boot
-
-```dockerfile
-# Backend: Spring Boot microservice
-FROM eclipse-temurin:21-jdk-alpine AS builder
-WORKDIR /app
-COPY . .
-RUN ./mvnw -DskipTests clean package
-
-FROM eclipse-temurin:21-jre-alpine
-WORKDIR /app
-COPY --from=builder /app/target/*.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+## 1. Backend Additions (Spring Boot 3.3.2, Java 17)
+
+### 1.1 New Persistence — JPA Entities + Flyway V4 Migrations
+
+Đặt migrations ở `src/main/resources/db/migration/V4__<feature>.sql` (V1=baseline, V2=dev seed, V3=stock đã dùng ở v1.1). V4 là cluster cho v1.2.
+
+#### Entity #1 — `WishlistItemEntity` (user-service)
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | BIGSERIAL PK | |
+| `user_id` | BIGINT FK → users(id) | NOT NULL, indexed |
+| `product_id` | BIGINT | NOT NULL — cross-service ID, không FK (microservice boundary) |
+| `created_at` | TIMESTAMPTZ | DEFAULT now() |
+| Unique | `(user_id, product_id)` | Idempotent toggle |
+
+**Why user-service không phải product-service:** wishlist là user-owned data. Product-service chỉ resolve productIds → details qua existing `GET /api/products?ids=...` (đã có ở v1.1 search).
+
+#### Entity #2 — `ProductReviewEntity` (product-service)
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | BIGSERIAL PK | |
+| `product_id` | BIGINT FK → products(id) | NOT NULL, indexed |
+| `user_id` | BIGINT | NOT NULL — cross-service, không FK |
+| `user_display_name` | VARCHAR(120) | Snapshot — tránh N+1 cross-service khi list reviews |
+| `rating` | SMALLINT | CHECK (rating BETWEEN 1 AND 5) |
+| `comment` | TEXT | NULL allowed (rating-only review) |
+| `created_at` | TIMESTAMPTZ | |
+| `updated_at` | TIMESTAMPTZ | |
+| Unique | `(product_id, user_id)` | One review per user per product (edit thay vì duplicate) |
+
+**Average rating:** computed view hoặc cached column trên `products` (`avg_rating NUMERIC(2,1)`, `review_count INT`) updated qua `@EventListener` post-insert/update/delete. Cached column rẻ + FE list product không phải JOIN aggregate.
+
+**Decision:** dùng cached column. Trigger-free (Java service tầng update). FE list trang `/products` đã sẵn `Product` DTO — chỉ thêm 2 field.
+
+#### Entity #3 — `UserAddressEntity` (user-service)
+| Column | Type | Notes |
+|--------|------|-------|
+| `id` | BIGSERIAL PK | |
+| `user_id` | BIGINT FK → users(id) | NOT NULL, indexed |
+| `label` | VARCHAR(60) | "Nhà", "Công ty", optional |
+| `recipient_name` | VARCHAR(120) | NOT NULL |
+| `phone` | VARCHAR(20) | NOT NULL |
+| `street` | VARCHAR(255) | NOT NULL |
+| `ward` | VARCHAR(120) | NULL |
+| `district` | VARCHAR(120) | NULL |
+| `city` | VARCHAR(120) | NOT NULL |
+| `is_default` | BOOLEAN | DEFAULT false; partial unique idx `WHERE is_default` per user |
+| `created_at` / `updated_at` | TIMESTAMPTZ | |
+
+**Integration với checkout v1.1:** `OrderEntity.shipping_address` đã là JSON column ở v1.1 (PERSIST-02). Address book chỉ cần serialize `UserAddressEntity` → JSON khi user chọn → POST `/api/orders` không đổi shape. Zero migration impact lên order-service.
+
+#### Entity #4 — Avatar storage (user-service, ALTER existing `users` table)
+```sql
+ALTER TABLE users
+  ADD COLUMN avatar_blob BYTEA,
+  ADD COLUMN avatar_content_type VARCHAR(40),
+  ADD COLUMN avatar_updated_at TIMESTAMPTZ;
 ```
 
-**Why alpine?** Small images (~150MB JRE), faster startups. Sufficient for microservices.
+**Why BYTEA inline thay vì separate table / object store:**
+- Local Docker Compose stack — không có S3/MinIO
+- Avatar resize → 200×200 JPEG ≤ 30KB → BYTEA fine (<1MB threshold gây toast cho Postgres)
+- One row per user, đọc qua dedicated endpoint `GET /api/users/{id}/avatar` (Cache-Control: max-age=300, ETag = avatar_updated_at)
+- Tránh "1 service mới cho file" anti-pattern cho dự án thử nghiệm GSD
 
-### Docker Best Practices for Next.js
+**Reject:** Base64 trong cột TEXT (33% bloat, browser không cache binary), separate `user_avatars` table (over-normalize — 1:1 với users), filesystem volume (không persist qua container rebuild).
 
-```dockerfile
-# Frontend: Next.js
-FROM node:20-alpine AS base
-WORKDIR /app
+### 1.2 Search Filters — Spring Data JPA Specifications
 
-FROM base AS builder
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
+**Need:** brand IN (...), priceMin/priceMax, ratingMin, inStock — all AND-combined, all optional.
 
-FROM base AS runtime
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package*.json ./
-EXPOSE 3000
-CMD ["npm", "start"]
+**Approach:**
+```java
+public interface ProductRepository
+    extends JpaRepository<ProductEntity, Long>,
+            JpaSpecificationExecutor<ProductEntity> {}
 ```
 
-### Docker Compose for Local Development
+`ProductSpecifications.java` static factory:
+- `hasBrand(List<String> brands)` → `root.get("brand").in(brands)`
+- `priceBetween(BigDecimal min, BigDecimal max)` → `cb.between(...)`
+- `ratingAtLeast(BigDecimal min)` → `cb.ge(root.get("avgRating"), min)`
+- `inStock()` → `cb.gt(root.get("stock"), 0)`
 
-```yaml
-version: '3.9'
-services:
-  # PostgreSQL
-  postgres:
-    image: postgres:18-alpine
-    environment:
-      POSTGRES_USER: ecommerce
-      POSTGRES_PASSWORD: dev_password
-      POSTGRES_DB: laptop_shop
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
+Controller combine bằng `Specification.where(s1).and(s2)...`, skip nulls.
 
-  # RabbitMQ (optional, for async messaging)
-  rabbitmq:
-    image: rabbitmq:3.13-alpine
-    environment:
-      RABBITMQ_DEFAULT_USER: guest
-      RABBITMQ_DEFAULT_PASS: guest
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
+**Verified pattern:** Spring Data JPA reference docs — Specifications API (Context7: `/spring-projects/spring-data-jpa`, topic "specifications"). Stable API, không cần annotation processor như QueryDSL.
 
-  # Redis (caching)
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
+**Reject QueryDSL:**
+- Cần Maven APT plugin (`apt-maven-plugin`) — extra build complexity
+- Generated Q-classes phải gitignore + regen — fragile
+- 4 predicates không xứng đáng infrastructure cost
+- Specifications tự nhiên typesafe đủ qua `JpaSort` / Pageable
 
-  # Backend (User Service example)
-  user-service:
-    build:
-      context: ./services/user-service
-      dockerfile: Dockerfile
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/laptop_shop
-      SPRING_DATASOURCE_USERNAME: ecommerce
-      SPRING_DATASOURCE_PASSWORD: dev_password
-      SPRING_JPA_HIBERNATE_DDL_AUTO: update
-      SPRING_RABBITMQ_HOST: rabbitmq
-    ports:
-      - "8081:8080"
-    depends_on:
-      - postgres
-      - rabbitmq
-    volumes:
-      - ./services/user-service:/app
-      - /app/target
+**Reject Hibernate Search / Lucene / Elasticsearch:**
+- Full-text search v1.1 đã giải bằng `LIKE '%kw%'` (UI-04) — đủ cho dataset thử nghiệm
+- v1.2 chỉ thêm structured filters → SQL WHERE đủ
 
-  # Frontend
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    environment:
-      NEXT_PUBLIC_API_URL: http://localhost:8000
-    ports:
-      - "3000:3000"
-    depends_on:
-      - api-gateway
-    volumes:
-      - ./frontend:/app
-      - /app/node_modules
+### 1.3 File Upload — Multipart + Thumbnailator
 
-  # API Gateway
-  api-gateway:
-    build:
-      context: ./services/api-gateway
-      dockerfile: Dockerfile
-    environment:
-      SPRING_CLOUD_GATEWAY_ROUTES_0_ID: user-service
-      SPRING_CLOUD_GATEWAY_ROUTES_0_URI: http://user-service:8080
-      SPRING_CLOUD_GATEWAY_ROUTES_0_PREDICATES_0: Path=/api/users/**
-    ports:
-      - "8000:8080"
-    depends_on:
-      - user-service
+**Endpoint:** `PUT /api/users/{id}/avatar` (multipart/form-data, field name `file`).
 
-volumes:
-  postgres_data:
-  rabbitmq_data:
-```
-
-**Usage:**
-```bash
-docker-compose up -d
-# Services available at: localhost:3000 (frontend), localhost:8000 (gateway), localhost:5432 (db)
-```
-
-### Container Orchestration
-
-| Platform | Decision | When to Use |
-|----------|----------|------------|
-| **Docker Compose** | ✅ MVP | Local development + single-machine deployment |
-| **Kubernetes (K8s)** | ❌ Defer | Post-MVP, if deploying across multiple servers |
-| **Docker Swarm** | ❌ Not recommended | Kubernetes is industry standard; skip Swarm |
-
-**For MVP:** Docker Compose. Upgrade to K8s only when managing 10+ services across multiple machines.
-
----
-
-## 8. API Gateway & Routing
-
-### API Gateway Solution
-
-| Platform | Version | Decision | Rationale |
-|----------|---------|----------|-----------|
-| **Spring Cloud Gateway** | 4.1.x | ✅ **RECOMMENDED** | Spring-native; routes all traffic to microservices |
-| **Kong** | 3.x | ❌ Not for MVP | Separate deployment; overkill |
-| **AWS API Gateway** | N/A | ❌ Not for university assignment | Cloud-locked; skip |
-| **Nginx** | 1.27.x | ✅ Alternative | Lightweight reverse proxy if using non-Spring tech |
-
-**Gateway Responsibilities:**
-- Route `/api/users/**` → User Service
-- Route `/api/products/**` → Product Service
-- Route `/api/orders/**` → Order Service
-- Handle authentication & CORS
-- Rate limiting (prevent abuse)
-
-### CORS Configuration
-
-```yaml
-# application.yml (API Gateway)
-spring:
-  cloud:
-    gateway:
-      routes:
-        - id: product-service
-          uri: http://product-service:8080
-          predicates:
-            - Path=/api/products/**
-          filters:
-            - AddResponseHeader=Access-Control-Allow-Origin, *
-```
-
----
-
-## 9. Integration & Communication Patterns
-
-### Inter-Service Communication
-
-| Pattern | Technology | Use Case | Decision |
-|---------|-----------|----------|----------|
-| **Synchronous (Request-Reply)** | Spring Cloud Feign + HTTP | Product lookup, user validation | ✅ Default for most calls |
-| **Asynchronous (Fire-Forget)** | RabbitMQ + Spring Cloud Stream | Order events, inventory updates | ✅ For long-running operations |
-| **gRPC** | gRPC (protobuf) | High-performance inter-service | ❌ Defer to v2 (adds complexity) |
-
-### Payment Gateway Integration
-
-| Decision | Service | Rationale |
-|----------|---------|-----------|
-| **Use mock payment gateway** | Custom stub in Test service | MVP doesn't require real payments; full integration wastes time |
-| **Stripe** | Stripe Java SDK | Post-MVP; simplest real payment processor |
-
-**For MVP:** Implement PaymentService with mock responses. Test with transaction IDs only.
-
----
-
-## 10. Dependency Management & Versions
-
-### Maven BOM (Bill of Materials)
-
-Use Spring Boot's BOM to manage versions automatically:
+**Library:** [`net.coobird:thumbnailator:0.4.20`](https://github.com/coobird/thumbnailator) — pure Java, no native deps, MIT.
 
 ```xml
-<dependencyManagement>
-    <dependencies>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-dependencies</artifactId>
-            <version>4.0.5</version>
-            <type>pom</type>
-            <scope>import</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-dependencies</artifactId>
-            <version>2024.0.2</version>
-            <type>pom</type>
-            <scope>import</scope>
-        </dependency>
-    </dependencies>
-</dependencyManagement>
+<dependency>
+  <groupId>net.coobird</groupId>
+  <artifactId>thumbnailator</artifactId>
+  <version>0.4.20</version>
+</dependency>
 ```
 
-This ensures all transitive dependencies are compatible.
+```java
+byte[] resized = Thumbnails.of(file.getInputStream())
+    .size(256, 256)
+    .outputFormat("jpg")
+    .outputQuality(0.85)
+    .asBufferedImage(); // wrap to ByteArrayOutputStream
+```
+
+**Validation:** Spring Boot `multipart.max-file-size=2MB`, content-type whitelist (`image/jpeg`, `image/png`, `image/webp`), magic-byte check (`Files.probeContentType` không tin browser).
+
+**Why not presigned S3:** không có S3 trong stack. Adding MinIO chỉ cho avatar = scope creep.
+
+**Why not base64 trong JSON body:** mất ETag/streaming, payload bloat, FE phải encode/decode.
 
 ---
 
-## 11. Technology Decisions Summary
+## 2. Frontend Additions (Next.js 16.2.3, React 19.2.4, TypeScript 5)
 
-### Must-Have (Non-negotiable)
+**Existing FE state (verified từ `sources/frontend/package.json`):** dependencies = `next`, `react`, `react-dom` ONLY. Zero UI lib, zero form lib, zero validation lib. Mọi thứ hiện tại là plain CSS modules + custom components (`Button`, `Badge`, `ProductCard`, `RetrySection`, `Toast`).
 
-| Component | Choice | Rationale |
-|-----------|--------|-----------|
-| Java | 21 LTS | Production-ready; matches Spring Boot 4.x minimum |
-| Spring Boot | 4.0.5 | Current stable; microservices-optimized |
-| PostgreSQL | 18.3 | Reliable, ACID, mature ecosystem |
-| Next.js | 15/16 | Modern React framework; SSR-ready |
-| Docker | 27.x | Industry standard containerization |
-| API Gateway | Spring Cloud Gateway | Native to Spring ecosystem |
+Đây là cố ý minimalism — additions phải justify từng KB.
 
-### Should-Have (Recommended)
+### 2.1 Form Validation — react-hook-form + zod
 
-| Component | Choice | Why |
-|-----------|--------|-----|
-| JWT | JJWT 0.12.x | Stateless auth across services |
-| React Hook Form + Zod | Latest | Type-safe forms, minimal re-renders |
-| TanStack Query | 5.x | Declarative server state management |
-| Zustand | 4.5.x | Lightweight client state |
-| shadcn/ui | Latest | Customizable, copy-paste components |
-| Testcontainers | 1.19.x | Isolated test databases |
-| RabbitMQ | 4.0.x | Event-driven order workflows |
+**Need:** Profile editing (5 fields + password), address create/edit (8 fields), review submit (rating + comment) — all need client validation, error states, dirty tracking.
 
-### Optional (Post-MVP Upgrade)
+**Picks:**
+| Lib | Version | Size (gz) | Why |
+|-----|---------|-----------|-----|
+| `react-hook-form` | 7.55.0 | ~9KB | Uncontrolled inputs = perf default, hook API minimal, Next 16 / React 19 compat |
+| `zod` | 3.24.1 | ~13KB | Schema once, infer TS type + validate runtime; reuse schemas đã sẵn nếu later mirror BE DTO |
+| `@hookform/resolvers` | 5.0.1 | <1KB | Glue zod ↔ rhf |
 
-| Component | Trigger | Timeline |
-|-----------|---------|----------|
-| Kubernetes | 10+ services across machines | v2.0 |
-| Spring Cloud Config | Frequent config changes | v2.0 |
-| Kafka | 10K+ events/second | v2.0 |
-| Jaeger tracing | Debugging production issues | v2.0 |
-| AWS/GCP deployment | Beyond university assignment | Post-production |
+Total: ~23KB gz cho 3 forms. Acceptable.
+
+**Reject Formik:** abandoned-ish (last release patchy), 13KB gz, controlled-input perf cliff với arrays.
+
+**Reject native HTML5 validation only:** `pattern` regex error messages không i18n, không tích hợp với existing `Toast` system, password confirmation cross-field check phải custom anyway.
+
+**Pattern:**
+```ts
+// schemas/profile.ts
+export const profileSchema = z.object({
+  fullName: z.string().min(2).max(120),
+  phone: z.string().regex(/^(\+84|0)\d{9,10}$/),
+});
+export type ProfileForm = z.infer<typeof profileSchema>;
+
+// component
+const { register, handleSubmit, formState: { errors } } =
+  useForm<ProfileForm>({ resolver: zodResolver(profileSchema) });
+```
+
+### 2.2 Image Gallery — yet-another-react-lightbox
+
+**Need:** Product detail có gallery (zoom, fullscreen, thumbnails strip, keyboard nav). Hiện `app/products/[slug]/page.tsx` đã có `selectedImage` state nhưng chỉ render 1 ảnh — phải nâng lên thumbnail strip + lightbox.
+
+**Pick:** [`yet-another-react-lightbox`](https://yet-another-react-lightbox.com) v3.21.x
+- Zero dependencies (peer: react)
+- ~11KB gz core, tree-shakeable plugins
+- Plugins: `Thumbnails`, `Zoom`, `Fullscreen`, `Counter` — pick chỉ cái cần
+- React 19 compat (Context7-verified)
+- TypeScript native
+
+```tsx
+import Lightbox from 'yet-another-react-lightbox';
+import Thumbnails from 'yet-another-react-lightbox/plugins/thumbnails';
+import 'yet-another-react-lightbox/styles.css';
+import 'yet-another-react-lightbox/plugins/thumbnails.css';
+```
+
+**Reject Swiper:** 40KB+ gz, overkill cho gallery (designed cho carousel slideshows).
+**Reject react-image-gallery:** stale (last commit >18 months), no React 19 support badge.
+**Reject PhotoSwipe vanilla:** không có React wrapper officially maintained, manual lifecycle.
+
+**Image strategy:** dùng existing `next/image` (đã import ở product detail page) cho main + thumbnails. Lightbox chỉ active on click.
+
+### 2.3 Star Rating — Custom Component (no lib)
+
+**Reject `react-rating`, `react-star-ratings`:** 1 component, 5 SVG `<polygon>` với fill state, 30 LOC, không xứng dependency.
+
+```tsx
+// components/ui/StarRating/StarRating.tsx
+function StarRating({ value, onChange, readOnly }: Props) {
+  return [1,2,3,4,5].map(n => (
+    <button type="button" onClick={() => !readOnly && onChange?.(n)}
+            aria-label={`${n} sao`}>
+      <svg><polygon className={n <= value ? 'filled' : 'empty'} ... /></svg>
+    </button>
+  ));
+}
+```
+
+A11y: `role="radiogroup"` wrapper khi editable, `aria-label` per star.
+
+### 2.4 Date Range — Native `<input type="date">`
+
+Order history filter chỉ cần from/to. Native input:
+- Zero JS
+- Picker UI free từ browser (Chromium/Firefox 2026 đều có calendar UI tốt)
+- Format ISO `YYYY-MM-DD` parse trivial backend-side
+- A11y free
+
+**Reject react-datepicker / dayjs picker:** không cần range overlay, không cần locale customization beyond browser default.
+
+### 2.5 Avatar Upload UX
+
+```tsx
+const [preview, setPreview] = useState<string | null>(null);
+<input type="file" accept="image/jpeg,image/png,image/webp"
+       onChange={e => {
+         const f = e.target.files?.[0];
+         if (!f) return;
+         if (f.size > 2_000_000) return showToast({ kind:'error', text:'File >2MB' });
+         setPreview(URL.createObjectURL(f));
+         setFile(f);
+       }} />
+{preview && <img src={preview} alt="preview" />}
+```
+
+Submit qua `FormData` + existing typed http client (cần thêm 1 method `postMultipart` ở `services/api.ts` — không bắt OpenAPI codegen vì multipart codegen flaky).
+
+**Reject react-dropzone:** drag-drop UX không cần thiết cho 1 avatar — extra 7KB gz cho zero gain.
+
+### 2.6 Homepage Carousel — CSS Scroll-Snap
+
+```css
+.featuredRow {
+  display: grid; grid-auto-flow: column; grid-auto-columns: 280px;
+  gap: 16px; overflow-x: auto;
+  scroll-snap-type: x mandatory;
+}
+.featuredRow > * { scroll-snap-align: start; }
+```
+
+Touch + trackpad swipe miễn phí. Arrow buttons optional bằng `scrollBy({left: 296})`.
+
+**Reject swiper / embla-carousel:** hero là 1 ảnh static + featured là horizontal list — không cần JS carousel engine.
 
 ---
 
-## 12. Version Compatibility Matrix
+## 3. Integration Points với Existing Stack
 
-This table shows tested combinations for April 2026:
-
-| Java | Spring Boot | Spring Cloud | PostgreSQL | Next.js | Node.js | Docker |
-|------|-------------|--------------|------------|---------|---------|--------|
-| 21 | 4.0.5 | 2024.0.2 | 18.3 | 15+ | 20 LTS | 27.x |
-| 23 | 4.0.5 | 2024.0.2 | 18.3 | 15+ | 22 | 27.x |
-
-**Note:** Spring Cloud 2024.0.2 is the latest; paired with Boot 4.0.x. Never mix Boot 3.x with 2024.0.x Spring Cloud.
-
----
-
-## 13. Common Pitfalls & How to Avoid Them
-
-### Pitfall 1: Package Naming Confuses javax.* vs jakarta.*
-**Problem:** Spring Boot 4.x uses `jakarta.servlet`, not `javax.servlet`. Old imports fail.  
-**Prevention:** Let Spring Boot Starter generate the project. IDE should auto-complete correctly.  
-**Fix:** Search `import javax.` and replace with `jakarta.`
-
-### Pitfall 2: Testcontainers Docker Not Available
-**Problem:** Tests hang waiting for Docker if not running.  
-**Prevention:** Ensure Docker Desktop is running. Use CI environment variables to skip if unavailable.
-
-### Pitfall 3: Next.js App Router Confusion
-**Problem:** Mix of old `pages/` and new `app/` directory breaks routing.  
-**Prevention:** Choose one: `app/` (recommended). Delete `pages/` folder entirely.
-
-### Pitfall 4: TanStack Query Cache Gets Stale
-**Problem:** Updated product prices don't refresh in UI.  
-**Prevention:** Configure `staleTime` (5 minutes) and `gcTime` (10 minutes) properly. Invalidate on mutations.
-
-### Pitfall 5: PostgreSQL Schema Drift
-**Problem:** Liquibase migrations out of sync with code.  
-**Prevention:** Run migrations first; let Hibernate validate existing schema with `spring.jpa.hibernate.ddl-auto: validate`.
-
-### Pitfall 6: JWT Token Expiration Not Handled
-**Problem:** Users get cryptic errors when token expires.  
-**Prevention:** Set reasonable TTL (15 min access, 7 day refresh). Refresh token flow in Next.js.
-
-### Pitfall 7: RabbitMQ Message Loss
-**Problem:** Messages dropped if consumer crashes.  
-**Prevention:** Enable `spring.rabbitmq.listener.simple.acknowledge-mode: MANUAL`. Implement dead-letter queues.
+| Existing piece | v1.2 hook |
+|----------------|-----------|
+| **OpenAPI codegen pipeline** (`scripts/gen-api.mjs`) | Phải regen sau khi thêm endpoints `/wishlist`, `/reviews`, `/addresses`, `/users/{id}/avatar`, `/products?brand=&minPrice=&...`. Avatar multipart endpoint có thể cần manual type stub vì codegen multipart flaky. |
+| **Typed `services/*.ts` modules** (cart, orders, products, users) | Add `services/wishlist.ts`, `services/reviews.ts`, `services/addresses.ts`. Pattern khớp existing — 1 file per resource. |
+| **`ApiError` dispatcher** (5 failure branches) | Reuse — không thêm error class. Validation 422 đã handled. |
+| **AuthProvider hydration** | Wishlist/addresses page là protected → middleware extension (AUTH-06) cover. Component chỉ cần read `useAuth()` user.id. |
+| **Middleware route gate** (AUTH-06 closure) | Matcher mở rộng: `['/admin/:path*', '/account/:path*', '/profile/:path*', '/checkout/:path*']`. JWT cookie check identical. |
+| **`OrderEntity.shipping_address` JSON** (v1.1 PERSIST-02) | Address book → serialize chosen `UserAddressEntity` thành JSON trước khi POST `/api/orders`. Order-service ZERO change. |
+| **`ProductEntity.stock`** (v1.1 PERSIST-01) | `inStock` filter dùng stock>0. Stock badge ở product detail dùng same field. |
+| **Cached `avg_rating` + `review_count` trên products** | New cached cols → product list/search responses tự nhiên có rating → "rating filter" + "rating display ở card" share data. |
+| **Playwright E2E** (`@playwright/test` 1.59) | Re-baseline cover v1.1 + thêm 8 specs cho v1.2 features. Selectors: `data-testid` thêm trên new components. |
+| **Toast system** (`components/ui/Toast`) | Reuse cho wishlist add/remove, profile saved, address default switch, review submitted. Zero new notification lib. |
 
 ---
 
-## 14. Installation Checklist
+## 4. Versions Summary (copy-paste install)
 
-### Prerequisites
+### Backend — `user-service/pom.xml`
+```xml
+<dependency>
+  <groupId>net.coobird</groupId>
+  <artifactId>thumbnailator</artifactId>
+  <version>0.4.20</version>
+</dependency>
+```
 
+### Backend — `product-service/pom.xml`
+No new deps. JPA Specifications là core Spring Data JPA (đã có).
+
+### Backend — `order-service/pom.xml`
+No new deps.
+
+### Frontend — `sources/frontend/package.json`
+```json
+{
+  "dependencies": {
+    "react-hook-form": "7.55.0",
+    "zod": "3.24.1",
+    "@hookform/resolvers": "5.0.1",
+    "yet-another-react-lightbox": "3.21.5"
+  }
+}
+```
+
+Install:
 ```bash
-# Check Java version
-java -version          # Should show 21 or higher
-
-# Check Node.js version
-node --version         # Should show 20.x or 22.x
-
-# Check Docker
-docker --version       # Should show 27.x or higher
-docker-compose --version
-
-# Check Maven (for Spring Boot)
-mvn --version          # Should show 3.9.x
-```
-
-### Backend Setup
-
-```bash
-# Create Spring Boot project
-cd services
-npx --yes @spring-projects/spring-boot-cli@latest project \
-  --from=https://start.spring.io \
-  --name=user-service \
-  --java-version=21 \
-  --dependencies=web,data-jpa,postgresql,actuator
-
-cd user-service
-
-# Install dependencies (auto-run by Maven)
-mvn clean install
-
-# Run tests
-mvn test
-
-# Start service
-mvn spring-boot:run
-```
-
-### Frontend Setup
-
-```bash
-# Create Next.js project with App Router
-cd frontend
-npx create-next-app@latest . \
-  --typescript \
-  --tailwind \
-  --app
-
-# Install additional dependencies
-npm install axios @tanstack/react-query zustand zod react-hook-form
-
-# Run tests
-npm run test
-
-# Start dev server
-npm run dev
-```
-
-### Docker Setup
-
-```bash
-# Start infrastructure (PostgreSQL, RabbitMQ, Redis)
-docker-compose up -d
-
-# Verify services
-docker-compose ps
-
-# View logs
-docker-compose logs postgres
-docker-compose logs rabbitmq
-
-# Stop all
-docker-compose down
+cd sources/frontend
+npm install react-hook-form@7.55.0 zod@3.24.1 @hookform/resolvers@5.0.1 yet-another-react-lightbox@3.21.5
 ```
 
 ---
 
-## 15. Documentation & References
+## 5. Explicitly NOT Adding (Anti-Bloat)
 
-### Official Documentation (Current as of 2026-04-22)
-
-| Project | URL | Version |
-|---------|-----|---------|
-| Spring Boot | https://spring.io/projects/spring-boot | 4.0.5 |
-| Spring Cloud | https://spring.io/projects/spring-cloud | 2024.0.2 |
-| Next.js | https://nextjs.org/docs | 15/16 |
-| PostgreSQL | https://www.postgresql.org/docs/current | 18.3 |
-| Docker | https://docs.docker.com | 27.x |
-| TanStack Query | https://tanstack.com/query/latest | 5.x |
-| React Hook Form | https://react-hook-form.com | 7.x |
-
----
-
-## 16. Confidence Assessment
-
-| Area | Confidence | Notes |
-|------|------------|-------|
-| Backend (Spring Boot) | **HIGH** | Verified via spring.io (April 2026); standard microservices approach |
-| Database (PostgreSQL) | **HIGH** | Official site confirms 18.3 release (Feb 26, 2026) |
-| Frontend (Next.js) | **HIGH** | nextjs.org confirms current release; App Router standard |
-| Testing Frameworks | **HIGH** | JUnit 5, Vitest, Playwright are industry standard (2025+) |
-| Docker/Compose | **HIGH** | Official sources; versions matched to Java 21 + Node 20 LTS |
-| Message Queues | **HIGH** | RabbitMQ recommended over Kafka for MVP; Spring Cloud Stream abstracts |
-| UI Libraries | **HIGH** | shadcn/ui + Tailwind CSS are 2025 standard for React e-commerce |
-| Build Tools | **HIGH** | Maven 3.9.x with Spring Boot BOM ensures dependency harmony |
+| Tempting addition | Why reject |
+|-------------------|-----------|
+| **Redux / Zustand** | AuthProvider context + per-page useState đủ. Wishlist count = 1 fetch on mount + invalidate. |
+| **TanStack Query / SWR** | Existing services đã có manual loading/error pattern; introducing query lib = rewrite tất cả services. Defer. |
+| **Tailwind** | Existing là CSS modules — switching = full restyling outside scope. |
+| **shadcn/ui, MUI, Chakra** | Component lib hiện tại nhỏ, prescriptive — adding design system = rewrite. v1.2 chỉ cần ~6 new components, viết tay. |
+| **QueryDSL / jOOQ** | Specifications cover use case; APT/codegen overhead không xứng. |
+| **MinIO / S3 / presigned** | Avatar = inline BYTEA đủ cho local Docker stack thử nghiệm. |
+| **Redis cache** | avg_rating cached column đã giải N+1; product list <100 rows local, không cần cache layer. |
+| **WebSocket / SSE** | Reviews refresh on submit = optimistic update + refetch list, không cần realtime. |
+| **react-dropzone, uppy** | Avatar = 1 file native input. |
+| **Algolia / Meilisearch / Elasticsearch** | Search dataset nhỏ, JPA Specification + LIKE đủ. |
+| **dayjs / date-fns** | Native `<input type="date">` + `Intl.DateTimeFormat` cho display. Order history đã có ISO format. |
 
 ---
 
-## Final Recommendation
+## 6. Confidence & Sources
 
-**This stack is production-ready for MVP.** No experimental frameworks; all choices have 5+ year track records. All tools are actively maintained (releases in 2026). The only significant decision is RabbitMQ vs Kafka — choose RabbitMQ for MVP unless your assignment explicitly requires event streaming at scale.
+| Claim | Confidence | Source |
+|-------|-----------|--------|
+| Spring Data JPA Specifications là API stable trong Spring Boot 3.3.x | HIGH | Spring Data JPA reference docs (current) |
+| Thumbnailator 0.4.20 stable, MIT, pure Java | HIGH | github.com/coobird/thumbnailator releases |
+| react-hook-form 7.55.x React 19 compat | HIGH | rhf docs (Context7) + npm peerDeps |
+| zod 3.24.x stable, no breaking from 3.23 | HIGH | zod CHANGELOG |
+| yet-another-react-lightbox 3.21.x React 19 compat, ~11KB gz | MEDIUM-HIGH | official docs site + bundlephobia (April 2026) |
+| BYTEA <100KB OK Postgres performance | HIGH | Postgres docs — TOAST handles inline ≤2KB, external ≤8KB chunks transparently |
+| Cached avg_rating column update via service-tier event listener | HIGH | Spring `@TransactionalEventListener` pattern, standard |
+| Native `<input type="date">` browser support 2026 | HIGH | caniuse — universal Chromium/FF/Safari 16+ |
 
-**Estimated delivery speed:** Full CRUD API for 3 microservices in 2-3 weeks with this stack.
+**Verified nothing:** Avatar BYTEA performance under high concurrency (irrelevant — local stack). Lightbox bundle size đo qua bundlephobia historical, không re-verified hôm nay.
 
 ---
 
-*Prepared: 2026-04-22*  
-*For: Laptop E-Commerce Microservices (University Assignment)*  
-*Next Step: Use this stack in gsd-plan-phase to design Phase 1 (Project Setup)*
+## 7. Roadmap Implications
+
+**Phase 9 (đề xuất):** AUTH-06 middleware + UI-02 admin dashboard + Playwright re-baseline (residual closure, zero new deps).
+
+**Phase 10:** Backend persistence cluster — V4 migrations (wishlist, reviews + cached cols, addresses, avatar BYTEA cols) + entities + repositories. Tất cả backend libs install ở phase này (chỉ Thumbnailator).
+
+**Phase 11:** FE foundation deps + cross-cutting UI:
+- Install rhf+zod+resolvers+lightbox cùng lúc
+- Build StarRating component
+- Profile editing form (first form = thiết lập rhf+zod pattern cho phases sau)
+
+**Phase 12:** Discovery features (Reviews UI, Advanced search filters) — reuse rhf+StarRating.
+
+**Phase 13:** Account features (Wishlist, Order history filtering, Address book) — reuse rhf+forms.
+
+**Phase 14:** Public polish (Homepage redesign, Product detail enhancements với lightbox).
+
+**Phase 15:** Playwright E2E expansion + audit.
+
+Phase 11 = critical foundation — bug ở rhf/zod setup sẽ block 12/13. Suggest extra audit-verify gate sau Phase 11.
