@@ -95,8 +95,12 @@ Plans:
   3. `POST /api/orders` persist `OrderEntity` với per-item `OrderItemEntity` rows (productId, productName snapshot, quantity, unitPrice snapshot, lineTotal) + `shippingAddress` (JSON/embedded) + `paymentMethod`
   4. `GET /api/orders/{id}` + `GET /api/orders/me` trả full payload với items array + shippingAddress + paymentMethod
   5. FE `/checkout/success` (confirmation) và `/account/orders/{id}` (detail) render full breakdown thật từ backend (line items + địa chỉ + phương thức thanh toán + totals); hết mock data trên 2 trang này
-**Plans**: TBD
-**UI hint**: yes
+**Plans:** 4 plans
+Plans:
+- [ ] 08-01-PLAN.md — product-service: Flyway V3 migration (stock column + seed 50) + ProductEntity.stock field + ProductCrudService wire (PERSIST-01 backend)
+- [ ] 08-02-PLAN.md — order-service: Flyway V2 migration (order_items table + shipping_address/payment_method columns) + OrderItemEntity + OrderEntity extend + OrderDto/Mapper + createOrderFromCommand() wire items (PERSIST-02, PERSIST-03 backend)
+- [ ] 08-03-PLAN.md — FE: checkout redirect sang /account/orders/{id} (bỏ modal) + order detail page async fetch + full breakdown UI + CSS table classes (PERSIST-03 FE)
+- [ ] 08-04-PLAN.md — FE: product detail stock display wire thật + disabled bug fix (D-13) + quantity max=stock (D-15) + CSS stock classes (PERSIST-01 FE)
 
 ## Progress
 
@@ -112,4 +116,4 @@ Plans:
 | 5. Database Foundation | 9/9 | ✅ Complete | 2026-04-26 |
 | 6. Real Auth Flow | 3/3 | ✅ Complete | 2026-04-26 |
 | 7. Search + Admin Real Data | 6/6 | ✅ Complete | 2026-04-26 |
-| 8. Cart → Order Persistence Visible | 0/TBD | Not started | — |
+| 8. Cart → Order Persistence Visible | 0/4 | Not started | — |
