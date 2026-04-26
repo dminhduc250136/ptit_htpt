@@ -53,11 +53,11 @@ Kế thừa từ `globals.css` — chỉ khai báo subset dùng trong Phase 6:
 | Role | Token | Size | Weight | Line Height | Usage |
 |------|-------|------|--------|-------------|-------|
 | Heading | `--text-headline-md` | 28px (1.75rem) | 700 (`--weight-bold`) | 1.2 (`--leading-tight`) | Form title: "Đăng nhập", "Tạo tài khoản", "403" |
-| Label | `--text-label-lg` | 14px (0.875rem) | 500 (`--weight-medium`) | 1.5 (`--leading-normal`) | Input field labels |
+| Label | `--text-label-lg` | 14px (0.875rem) | 700 (`--weight-bold`) | 1.5 (`--leading-normal`) | Input field labels |
 | Body | `--text-body-lg` | 16px (1rem) | 400 (`--weight-regular`) | 1.6 (`--leading-relaxed`) | Input value text, button text (size lg), subtitle |
 | Caption | `--text-body-sm` | 12px (0.75rem) | 400 (`--weight-regular`) | 1.6 (`--leading-relaxed`) | Error messages dưới field, helper text, checkbox label |
 
-**Quy tắc:** Không dùng quá 4 font sizes trên cùng một màn hình. Không dùng weight < 400 trong Phase 6.
+**Quy tắc:** Đúng 2 font weights — `400 (--weight-regular)` và `700 (--weight-bold)`. Không dùng weight < 400 hoặc weight 500 trong Phase 6. Không dùng quá 4 font sizes trên cùng một màn hình.
 
 ---
 
