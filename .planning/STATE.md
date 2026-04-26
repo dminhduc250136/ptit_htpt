@@ -1,31 +1,31 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.1
-milestone_name: Real End-User Experience
-current_plan: 05-wave3-in-progress
-status: phase5-executing
-last_updated: "2026-04-26T04:30:00.000Z"
-last_activity: "2026-04-26 04:30Z -- Phase 5 Wave 3 RESUMED sau usage-limit reset. Plan 06 (payment) đã COMPLETE và MERGED. Plans 03/04/05/07 partial commits đã merged về develop, sau đó respawn 4 background gsd-executor agents để continue từ chỗ stopped. Base commit: 098cc1b. Agents đang chạy."
+milestone_name: Phase Progress
+status: "Plan 08 integration smoke PASS. Commits: 69c8884 (Task 8.1), 4a6afe1 (Task 8.2). Next: Plan 09 FE rewire (xóa mock-data, wire FE → real backend)."
+last_updated: "2026-04-26T04:17:57.017Z"
+last_activity: "2026-04-26 04:15Z — Plan 08 COMPLETE. Stack verified green."
 progress:
   total_phases: 4
   completed_phases: 0
   total_plans: 9
-  completed_plans: 3
-  percent: 33
+  completed_plans: 8
+  percent: 89
 ---
 
 ## Current Position
 
-Phase: 5 — Database Foundation (EXECUTING — Wave 3 in progress)
-Plan: 9 plans / 5 waves — ✅ Wave 1 (Plan 01) DONE → ✅ Wave 2 (Plan 02) DONE → 🟡 Wave 3 (Plans 03-07 parallel) IN PROGRESS → ⏳ Wave 4 (Plan 08) → ⏳ Wave 5 (Plan 09)
-Status: 5 background gsd-executor agents đang chạy worktree-isolated cho Wave 3 (product, user, order, payment, inventory services JPA refactor). Khi resume cần verify worktrees còn tồn tại + merge từng worktree branch về develop.
-Last activity: 2026-04-26 01:30Z — Wave 3 spawned 5 parallel agents trên base commit 1ddf478 (= post Wave 2 merge).
+Phase: 5 — Database Foundation (Wave 4 COMPLETE — Wave 5 ready)
+Plan: 9 plans / 5 waves — ✅ Wave 1 (Plan 01) DONE → ✅ Wave 2 (Plan 02) DONE → ✅ Wave 3 (Plans 03-07) DONE → ✅ Wave 4 (Plan 08) DONE → ⏳ Wave 5 (Plan 09)
+Status: Plan 08 integration smoke PASS. Commits: 69c8884 (Task 8.1), 4a6afe1 (Task 8.2). Next: Plan 09 FE rewire (xóa mock-data, wire FE → real backend).
+Last activity: 2026-04-26 04:15Z — Plan 08 COMPLETE. Stack verified green.
 
 ## Resume Instructions (Phase 5 Execute)
 
 **Last orchestrator commit on develop**: `098cc1b` (post merge of Plan 06 + 4 partial worktrees Plans 03/04/05/07).
 
 **Wave 3 status (2026-04-26 04:30Z — RESUMED after 4:20am limit reset):**
+
 - ✅ Plan 06 payment-service — COMPLETE + MERGED (4 commits + SUMMARY)
 - 🟡 Plan 03 product-service — partial deps merged, RESUMED via agent `a2c438f03a64ac616` (background)
 - 🟡 Plan 04 user-service — partial deps merged, RESUMED via agent `a4f92d7394f404216` (background)
@@ -46,6 +46,7 @@ Last activity: 2026-04-26 01:30Z — Wave 3 spawned 5 parallel agents trên base
 **Stale worktrees (locked, non-blocking):** `agent-a8422e9616c369b6c` (W1), `agent-a60a38734b1d51504` (W2), and old Wave 3 batch (`ad7b3d0814aedeeb2`, `aeef4b198f3b5587b`, `a56f0b03c6deb3627`, `a6478588edc9ff3ec`, `a9f0daf00af104c9b`) — đã merge xong, có thể remove sau session khi unlocked.
 
 **Critical context cho Wave 3 → Wave 4 chain:**
+
 - Cross-service IDs: admin user = `00000000-0000-0000-0000-000000000001`, demo_user = `00000000-0000-0000-0000-000000000002`. Order seed (Plan 05) reference demo_user. Inventory seed (Plan 07) reference `prod-001`..`prod-010` (Plan 03 product seed pattern).
 - BCrypt verified hash cho admin: `$2a$10$TMH2spmmPRD90vJz8w5yz.G0o4AR/Hio2RU1yBwjjT1ClTLqF5lFu` (Plan 04 V2 seed). Hash sai trong RESEARCH (`$N9qo8uLOick...`) đã bị Plan 01 caught.
 - OpenAPI baselines pre-refactor lưu tại `.planning/phases/05-database-foundation/baseline/openapi-{user,product,order,payment,inventory}-service.json` — Wave 4 capture post versions và diff = 0.
@@ -74,6 +75,8 @@ Last activity (history): 2026-04-26 — Phase 5 planning complete (research + pa
 
 ## Decisions
 
+- **2026-04-26 Plan 08:** Gateway two-route-per-service pattern (base + wildcard) — tránh trailing-slash ambiguity trong RewritePath. Fix đồng thời capture group name conflict với $PATH env var (dùng `seg` thay `path`).
+- **2026-04-26 Plan 08:** OpenAPI drift documented (không block): order=0 diff; user/product/payment/inventory có expected drift per Plans 03/04/06/07 SUMMARYs. Wave 5 proceeds.
 - v1.1 scope reshape theo "visible-first" (user feedback): chỉ pick 6/17 deferred items có visible impact (D3 partial, D4, D5, D11 partial, D15, D16). 11/17 còn lại (D1, D2, D6, D7, D8, D9, D10, D12, D13, D14, D17) defer sang v1.2.
 - Phase numbering: continue từ v1.0 (start Phase 5), KHÔNG dùng `--reset-phase-numbers`.
 - Skip research step: stack đã locked, patterns auth/CRUD đã có sẵn từ v1.0 foundation.
