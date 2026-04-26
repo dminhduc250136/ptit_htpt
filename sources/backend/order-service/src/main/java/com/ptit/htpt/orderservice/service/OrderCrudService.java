@@ -1,10 +1,13 @@
 package com.ptit.htpt.orderservice.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ptit.htpt.orderservice.domain.CartEntity;
 import com.ptit.htpt.orderservice.domain.OrderDto;
 import com.ptit.htpt.orderservice.domain.OrderEntity;
+import com.ptit.htpt.orderservice.domain.OrderItemEntity;
 import com.ptit.htpt.orderservice.domain.OrderMapper;
 import com.ptit.htpt.orderservice.repository.InMemoryCartRepository;
+import com.ptit.htpt.orderservice.repository.OrderItemRepository;
 import com.ptit.htpt.orderservice.repository.OrderRepository;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
@@ -18,18 +21,28 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
 public class OrderCrudService {
+  private static final Logger log = LoggerFactory.getLogger(OrderCrudService.class);
   private final InMemoryCartRepository cartRepository;
   private final OrderRepository orderRepository;
+  private final OrderItemRepository orderItemRepository;
+  private final ObjectMapper objectMapper;
 
-  public OrderCrudService(InMemoryCartRepository cartRepository, OrderRepository orderRepository) {
+  public OrderCrudService(InMemoryCartRepository cartRepository,
+                          OrderRepository orderRepository,
+                          OrderItemRepository orderItemRepository,
+                          ObjectMapper objectMapper) {
     this.cartRepository = cartRepository;
     this.orderRepository = orderRepository;
+    this.orderItemRepository = orderItemRepository;
+    this.objectMapper = objectMapper;
   }
 
   public Map<String, Object> listCarts(int page, int size, String sort, boolean includeDeleted) {
@@ -88,22 +101,56 @@ public class OrderCrudService {
 
   /**
    * Domain entry point for the FE checkout flow. Derives totalAmount from items, defaults status
-   * to PENDING, persists via OrderEntity factory. userId supplied by controller after reading
-   * X-User-Id session header — Phase 6 sẽ replace với JWT claim verification at gateway.
+   * to PENDING, persists via OrderEntity factory + per-item OrderItemEntity cascade.
+   * userId supplied by controller after reading X-User-Id session header.
+   *
+   * <p>Phase 8 Plan 02: persist items (D-06 productName snapshot) + shippingAddress (D-08) + paymentMethod (D-09).
+   * D-04 stock validate + D-05 stock deduct wired in Task 4.
    */
   public OrderDto createOrderFromCommand(String userId, CreateOrderCommand command) {
     if (userId == null || userId.isBlank()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing X-User-Id session header");
     }
 
+    // D-04: Stock validation — thêm bởi Task 4 (validateStockOrThrow inject RestTemplate)
+    // Task 4 sẽ thêm: validateStockOrThrow(command.items());
+
     BigDecimal totalAmount = command.items().stream()
         .map(item -> item.unitPrice().multiply(BigDecimal.valueOf(item.quantity())))
         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-    String note = command.note();   // null OK — OrderEntity.note nullable
+    // Serialize shippingAddress thành JSON string để lưu JSONB (D-08)
+    String shippingAddressJson;
+    try {
+      shippingAddressJson = objectMapper.writeValueAsString(command.shippingAddress());
+    } catch (Exception e) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid shippingAddress format");
+    }
 
-    OrderEntity order = OrderEntity.create(userId, totalAmount, "PENDING", note);
-    return OrderMapper.toDto(orderRepository.save(order));
+    // Tạo và persist OrderEntity
+    OrderEntity order = OrderEntity.create(userId, totalAmount, "PENDING", command.note());
+    order.setShippingAddress(shippingAddressJson);
+    order.setPaymentMethod(command.paymentMethod());
+
+    // Tạo OrderItemEntity cho từng item — cascade ALL sẽ persist cùng order
+    // D-06: productName snapshot lấy trực tiếp từ command (FE truyền item.name từ cart state)
+    for (OrderItemRequest itemReq : command.items()) {
+      OrderItemEntity item = OrderItemEntity.create(
+          order,
+          itemReq.productId(),
+          itemReq.productName(),   // D-06: productName snapshot — KHÔNG dùng productId làm placeholder
+          itemReq.quantity(),
+          itemReq.unitPrice()
+      );
+      order.addItem(item);
+    }
+
+    OrderEntity saved = orderRepository.save(order);
+
+    // D-05: Stock deduct — thêm bởi Task 4 (deductStockAfterPersist inject RestTemplate)
+    // Task 4 sẽ thêm: deductStockAfterPersist(command.items());
+
+    return OrderMapper.toDto(saved);
   }
 
   public OrderDto updateOrder(String id, OrderUpsertRequest request) {
@@ -205,6 +252,7 @@ public class OrderCrudService {
 
   public record OrderItemRequest(
       @NotBlank String productId,
+      @NotBlank String productName,
       @Min(1) int quantity,
       @NotNull @DecimalMin("0.0") BigDecimal unitPrice
   ) {}
