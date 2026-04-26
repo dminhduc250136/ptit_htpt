@@ -14,7 +14,7 @@
 
 import type { paths as _OrdersPaths } from '@/types/api/orders.generated';
 import type { Order, CreateOrderRequest, PaginatedResponse } from '@/types';
-import { httpGet, httpPost } from './http';
+import { httpGet, httpPost, httpPatch } from './http';
 
 export type _PathsSurface = _OrdersPaths;
 
@@ -47,4 +47,23 @@ export function listMyOrders(params?: ListOrdersParams): Promise<PaginatedRespon
 
 export function getOrderById(id: string): Promise<Order> {
   return httpGet<Order>(`/api/orders/orders/${encodeURIComponent(id)}`);
+}
+
+// Admin order functions — gateway: /api/orders/admin → /admin/orders
+
+export function listAdminOrders(params?: ListOrdersParams): Promise<PaginatedResponse<Order>> {
+  const qs = new URLSearchParams();
+  if (params?.page !== undefined) qs.set('page', String(params.page));
+  if (params?.size  !== undefined) qs.set('size',  String(params.size));
+  if (params?.sort)                qs.set('sort',  params.sort);
+  const suffix = qs.toString() ? `?${qs}` : '';
+  return httpGet<PaginatedResponse<Order>>(`/api/orders/admin${suffix}`);
+}
+
+export function getAdminOrderById(id: string): Promise<Order> {
+  return httpGet<Order>(`/api/orders/admin/${encodeURIComponent(id)}`);
+}
+
+export function updateOrderState(id: string, status: string): Promise<Order> {
+  return httpPatch<Order>(`/api/orders/admin/${encodeURIComponent(id)}/state`, { status });
 }
