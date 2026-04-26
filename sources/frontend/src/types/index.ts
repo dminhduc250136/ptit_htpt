@@ -41,7 +41,9 @@
 export interface User {
   id: string;
   email: string;
-  fullName: string;
+  username?: string;   // thêm — backend UserDto trả username (Phase 6)
+  roles?: string;      // thêm — per D-08, middleware đọc user_role cookie từ đây
+  fullName: string;    // giữ — có thể dùng bởi profile pages phase khác
   phone?: string;
   avatarUrl?: string;
   role: 'CUSTOMER' | 'ADMIN';
@@ -64,15 +66,15 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
+  username: string;   // thêm mới — per D-01
   email: string;
   password: string;
-  fullName: string;
-  phone?: string;
+  // fullName và phone REMOVED per D-01 / CONTEXT.md Deferred
 }
 
 export interface AuthResponse {
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string;   // optional — backend Phase 6 không trả field này (deferred)
   user: User;
 }
 

@@ -1,11 +1,5 @@
 'use client';
 
-// NOTE: auth backend endpoints /auth/login etc. not yet implemented —
-// see 04-WAVE-STATUS.md. Mock flow preserved per user decision (Wave 2 deviation
-// approved): we still populate localStorage tokens + auth_present cookie + the
-// AuthProvider state so middleware admits the user to /checkout and /profile.
-// Swap mock submit for `services/auth.login()` once backend exposes /api/users/auth/login.
-
 import React, { Suspense, useState } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -13,7 +7,8 @@ import styles from './page.module.css';
 import Button from '@/components/ui/Button/Button';
 import Input from '@/components/ui/Input/Input';
 import Banner from '@/components/ui/Banner/Banner';
-import { setTokens } from '@/services/token';
+import { login } from '@/services/auth';
+import { ApiError } from '@/services/errors';
 import { useAuth } from '@/providers/AuthProvider';
 
 function LoginPageContent() {
@@ -31,6 +26,7 @@ function LoginPageContent() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [apiError, setApiError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,16 +39,22 @@ function LoginPageContent() {
       return;
     }
     setErrors({});
+    setApiError(null);
     setLoading(true);
-    // Mock login: backend /auth/login not shipped yet. Simulate a short delay,
-    // then populate tokens + auth state so downstream flows (middleware, header
-    // badges, protected pages) behave as if the user is signed in.
-    await new Promise((r) => setTimeout(r, 800));
-    const derivedName = email.split('@')[0] || 'Khách hàng';
-    setTokens('mock-access-token', 'mock-refresh-token');
-    authLogin({ id: 'mock-user', email, name: derivedName });
-    setLoading(false);
-    router.replace(returnTo);
+    try {
+      const data = await login({ email, password });
+      authLogin({ id: data.user.id, email: data.user.email, name: data.user.username ?? data.user.email });
+      router.replace(returnTo);
+    } catch (err: unknown) {
+      if (err instanceof ApiError && err.status === 401) {
+        // Per UI-SPEC: 401 → Banner form-level (không highlight field)
+        setApiError('Email hoặc mật khẩu không chính xác. Vui lòng thử lại');
+      } else {
+        setApiError('Có lỗi xảy ra, vui lòng thử lại');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const errorCount = Object.keys(errors).length;
@@ -67,6 +69,7 @@ function LoginPageContent() {
           </p>
         </div>
 
+        {apiError && <Banner count={1}>{apiError}</Banner>}
         {errorCount > 0 && <Banner count={errorCount} />}
 
         <form className={styles.form} onSubmit={handleSubmit}>
@@ -112,7 +115,7 @@ function LoginPageContent() {
             </Link>
           </div>
 
-          <Button type="submit" size="lg" fullWidth loading={loading}>
+          <Button type="submit" size="lg" fullWidth loading={loading} disabled={loading}>
             Đăng nhập
           </Button>
         </form>
