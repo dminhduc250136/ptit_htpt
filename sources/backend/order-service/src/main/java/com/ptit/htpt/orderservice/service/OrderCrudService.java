@@ -6,6 +6,8 @@ import com.ptit.htpt.orderservice.domain.OrderDto;
 import com.ptit.htpt.orderservice.domain.OrderEntity;
 import com.ptit.htpt.orderservice.domain.OrderItemEntity;
 import com.ptit.htpt.orderservice.domain.OrderMapper;
+import com.ptit.htpt.orderservice.exception.StockShortageException;
+import com.ptit.htpt.orderservice.exception.StockShortageException.StockShortageItem;
 import com.ptit.htpt.orderservice.repository.InMemoryCartRepository;
 import com.ptit.htpt.orderservice.repository.OrderItemRepository;
 import com.ptit.htpt.orderservice.repository.OrderRepository;
@@ -23,8 +25,13 @@ import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 @Service
@@ -34,15 +41,18 @@ public class OrderCrudService {
   private final OrderRepository orderRepository;
   private final OrderItemRepository orderItemRepository;
   private final ObjectMapper objectMapper;
+  private final RestTemplate restTemplate;
 
   public OrderCrudService(InMemoryCartRepository cartRepository,
                           OrderRepository orderRepository,
                           OrderItemRepository orderItemRepository,
-                          ObjectMapper objectMapper) {
+                          ObjectMapper objectMapper,
+                          RestTemplate restTemplate) {
     this.cartRepository = cartRepository;
     this.orderRepository = orderRepository;
     this.orderItemRepository = orderItemRepository;
     this.objectMapper = objectMapper;
+    this.restTemplate = restTemplate;
   }
 
   public Map<String, Object> listCarts(int page, int size, String sort, boolean includeDeleted) {
@@ -112,8 +122,8 @@ public class OrderCrudService {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing X-User-Id session header");
     }
 
-    // D-04: Stock validation — thêm bởi Task 4 (validateStockOrThrow inject RestTemplate)
-    // Task 4 sẽ thêm: validateStockOrThrow(command.items());
+    // D-04: Validate stock trước khi persist — throw 409 STOCK_SHORTAGE nếu quantity > stock
+    validateStockOrThrow(command.items());
 
     BigDecimal totalAmount = command.items().stream()
         .map(item -> item.unitPrice().multiply(BigDecimal.valueOf(item.quantity())))
@@ -147,8 +157,8 @@ public class OrderCrudService {
 
     OrderEntity saved = orderRepository.save(order);
 
-    // D-05: Stock deduct — thêm bởi Task 4 (deductStockAfterPersist inject RestTemplate)
-    // Task 4 sẽ thêm: deductStockAfterPersist(command.items());
+    // D-05: Deduct stock sau persist — best-effort, không rollback order nếu fail
+    deductStockAfterPersist(command.items());
 
     return OrderMapper.toDto(saved);
   }
@@ -264,4 +274,99 @@ public class OrderCrudService {
       @NotBlank String city,
       String zipCode
   ) {}
+
+  /**
+   * D-04: Validate stock cho từng item trước khi persist order.
+   * Gọi GET /api/products/{productId} qua gateway để lấy stock thật.
+   * Nếu bất kỳ item nào có quantity > stock → throw StockShortageException (→ 409 CONFLICT).
+   * Nếu product-service không trả được (timeout, 404) → log.warn và bỏ qua item đó (best-effort MVP).
+   */
+  private void validateStockOrThrow(List<OrderItemRequest> items) {
+    List<StockShortageItem> shortages = new ArrayList<>();
+    for (OrderItemRequest item : items) {
+      try {
+        String url = "http://api-gateway:8080/api/products/" + item.productId();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> product = restTemplate.getForObject(url, Map.class);
+        if (product == null) {
+          log.warn("[D-04] product-service returned null for productId={}", item.productId());
+          continue;
+        }
+        // product-service response: {id, name, stock, ...} — stock field từ Plan 08-01
+        Object stockObj = product.get("stock");
+        int stock = stockObj == null ? 0 : ((Number) stockObj).intValue();
+        if (item.quantity() > stock) {
+          shortages.add(new StockShortageItem(
+              item.productId(),
+              item.productName(),
+              item.quantity(),
+              stock
+          ));
+        }
+      } catch (Exception ex) {
+        // product-service không available — log và bỏ qua validate cho item này (MVP best-effort)
+        log.warn("[D-04] Could not fetch stock for productId={}: {}", item.productId(), ex.getMessage());
+      }
+    }
+    if (!shortages.isEmpty()) {
+      throw new StockShortageException(shortages);
+    }
+  }
+
+  /**
+   * D-05: Decrement stock sau khi order đã persist thành công.
+   * Gọi GET /api/products/{id} để lấy currentStock → tính newStock → PATCH /api/products/admin/{id}.
+   * Nếu fail → log.error, KHÔNG rollback order (user confirmed MVP acceptable).
+   */
+  private void deductStockAfterPersist(List<OrderItemRequest> items) {
+    for (OrderItemRequest item : items) {
+      try {
+        // Fetch current stock
+        String getUrl = "http://api-gateway:8080/api/products/" + item.productId();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> product = restTemplate.getForObject(getUrl, Map.class);
+        if (product == null) {
+          log.error("[D-05] Cannot deduct stock for productId={}: product not found", item.productId());
+          continue;
+        }
+        Object stockObj = product.get("stock");
+        int currentStock = stockObj == null ? 0 : ((Number) stockObj).intValue();
+        int newStock = Math.max(0, currentStock - item.quantity());
+
+        // PATCH /api/products/admin/{id} với stock mới
+        String patchUrl = "http://api-gateway:8080/api/products/admin/" + item.productId();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        Map<String, Object> patchBody = buildStockUpdateBody(product, newStock);
+        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(patchBody, headers);
+        restTemplate.exchange(patchUrl, HttpMethod.PATCH, entity, Void.class);
+        log.info("[D-05] Stock deducted for productId={}: {} → {}", item.productId(), currentStock, newStock);
+      } catch (Exception ex) {
+        log.error("[D-05] Stock deduct failed for productId={} qty={}: {}",
+            item.productId(), item.quantity(), ex.getMessage());
+        // KHÔNG throw — order đã saved, deduct failure là acceptable (MVP)
+      }
+    }
+  }
+
+  /**
+   * Builds PATCH body reusing existing product fields from GET response + overriding stock.
+   * Prevents null-out of name/price/description when PATCH requires full ProductUpsertRequest.
+   */
+  @SuppressWarnings("unchecked")
+  private Map<String, Object> buildStockUpdateBody(Map<String, Object> existingProduct, int newStock) {
+    Map<String, Object> body = new java.util.LinkedHashMap<>();
+    for (Map.Entry<String, Object> entry : existingProduct.entrySet()) {
+      if (entry.getValue() != null) {
+        body.put(entry.getKey(), entry.getValue());
+      }
+    }
+    body.put("stock", newStock);
+    // Remove read-only fields that would cause validation errors
+    body.remove("id");
+    body.remove("createdAt");
+    body.remove("updatedAt");
+    body.remove("deleted");
+    return body;
+  }
 }
