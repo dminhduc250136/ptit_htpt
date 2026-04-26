@@ -46,10 +46,28 @@
       <scope>test</scope>
     </dependency>
     <!-- Phase 5 / DB-05: BCrypt verifier cho V2 seed hash (RESEARCH §Decision #6) -->
+    <!-- Phase 6: moved from test scope → compile scope for BCryptPasswordEncoder in AuthService -->
     <dependency>
       <groupId>org.springframework.security</groupId>
       <artifactId>spring-security-crypto</artifactId>
-      <scope>test</scope>
+    </dependency>
+    <!-- Phase 6: JJWT 0.12.7 — JWT issue/verify (D-06/D-11) -->
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-api</artifactId>
+      <version>0.12.7</version>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-impl</artifactId>
+      <version>0.12.7</version>
+      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.jsonwebtoken</groupId>
+      <artifactId>jjwt-jackson</artifactId>
+      <version>0.12.7</version>
+      <scope>runtime</scope>
     </dependency>
     <!-- Phase 5: persistence -->
     <dependency>

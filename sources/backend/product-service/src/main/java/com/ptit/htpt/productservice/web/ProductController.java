@@ -32,9 +32,11 @@ public class ProductController {
   public ApiResponse<Map<String, Object>> listProducts(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
-      @RequestParam(defaultValue = "updatedAt,desc") String sort
+      @RequestParam(defaultValue = "updatedAt,desc") String sort,
+      @RequestParam(required = false) String keyword    // D-02: optional keyword filter
   ) {
-    return ApiResponse.of(200, "Products listed", productCrudService.listProducts(page, size, sort, false));
+    return ApiResponse.of(200, "Products listed",
+        productCrudService.listProducts(page, size, sort, false, keyword));
   }
 
   @GetMapping("/{id}")

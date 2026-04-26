@@ -23,8 +23,8 @@ Mục tiêu: biến demo flow từ "stub-verified" thành "real visible end-to-e
 ## Phases (v1.1)
 
 - [ ] **Phase 5: Database Foundation** — Đưa Postgres + JPA + Flyway vào stack, refactor in-memory repos, seed dev data từ FE mocks (block các phase sau)
-- [ ] **Phase 6: Real Auth Flow** — Backend ship `/api/users/auth/{register,login,logout}` thật + FE form gỡ mock, session persist sau reload
-- [ ] **Phase 7: Search + Admin Real Data** — `/search` rewire + admin/products/orders/users migrate khỏi mock sang CRUD thật qua gateway
+- [x] **Phase 6: Real Auth Flow** — Backend ship `/api/users/auth/{register,login,logout}` thật + FE form gỡ mock, session persist sau reload (completed 2026-04-26)
+- [x] **Phase 7: Search + Admin Real Data** — `/search` rewire + admin/products/orders/users migrate khỏi mock sang CRUD thật qua gateway (completed 2026-04-26)
 - [ ] **Phase 8: Cart → Order Persistence Visible** — ProductEntity.stock persist + OrderEntity per-item rows + shippingAddress/paymentMethod, FE order detail render full breakdown thật
 
 ## Phase Details
@@ -61,8 +61,11 @@ Plans:
   3. Sau login: token + user lưu localStorage + middleware-readable cookie; user reload page vẫn còn session, không bị kick về `/login`
   4. Logout endpoint invalidate token (blacklist hoặc client-side discard); sau logout user truy cập `/account/*` bị redirect về `/login` đúng
   5. Protected routes (`/account/*`, `/checkout/*`, `/admin/*`) middleware redirect khi không có session; admin role check (`roles` array contains `ADMIN`) gate `/admin/*` đúng
-**Plans**: TBD
-**UI hint**: yes
+**Plans:** 3 plans
+Plans:
+- [x] 06-01-PLAN.md — Backend auth infra: pom.xml + JWT config + PasswordEncoderConfig + JwtUtils + AuthService + AuthController (AUTH-01, AUTH-02, AUTH-03)
+- [x] 06-02-PLAN.md — FE types + token/auth services: RegisterRequest/AuthResponse/User type fixes + setUserRole/clearUserRole + auth.ts wiring (AUTH-04, AUTH-05, AUTH-06)
+- [x] 06-03-PLAN.md — FE pages + middleware + /403: login/register wire real backend, middleware /account/* + admin role check, /403 page (AUTH-03, AUTH-04, AUTH-05, AUTH-06)
 
 ### Phase 7: Search + Admin Real Data
 **Goal**: FE `/search` page và toàn bộ `admin/*` pages migrate khỏi mock sang CRUD thật qua gateway; admin có thể quản lý products/orders/users với data thật từ Postgres.
@@ -71,10 +74,16 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. User nhập keyword vào `/search` → FE call `listProducts({keyword, page, size})` qua gateway → render kết quả thật từ DB; empty state hiện "Không tìm thấy sản phẩm cho '{keyword}'", loading state hiện skeleton
   2. Admin login → vào `admin/products` → list từ backend; create/edit/delete product qua form/dialog → success toast → list refresh; gỡ hoàn toàn mock data
-  3. Admin vào `admin/orders` → list orders thật; click row mở detail page show full order với line items + status; admin update status (`PENDING → SHIPPED → DELIVERED`) persist trong DB
-  4. Admin vào `admin/users` → list users thật; admin xem detail + soft-delete user qua existing CRUD endpoints, list refresh đúng sau action
-**Plans**: TBD
-**UI hint**: yes
+  3. Admin vào `admin/orders` → list orders thật; click row mở detail page show full order với line items + status; admin update status (`PENDING → SHIPPING → DELIVERED`) persist trong DB
+  4. Admin vào `admin/users` → list users thật; admin edit fullName/phone/roles + soft-delete user (CUSTOMER only), list refresh đúng sau action
+**Plans:** 6 plans
+Plans:
+- [x] 07-01-PLAN.md — Gateway admin routes (D-01, 6 routes mới) + Backend keyword search fix (D-02) (UI-01, UI-02, UI-03, UI-04)
+- [x] 07-02-PLAN.md — Product-service Flyway V2 migration + ProductEntity extension + ProductUpsertRequest (D-03) (UI-02)
+- [x] 07-03-PLAN.md — User-service Flyway V2 migration + UserEntity chain + PATCH /admin/users/{id} (D-04, D-05) (UI-04)
+- [x] 07-04-PLAN.md — FE admin services (products.ts, orders.ts, users.ts new) + ToastProvider in admin layout (UI-01, UI-02, UI-03, UI-04)
+- [x] 07-05-PLAN.md — Admin Products page wire + modal add/edit (D-06, D-07) + Admin Orders list + detail page (D-08) (UI-02, UI-03)
+- [x] 07-06-PLAN.md — Admin Users page wire + column adapt (D-09) + UserEditModal PATCH (D-10) (UI-04)
 
 ### Phase 8: Cart → Order Persistence Visible
 **Goal**: ProductEntity.stock persist trong DB (gỡ "cart-seed via localStorage"); OrderEntity persist per-item OrderItem rows + shippingAddress + paymentMethod; FE order confirmation + order detail render full breakdown thật từ backend payload.
@@ -94,13 +103,13 @@ Plans:
 | Milestone | Phases Complete | Status | Shipped |
 |-----------|-----------------|--------|---------|
 | v1.0 MVP Stabilization | 4/4 | Shipped | 2026-04-25 |
-| v1.1 Real End-User Experience | 0/4 | Active | — |
+| v1.1 Real End-User Experience | 3/4 | Active | — |
 
 ### v1.1 Phase Progress
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 5. Database Foundation | 0/9 | Planned | — |
-| 6. Real Auth Flow | 0/TBD | Not started | — |
-| 7. Search + Admin Real Data | 0/TBD | Not started | — |
+| 5. Database Foundation | 9/9 | ✅ Complete | 2026-04-26 |
+| 6. Real Auth Flow | 3/3 | ✅ Complete | 2026-04-26 |
+| 7. Search + Admin Real Data | 6/6 | ✅ Complete | 2026-04-26 |
 | 8. Cart → Order Persistence Visible | 0/TBD | Not started | — |
