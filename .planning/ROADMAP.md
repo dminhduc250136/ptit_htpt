@@ -25,7 +25,7 @@ Mục tiêu: biến demo flow từ "stub-verified" thành "real visible end-to-e
 - [ ] **Phase 5: Database Foundation** — Đưa Postgres + JPA + Flyway vào stack, refactor in-memory repos, seed dev data từ FE mocks (block các phase sau)
 - [x] **Phase 6: Real Auth Flow** — Backend ship `/api/users/auth/{register,login,logout}` thật + FE form gỡ mock, session persist sau reload (completed 2026-04-26)
 - [x] **Phase 7: Search + Admin Real Data** — `/search` rewire + admin/products/orders/users migrate khỏi mock sang CRUD thật qua gateway (completed 2026-04-26)
-- [ ] **Phase 8: Cart → Order Persistence Visible** — ProductEntity.stock persist + OrderEntity per-item rows + shippingAddress/paymentMethod, FE order detail render full breakdown thật
+- [x] **Phase 8: Cart → Order Persistence Visible** — ProductEntity.stock persist + OrderEntity per-item rows + shippingAddress/paymentMethod, FE order detail render full breakdown thật ✅ 2026-04-26
 
 ## Phase Details
 
