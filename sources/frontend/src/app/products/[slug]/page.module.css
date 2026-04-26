@@ -215,15 +215,17 @@
 .stockInfo { margin-top: var(--space-1); }
 
 .inStock {
-  font-size: var(--text-body-md);
-  color: #16a34a;
-  font-weight: var(--weight-medium);
+  font-size: var(--text-body-sm);
+  color: var(--secondary-container);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-normal);
 }
 
 .outOfStock {
-  font-size: var(--text-body-md);
+  font-size: var(--text-body-sm);
   color: var(--error);
-  font-weight: var(--weight-medium);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-normal);
 }
 
 /* Actions */
@@ -244,7 +246,9 @@
 }
 
 .qtyBtn {
-  width: 40px;
+  min-width: 44px;
+  min-height: 44px;
+  width: 44px;
   height: 48px;
   display: flex;
   align-items: center;
@@ -255,6 +259,7 @@
   font-size: var(--text-title-md);
   color: var(--on-surface);
   transition: background-color var(--transition-fast);
+  /* WCAG 2.5.5 touch target */
 }
 
 .qtyBtn:hover:not(:disabled) {
