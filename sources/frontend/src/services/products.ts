@@ -2,9 +2,12 @@
  * Product service API — listProducts, getProductById, listCategories, etc.
  *
  * Source: 04-RESEARCH.md §Pattern 2. Types derived from generated products.paths.
- * Gateway prefix /api/products/ + inner controller paths (verified via
- * products.generated.ts keys: /products, /products/{id}, /products/categories,
- * /products/categories/{id}).
+ * Gateway paths (corrected Phase 5 Plan 09 — Rule 1 bug fix):
+ *   Gateway /api/products   → product-service /products   (list)
+ *   Gateway /api/products/{id} → product-service /products/{id}   (detail)
+ *   Gateway /api/products/categories → product-service /products/categories
+ * Previous paths had double /api/products/products which caused 404 (gateway
+ * strips /api/products prefix, forwarding /products/{seg} to product-service).
  *
  * Pitfall 7 note: springdoc emits `never` for several response bodies because
  * ApiResponseAdvice wraps the data field invisibly. http.ts unwraps one envelope
@@ -38,25 +41,24 @@ export function listProducts(params?: ListProductsParams): Promise<PaginatedResp
   if (params?.categoryId)         qs.set('categoryId', params.categoryId);
   if (params?.keyword)            qs.set('keyword', params.keyword);
   const suffix = qs.toString() ? `?${qs}` : '';
-  return httpGet<PaginatedResponse<Product>>(`/api/products/products${suffix}`);
+  return httpGet<PaginatedResponse<Product>>(`/api/products${suffix}`);
 }
 
 export function getProductById(id: string): Promise<Product> {
-  return httpGet<Product>(`/api/products/products/${encodeURIComponent(id)}`);
+  return httpGet<Product>(`/api/products/${encodeURIComponent(id)}`);
 }
 
 /**
- * Slug-based lookup. Backend does not (yet) expose /products/slug/{slug} per the
- * generated paths keys (only /products/{id}). Implementation fetches by slug as a
- * query parameter against the list endpoint and returns the first match. When
- * backend exposes a dedicated slug route, swap to a single GET call.
+ * Slug-based lookup. Backend does not expose a dedicated /products/slug/{slug}
+ * endpoint — it ignores unknown query params and returns all products.
+ * Strategy: fetch full first page (size=50), then filter client-side by slug.
+ * Phase 7 UI-01: when backend adds slug filter support, simplify to single call.
  */
 export async function getProductBySlug(slug: string): Promise<Product | null> {
-  const qs = new URLSearchParams({ slug });
-  const page = await httpGet<PaginatedResponse<Product>>(`/api/products/products?${qs}`);
-  return page?.content?.[0] ?? null;
+  const page = await httpGet<PaginatedResponse<Product>>(`/api/products?size=50`);
+  return page?.content?.find(p => p.slug === slug) ?? null;
 }
 
 export function listCategories(): Promise<PaginatedResponse<Category>> {
-  return httpGet<PaginatedResponse<Category>>(`/api/products/products/categories`);
+  return httpGet<PaginatedResponse<Category>>(`/api/products/categories`);
 }
