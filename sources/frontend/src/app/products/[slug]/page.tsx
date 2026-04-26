@@ -243,6 +243,9 @@ export default function ProductDetailPage() {
                           name: product.name,
                           thumbnailUrl: product.thumbnailUrl,
                           price: product.price,
+                          // BUG-FIX (cart-stock-cap): truyền stock để cart.ts lưu snapshot
+                          // và updateQuantity có thể enforce giới hạn trên
+                          stock: product.stock ?? 0,
                         },
                         quantity,
                       );

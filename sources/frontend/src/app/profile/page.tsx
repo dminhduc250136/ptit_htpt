@@ -141,8 +141,8 @@ export default function ProfilePage() {
                       <Link key={order.id} href={`/profile/orders/${order.id}`} className={styles.orderCard}>
                         <div className={styles.orderHeader}>
                           <span className={styles.orderCode}>{order.orderCode}</span>
-                          <Badge variant={statusMap[order.orderStatus]?.variant || 'default'}>
-                            {statusMap[order.orderStatus]?.label ?? order.orderStatus}
+                          <Badge variant={statusMap[order.orderStatus ?? '']?.variant || 'default'}>
+                            {statusMap[order.orderStatus ?? '']?.label ?? order.orderStatus}
                           </Badge>
                         </div>
                         <div className={styles.orderItems}>

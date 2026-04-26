@@ -8,7 +8,7 @@ const mockProducts: Product[] = [];
 const mockUsers: User[] = [];
 
 export default function AdminDashboard() {
-  const totalRevenue = mockOrders.reduce((s, o) => s + o.totalAmount, 0);
+  const totalRevenue = mockOrders.reduce((s, o) => s + (o.totalAmount ?? 0), 0);
   const pendingOrders = mockOrders.filter(o => o.orderStatus === 'PENDING').length;
   const shippingOrders = mockOrders.filter(o => o.orderStatus === 'SHIPPING').length;
 
@@ -54,7 +54,7 @@ export default function AdminDashboard() {
                   <tr key={o.id}>
                     <td className={styles.tdBold}>{o.orderCode}</td>
                     <td><span className={`${styles.statusBadge} ${styles['status_' + o.orderStatus]}`}>{o.orderStatus}</span></td>
-                    <td>{formatPrice(o.totalAmount)}</td>
+                    <td>{formatPrice(o.totalAmount ?? 0)}</td>
                     <td className={styles.tdMuted}>{new Date(o.createdAt).toLocaleDateString('vi-VN')}</td>
                   </tr>
                 ))}

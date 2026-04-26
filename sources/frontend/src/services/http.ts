@@ -8,12 +8,25 @@
  * - T-04-03 (open redirect via returnTo): 401 handler validates pathname starts with '/'
  *   AND not '//' before encoding it into the /login redirect.
  * - T-04-04 (stale token): 401 branch calls clearTokens() before redirect.
+ *
+ * BUG-FIX (login-redirect-loop): Auth endpoints (/auth/login, /auth/register) intentionally
+ * return 401 for bad credentials — they must NOT trigger the "session expired" redirect because
+ * the caller (login page) handles the 401 itself to show an error banner. Only non-auth 401s
+ * (i.e. stale tokens on protected endpoints) should redirect to /login.
  */
 
 import { ApiError, type FieldError } from './errors';
 import { getAccessToken, clearTokens } from './token';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? 'http://localhost:8080';
+
+// Paths whose 401 responses are intentional credential rejections — callers handle them
+// directly. Do NOT redirect to /login for these paths (that would create an infinite loop
+// when the user is already on /login and enters wrong credentials).
+const AUTH_PATHS_NO_REDIRECT = [
+  '/api/users/auth/login',
+  '/api/users/auth/register',
+];
 
 interface ApiEnvelope<T> {
   timestamp?: string;
@@ -98,8 +111,11 @@ async function request<T>(
   // Failure envelope (identical keys on service-origin and gateway-origin per Phase 3 D-05..D-07)
   const err = (parsed ?? {}) as Partial<ApiErrorBody>;
 
-  // Silent 401: clear tokens and redirect. Throw anyway so calling pages stop.
-  if (res.status === 401) {
+  // Silent 401: clear tokens and redirect to /login.
+  // Exception: auth endpoints (login/register) intentionally return 401 for bad credentials —
+  // their callers handle the ApiError to display an error banner. Redirecting here would
+  // produce GET /login?returnTo=%2Flogin (infinite loop) because pathname IS /login.
+  if (res.status === 401 && !AUTH_PATHS_NO_REDIRECT.includes(path)) {
     clearTokens();
     if (typeof window !== 'undefined') {
       // Open-redirect hardening (T-04-03): validate pathname is a local relative path.
