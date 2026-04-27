@@ -1,0 +1,398 @@
+{
+  "config": {
+    "configFile": "D:\\SYP_PROJECT\\gsd-learning\\tmdt-use-gsd\\sources\\frontend\\playwright.config.ts",
+    "rootDir": "D:/SYP_PROJECT/gsd-learning/tmdt-use-gsd/sources/frontend/e2e",
+    "forbidOnly": false,
+    "fullyParallel": false,
+    "globalSetup": "D:\\SYP_PROJECT\\gsd-learning\\tmdt-use-gsd\\sources\\frontend\\e2e\\global-setup.ts",
+    "globalTeardown": null,
+    "globalTimeout": 0,
+    "grep": {},
+    "grepInvert": null,
+    "maxFailures": 0,
+    "metadata": {},
+    "preserveOutput": "always",
+    "projects": [
+      {
+        "outputDir": "D:/SYP_PROJECT/gsd-learning/tmdt-use-gsd/sources/frontend/test-results",
+        "repeatEach": 1,
+        "retries": 0,
+        "metadata": {},
+        "id": "chromium",
+        "name": "chromium",
+        "testDir": "D:/SYP_PROJECT/gsd-learning/tmdt-use-gsd/sources/frontend/e2e",
+        "testIgnore": [
+          "**/*.legacy.spec.ts.bak",
+          "**/global-setup.ts"
+        ],
+        "testMatch": [
+          "**/*.@(spec|test).?(c|m)[jt]s?(x)"
+        ],
+        "timeout": 30000
+      }
+    ],
+    "quiet": false,
+    "reporter": [
+      [
+        "list",
+        null
+      ],
+      [
+        "json",
+        {
+          "outputFile": "e2e/results.json"
+        }
+      ]
+    ],
+    "reportSlowTests": {
+      "max": 5,
+      "threshold": 300000
+    },
+    "shard": null,
+    "tags": [],
+    "updateSnapshots": "missing",
+    "updateSourceMethod": "patch",
+    "version": "1.59.1",
+    "workers": 1,
+    "webServer": null
+  },
+  "suites": [
+    {
+      "title": "admin-orders.spec.ts",
+      "file": "admin-orders.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "ADM-ORD-1: list /admin/orders render heading + table",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "f6cd05cd61d9178e868b-4093695728f1d5233579",
+          "file": "admin-orders.spec.ts",
+          "line": 20,
+          "column": 5
+        },
+        {
+          "title": "ADM-ORD-2: click \"Xem chi tiết\" trên row đầu tiên → navigate /admin/orders/:id",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "f6cd05cd61d9178e868b-04042566460918d6725f",
+          "file": "admin-orders.spec.ts",
+          "line": 31,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "admin-products.spec.ts",
+      "file": "admin-products.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "ADM-PROD-1: list /admin/products render heading + table",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "26be74c06e0b4cfbef05-0efddcead95e981c8f96",
+          "file": "admin-products.spec.ts",
+          "line": 20,
+          "column": 5
+        },
+        {
+          "title": "ADM-PROD-2: create product → toast success",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "26be74c06e0b4cfbef05-92d1196a82b4544d8cf2",
+          "file": "admin-products.spec.ts",
+          "line": 28,
+          "column": 5
+        },
+        {
+          "title": "ADM-PROD-3: validation error khi submit form thiếu tên sản phẩm",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "26be74c06e0b4cfbef05-7b16d39df7f3440fc777",
+          "file": "admin-products.spec.ts",
+          "line": 65,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "admin-users.spec.ts",
+      "file": "admin-users.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "ADM-USR-1: list /admin/users render heading + table với ít nhất 1 row (seed users)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "9d69cbef181f9ad01509-48ce56695820dd900260",
+          "file": "admin-users.spec.ts",
+          "line": 19,
+          "column": 5
+        },
+        {
+          "title": "ADM-USR-2: PATCH user fullName → toast success",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "9d69cbef181f9ad01509-c900c0cd035386a22e35",
+          "file": "admin-users.spec.ts",
+          "line": 34,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "auth.spec.ts",
+      "file": "auth.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "AUTH-1: register flow → user mới đăng nhập được",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "d748ac400d08b85935ef-cfd2f7189ba6ef088ddc",
+          "file": "auth.spec.ts",
+          "line": 25,
+          "column": 5
+        },
+        {
+          "title": "AUTH-2: login + logout",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "d748ac400d08b85935ef-e2943876671d73a9de31",
+          "file": "auth.spec.ts",
+          "line": 45,
+          "column": 5
+        },
+        {
+          "title": "AUTH-3: role gate — chưa login vào /profile/orders → redirect /login; USER vào /admin → /403",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "d748ac400d08b85935ef-0c3e9b37f36d14c74a25",
+          "file": "auth.spec.ts",
+          "line": 82,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "order-detail.spec.ts",
+      "file": "order-detail.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "ORD-DTL-1: /profile render sau khi login qua storageState",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "48897fda6cdd49b9018f-9b38e66bd2e69e73c5e6",
+          "file": "order-detail.spec.ts",
+          "line": 22,
+          "column": 5
+        },
+        {
+          "title": "ORD-DTL-2: order detail page render 4-col items table + địa chỉ + thanh toán",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "48897fda6cdd49b9018f-4be1e285f0d261508bc6",
+          "file": "order-detail.spec.ts",
+          "line": 34,
+          "column": 5
+        }
+      ]
+    },
+    {
+      "title": "password-change.spec.ts",
+      "file": "password-change.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "PWD-1: sai oldPassword → field-level error \"Mật khẩu hiện tại không đúng\"",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "999be6ce42d297df25f1-970c804660b38082a28d",
+          "file": "password-change.spec.ts",
+          "line": 27,
+          "column": 5
+        },
+        {
+          "title": "PWD-2: đúng oldPassword → success message \"Đã đổi mật khẩu\" + session còn (D-10)",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "999be6ce42d297df25f1-21e6af24fb2c1d81af6e",
+          "file": "password-change.spec.ts",
+          "line": 51,
+          "column": 5
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "stats": {
+    "startTime": "2026-04-27T03:02:41.401Z",
+    "duration": 22.062000000000012,
+    "expected": 0,
+    "skipped": 14,
+    "unexpected": 0,
+    "flaky": 0
+  }
+}
