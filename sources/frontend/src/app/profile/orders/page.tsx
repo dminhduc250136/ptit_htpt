@@ -8,7 +8,6 @@ import styles from './page.module.css';
 import Badge from '@/components/ui/Badge/Badge';
 import RetrySection from '@/components/ui/RetrySection/RetrySection';
 import OrderFilterBar from '@/components/ui/OrderFilterBar/OrderFilterBar';
-import { useToast } from '@/components/ui/Toast/Toast';
 import { listMyOrders } from '@/services/orders';
 import { useAuth } from '@/providers/AuthProvider';
 import { formatPrice } from '@/services/api';
@@ -28,7 +27,6 @@ const statusMap: Record<
 
 export default function OrdersPage() {
   const { user } = useAuth();
-  const { showToast: _showToast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
 
