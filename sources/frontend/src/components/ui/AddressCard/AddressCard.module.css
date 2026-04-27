@@ -1,0 +1,79 @@
+.card {
+  background: var(--surface-container-low);
+  border-radius: var(--radius-lg);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  transition: background 0.15s ease, transform 0.15s ease;
+}
+
+.card:hover {
+  background: var(--surface-container);
+  transform: translateY(-1px);
+}
+
+.cardDefault {
+  border-left: 3px solid var(--primary);
+}
+
+.loadingCard {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  background: var(--primary-fixed);
+  color: var(--primary);
+  border-radius: var(--radius-full);
+  padding: var(--space-1) var(--space-2);
+  font-size: 11px;
+  font-weight: var(--weight-semibold);
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.fullName {
+  font-size: var(--text-title-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--on-surface);
+}
+
+.phone {
+  font-size: var(--text-body-md);
+  font-weight: var(--weight-regular);
+  color: var(--on-surface-variant);
+}
+
+.addressText {
+  font-size: var(--text-body-md);
+  color: var(--on-surface-variant);
+  margin: 0;
+  line-height: var(--leading-relaxed);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-1);
+}
