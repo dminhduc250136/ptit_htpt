@@ -46,6 +46,7 @@ export interface User {
   fullName: string;    // giữ — có thể dùng bởi profile pages phase khác
   phone?: string;
   avatarUrl?: string;
+  hasAvatar?: boolean; // Phase 10 — luôn false ở Phase 10, true khi avatar wire-up Phase 12+
   role: 'CUSTOMER' | 'ADMIN';
   address?: Address;
   createdAt: string;
