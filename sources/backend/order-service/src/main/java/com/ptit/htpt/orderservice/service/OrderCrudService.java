@@ -18,6 +18,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -190,6 +193,42 @@ public class OrderCrudService {
         .toList();
   }
 
+  /**
+   * Phase 11 / ACCT-02 (D-12, D-13, D-14, D-15): Filter orders server-side theo userId + optional params.
+   * D-14: Date string "YYYY-MM-DD" → from = start-of-day UTC+7, to = 23:59:59 UTC+7.
+   * D-13: q keyword tìm trên order.id ILIKE — không join order items.
+   */
+  public Map<String, Object> listMyOrders(ListMyOrdersQuery query) {
+    // Parse status: null hoặc "ALL" → pass null vào repository (bỏ qua filter)
+    String statusFilter = (query.status() == null || "ALL".equalsIgnoreCase(query.status()))
+        ? null : query.status();
+
+    // D-14: parse date string "YYYY-MM-DD" → Instant UTC+7
+    // from → 2026-04-01T00:00:00+07:00 (start of day Saigon)
+    // to   → 2026-04-30T23:59:59+07:00 (end of day Saigon — SC-5: không miss đơn 23:59 GMT+7)
+    ZoneOffset saigon = ZoneOffset.of("+07:00");
+    Instant fromInstant = null;
+    Instant toInstant = null;
+    if (query.from() != null && !query.from().isBlank()) {
+      fromInstant = LocalDate.parse(query.from()).atStartOfDay().toInstant(saigon);
+    }
+    if (query.to() != null && !query.to().isBlank()) {
+      // end of day: 23:59:59 (+07:00)
+      toInstant = LocalDate.parse(query.to()).atTime(23, 59, 59).toInstant(saigon);
+    }
+
+    // D-13: q = null/blank → pass null (bỏ qua filter)
+    String qFilter = (query.q() == null || query.q().isBlank()) ? null : query.q().trim();
+
+    List<OrderEntity> filtered = orderRepository.findByUserIdWithFilters(
+        query.userId(), statusFilter, fromInstant, toInstant, qFilter
+    );
+
+    // Map sang DTO trước khi paginate
+    List<OrderDto> dtos = filtered.stream().map(OrderMapper::toDto).toList();
+    return paginate(dtos, query.page(), query.size());
+  }
+
   private Comparator<CartEntity> cartComparator(String sort) {
     if (sort == null || sort.isBlank()) {
       return Comparator.comparing(CartEntity::updatedAt).reversed();
@@ -273,6 +312,23 @@ public class OrderCrudService {
       @NotBlank String district,
       @NotBlank String city,
       String zipCode
+  ) {}
+
+  /**
+   * Phase 11 / ACCT-02 (D-10, D-11, D-12, D-13, D-14, D-15).
+   * Filter params cho GET /orders từ user đang đăng nhập.
+   * status=null → ALL. from/to = YYYY-MM-DD string → convert sang Instant UTC+7 (D-14).
+   * q = order ID keyword → ILIKE (D-13).
+   */
+  public record ListMyOrdersQuery(
+      String userId,    // required — từ X-User-Id header (Phase 11 giữ nguyên pattern cũ)
+      String status,    // nullable — "PENDING"/"CONFIRMED"/"SHIPPING"/"DELIVERED"/"CANCELLED"
+      String from,      // nullable — "YYYY-MM-DD"
+      String to,        // nullable — "YYYY-MM-DD"
+      String q,         // nullable — keyword search on order.id
+      int page,
+      int size,
+      String sort
   ) {}
 
   /**
