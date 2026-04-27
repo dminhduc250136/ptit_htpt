@@ -47,3 +47,6 @@ next-env.d.ts
 /playwright-report/
 /blob-report/
 /playwright/.cache/
+
+# Phase 9 / Plan 09-05 (TEST-01) — Playwright session state (chứa real session cookies, KHÔNG commit)
+/e2e/storageState/

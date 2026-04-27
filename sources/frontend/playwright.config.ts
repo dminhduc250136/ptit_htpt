@@ -2,6 +2,10 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
+  // Không pick up legacy file .bak và global-setup (không phải test)
+  testIgnore: ['**/*.legacy.spec.ts.bak', '**/global-setup.ts'],
+  // Phase 9 / Plan 09-05 (D-13): global setup login user + admin → save storageState
+  globalSetup: require.resolve('./e2e/global-setup'),
   fullyParallel: false,
   workers: 1,
   retries: 0,
