@@ -1,10 +1,11 @@
 ---
 phase: 13
 slug: reviews-ratings
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-04-27
+reviewed_at: 2026-04-27
 ---
 
 # Phase 13 — UI Design Contract
