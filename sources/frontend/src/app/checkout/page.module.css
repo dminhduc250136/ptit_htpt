@@ -32,6 +32,14 @@
 .backLink { text-align: center; font-size: var(--text-body-md); color: var(--primary); text-decoration: none; }
 .backLink:hover { opacity: 0.7; }
 
+/* AddressPicker divider */
+.pickerDivider {
+  text-align: center;
+  color: var(--on-surface-variant);
+  margin: var(--space-2) 0;
+  font-size: var(--text-body-md);
+}
+
 /* Success Modal */
 .successOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: var(--space-4); }
 .successModal { background: var(--surface-container-lowest); border-radius: var(--radius-2xl); padding: var(--space-7); text-align: center; max-width: 480px; width: 100%; animation: fadeInUp 0.4s ease; }
