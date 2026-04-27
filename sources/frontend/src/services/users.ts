@@ -4,7 +4,7 @@
  * Bearer token auto-attached bởi http.ts.
  */
 import type { User, PaginatedResponse } from '@/types';
-import { httpGet, httpPatch, httpDelete } from './http';
+import { httpGet, httpPatch, httpDelete, httpPost } from './http';
 
 export interface ListUsersParams {
   page?: number;
@@ -33,4 +33,19 @@ export function patchAdminUser(id: string, body: AdminUserPatchBody): Promise<Us
 
 export function deleteAdminUser(id: string): Promise<void> {
   return httpDelete<void>(`/api/users/admin/${encodeURIComponent(id)}`);
+}
+
+// ============================================================
+// Phase 9 / Plan 09-04 (AUTH-07). Self-service password change.
+// Endpoint backend: POST /api/users/me/password (Plan 09-03).
+// Backend trả code: "AUTH_INVALID_PASSWORD" (không phải errorCode).
+// ============================================================
+
+export interface ChangePasswordBody {
+  oldPassword: string;
+  newPassword: string;
+}
+
+export function changeMyPassword(body: ChangePasswordBody): Promise<{ changed: true }> {
+  return httpPost<{ changed: true }>('/api/users/me/password', body);
 }
