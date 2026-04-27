@@ -15,11 +15,11 @@ progress:
 
 ## Current Position
 
-Phase: Phase 12 — Wishlist
+Phase: Phase 13 — Reviews & Ratings
 Plan: Not yet planned
-Status: Ready to plan
-Last activity: 2026-04-27 -- Phase 11 verification PASSED (17/17), code review done (5 warnings, 6 info, 0 critical), human UAT persisted (11-HUMAN-UAT.md)
-Resume file: .planning/phases/11-address-book-order-history-filtering/11-VERIFICATION.md
+Status: UI-SPEC approved — ready to plan
+Last activity: 2026-04-27 -- Phase 13 UI-SPEC approved (6/6 dimensions PASS)
+Resume file: .planning/phases/13-reviews-ratings/13-UI-SPEC.md
 
 ## Project Reference
 
