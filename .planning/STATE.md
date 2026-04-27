@@ -4,7 +4,7 @@ milestone: v1.2
 milestone_name: milestone
 status: executing
 last_updated: "2026-04-27T05:30:00.000Z"
-last_activity: 2026-04-27 -- Phase 10 complete, advancing to Phase 11
+last_activity: 2026-04-27 -- Phase 11 context gathered
 progress:
   total_phases: 7
   completed_phases: 2
@@ -17,9 +17,9 @@ progress:
 
 Phase: Phase 11 — Address Book + Order History Filtering
 Plan: Not started
-Status: Ready to discuss
+Status: Ready for planning
 Last activity: 2026-04-27 -- Phase 10 complete, advancing to Phase 11
-Resume file: None
+Resume file: .planning/phases/11-address-book-order-history-filtering/11-CONTEXT.md
 
 ## Project Reference
 
