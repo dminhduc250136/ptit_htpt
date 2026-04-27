@@ -87,7 +87,12 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
   2. User upload avatar JPEG/PNG/WebP ≤ 2MB qua `/profile/settings` Avatar section → backend magic-byte verify + Thumbnailator resize 256×256 → lưu BYTEA → `GET /api/users/{id}/avatar` serve binary với Cache-Control; navbar avatar update sau reload.
   3. User upload `.exe` hoặc file > 2MB → backend reject 422 với error code rõ ràng; FE hiển thị field-level error (không crash).
   4. Gateway route order verified: `user-service-me` ĐỨNG TRƯỚC `user-service-base` — `PATCH /api/users/me` không match `/api/users/{id}` với id="me".
-**Plans:** TBD
+**Plans:** 3 plans
+- [ ] 10-01-PLAN.md — Backend GET/PATCH /users/me + UserDto.hasAvatar (ACCT-03)
+- [ ] 10-02-PLAN.md — Frontend deps install (react-hook-form + zod + @hookform/resolvers — set rhf+zod foundation cho v1.2)
+- [ ] 10-03-PLAN.md — Frontend services + Profile Info section + Avatar placeholder (ACCT-03; ACCT-04 deferred per CONTEXT D-08)
+
+**Note:** ACCT-04 (avatar upload) DEFERRED to backlog per CONTEXT D-08 — Phase 10 ship Profile Editing only. Success Criteria 2 & 3 (avatar upload flows) deferred together. SC-1 và SC-4 vẫn trong scope.
 **UI hint:** yes
 
 ### Phase 11: Address Book + Order History Filtering
@@ -167,7 +172,7 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 9. Residual Closure & Verification | 0/5 | Planned | - |
-| 10. User-Svc Schema + Profile Editing | 0/? | Not started | - |
+| 10. User-Svc Schema + Profile Editing | 0/3 | Planned | - |
 | 11. Address Book + Order Filtering | 0/? | Not started | - |
 | 12. Wishlist | 0/? | Not started | - |
 | 13. Reviews & Ratings | 0/? | Not started | - |
