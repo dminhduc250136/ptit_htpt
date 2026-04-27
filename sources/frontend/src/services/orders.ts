@@ -22,6 +22,15 @@ export interface ListOrdersParams {
   page?: number;
   size?: number;
   sort?: string;
+  // Phase 11 / ACCT-02 (D-10, D-11, D-12, D-13, D-14, D-15): filter params
+  /** Status filter: 'ALL' | 'PENDING' | 'CONFIRMED' | 'SHIPPING' | 'DELIVERED' | 'CANCELLED' */
+  status?: string;
+  /** Date from (YYYY-MM-DD). Backend interpret full day UTC+7 (D-14). */
+  from?: string;
+  /** Date to (YYYY-MM-DD). Backend interpret full day UTC+7 (D-14). */
+  to?: string;
+  /** Keyword tìm theo order ID (ILIKE). D-13: order ID only. */
+  q?: string;
 }
 
 /**
@@ -39,8 +48,13 @@ export function createOrder(body: CreateOrderRequest, userId?: string): Promise<
 export function listMyOrders(params?: ListOrdersParams): Promise<PaginatedResponse<Order>> {
   const qs = new URLSearchParams();
   if (params?.page !== undefined) qs.set('page', String(params.page));
-  if (params?.size !== undefined) qs.set('size', String(params.size));
-  if (params?.sort)               qs.set('sort', params.sort);
+  if (params?.size  !== undefined) qs.set('size',  String(params.size));
+  if (params?.sort)                qs.set('sort',  params.sort);
+  // Phase 11 / ACCT-02: filter params
+  if (params?.status && params.status !== 'ALL') qs.set('status', params.status);
+  if (params?.from)  qs.set('from', params.from);
+  if (params?.to)    qs.set('to',   params.to);
+  if (params?.q)     qs.set('q',    params.q);
   const suffix = qs.toString() ? `?${qs}` : '';
   return httpGet<PaginatedResponse<Order>>(`/api/orders/orders${suffix}`);
 }

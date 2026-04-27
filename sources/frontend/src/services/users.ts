@@ -3,7 +3,7 @@
  * Gateway path: /api/users/admin → /admin/users
  * Bearer token auto-attached bởi http.ts.
  */
-import type { User, PaginatedResponse } from '@/types';
+import type { User, PaginatedResponse, SavedAddress, AddressBody } from '@/types';
 import { httpGet, httpPatch, httpDelete, httpPost } from './http';
 
 export interface ListUsersParams {
@@ -66,4 +66,38 @@ export function getMe(): Promise<User> {
 
 export function patchMe(body: UpdateMeBody): Promise<User> {
   return httpPatch<User>('/api/users/me', body);
+}
+
+// ============================================================
+// Phase 11 / ACCT-05. Address book CRUD.
+// Endpoints backend: /api/users/me/addresses/**
+// Gateway route: user-service-me/** → /users/me/**
+// ============================================================
+
+/**
+ * Lấy danh sách addresses của user hiện tại.
+ * Sort: is_default DESC, created_at DESC (backend sort).
+ */
+export function listAddresses(): Promise<SavedAddress[]> {
+  return httpGet<SavedAddress[]>('/api/users/me/addresses');
+}
+
+/** Tạo address mới. Nếu > 10 → backend trả 422 ADDRESS_LIMIT_EXCEEDED. */
+export function createAddress(body: AddressBody): Promise<SavedAddress> {
+  return httpPost<SavedAddress>('/api/users/me/addresses', body);
+}
+
+/** Cập nhật address theo id (chỉ owner). */
+export function updateAddress(id: string, body: AddressBody): Promise<SavedAddress> {
+  return httpPatch<SavedAddress>(`/api/users/me/addresses/${encodeURIComponent(id)}`, body);
+}
+
+/** Xóa address theo id (hard-delete, chỉ owner). */
+export function deleteAddress(id: string): Promise<void> {
+  return httpDelete<void>(`/api/users/me/addresses/${encodeURIComponent(id)}`);
+}
+
+/** Đặt address là mặc định (clear others). */
+export function setDefaultAddress(id: string): Promise<SavedAddress> {
+  return httpPatch<SavedAddress>(`/api/users/me/addresses/${encodeURIComponent(id)}/default`, {});
 }

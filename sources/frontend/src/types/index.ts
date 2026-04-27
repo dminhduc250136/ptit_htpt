@@ -61,6 +61,35 @@ export interface Address {
   zipCode?: string;
 }
 
+// ===== ADDRESS BOOK (Phase 11 / ACCT-05) =====
+/**
+ * SavedAddress: persisted address book entry cho user.
+ * Khác với Address (checkout snapshot) — có id, userId, fullName, phone, isDefault.
+ */
+export interface SavedAddress {
+  id: string;
+  userId: string;
+  fullName: string;
+  phone: string;
+  street: string;
+  ward: string;
+  district: string;
+  city: string;
+  isDefault: boolean;
+  createdAt: string;
+}
+
+/** Body để create / update một saved address. */
+export interface AddressBody {
+  fullName: string;
+  phone: string;
+  street: string;
+  ward: string;
+  district: string;
+  city: string;
+  isDefault?: boolean;
+}
+
 export interface LoginRequest {
   email: string;
   password: string;
