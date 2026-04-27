@@ -3,10 +3,10 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-27T15:30:00.000Z"
-last_activity: 2026-04-27 -- Phase 11 COMPLETE (17/17 verified, 4 UAT items human_needed)
+last_updated: "2026-04-27T16:00:00.000Z"
+last_activity: 2026-04-27 -- Scope trim: Phase 12 skip, REV-04/SEARCH-03/SEARCH-04/lightbox deferred v1.3
 progress:
-  total_phases: 7
+  total_phases: 6
   completed_phases: 3
   total_plans: 20
   completed_plans: 14
