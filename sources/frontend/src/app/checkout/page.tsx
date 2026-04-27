@@ -18,9 +18,12 @@ import {
   type CartItem,
 } from '@/services/cart';
 import { createOrder } from '@/services/orders';
+import { listAddresses } from '@/services/users';
 import { isApiError } from '@/services/errors';
 import { formatPrice } from '@/services/api';
 import { useAuth } from '@/providers/AuthProvider';
+import AddressPicker from '@/components/ui/AddressPicker/AddressPicker';
+import type { SavedAddress } from '@/types';
 
 interface StockConflictItem {
   productId: string;
@@ -60,6 +63,46 @@ export default function CheckoutPage() {
     paymentMethod: 'COD' as 'COD' | 'BANK_TRANSFER' | 'E_WALLET',
   });
   const [loading, setLoading] = useState(false);
+
+  // --- AddressPicker state (D-01, D-02, D-03, ACCT-06) ---
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const [addressesLoading, setAddressesLoading] = useState(false);
+  // pickerVisible: hiển thị AddressPicker chỉ khi fetch thành công (silent fail per D-Discretion)
+  const [pickerVisible, setPickerVisible] = useState(false);
+
+  // Fetch saved addresses khi user logged-in
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    setAddressesLoading(true);
+    listAddresses()
+      .then((addresses) => {
+        if (!alive) return;
+        setSavedAddresses(addresses);
+        setPickerVisible(true); // chỉ show khi fetch thành công
+      })
+      .catch(() => {
+        // Silent fail per D-Discretion: ẩn picker, không toast
+        if (!alive) return;
+        setPickerVisible(false);
+      })
+      .finally(() => {
+        if (alive) setAddressesLoading(false);
+      });
+    return () => { alive = false; };
+  }, [user]);
+
+  const handleAddressSelect = (address: SavedAddress) => {
+    setForm((prev) => ({
+      ...prev,
+      fullName: address.fullName,
+      phone: address.phone,
+      street: address.street,
+      ward: address.ward,
+      district: address.district,
+      city: address.city,
+    }));
+  };
 
   // --- Error recovery state (Shared Pattern 5: error-dispatcher contract) ---
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -167,6 +210,17 @@ export default function CheckoutPage() {
             {/* Shipping Info */}
             <div className={styles.formSection}>
               <h3 className={styles.formSectionTitle}>Thông tin giao hàng</h3>
+              {/* D-01, D-02, D-03: AddressPicker snap-fill — chỉ show khi fetch thành công (silent fail) */}
+              {pickerVisible && (
+                <>
+                  <AddressPicker
+                    addresses={savedAddresses}
+                    loading={addressesLoading}
+                    onSelect={handleAddressSelect}
+                  />
+                  <div className={styles.pickerDivider}>— hoặc điền thủ công —</div>
+                </>
+              )}
               <div className={styles.formGrid}>
                 <Input label="Họ và tên" value={form.fullName} onChange={(e) => update('fullName', e.target.value)} error={fieldErrors.fullName} fullWidth />
                 <Input label="Số điện thoại" value={form.phone} onChange={(e) => update('phone', e.target.value)} error={fieldErrors.phone} fullWidth />
