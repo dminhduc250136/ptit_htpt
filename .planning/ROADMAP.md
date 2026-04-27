@@ -109,7 +109,7 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
 **Plans:** 4 plans
 - [x] 13-01-PLAN.md — user-svc JwtUtils + AuthService thêm claim 'name' (fullName) *(2026-04-27)*
 - [x] 13-02-PLAN.md — order-svc internal eligibility endpoint (/internal/orders/eligibility) + OrderRepository query *(2026-04-27)*
-- [ ] 13-03-PLAN.md — product-svc V4 reviews + V5 avg_rating + ReviewEntity/Repo/Service/Controller + Jsoup sanitize + RestTemplate eligibility re-check + tests
+- [x] 13-03-PLAN.md — product-svc V4 reviews + V5 avg_rating + ReviewEntity/Repo/Service/Controller + Jsoup sanitize + RestTemplate eligibility re-check + tests *(2026-04-27)*
 - [ ] 13-04-PLAN.md — FE ReviewSection (StarWidget, Form, List) + types align + ProductCard/PDP avgRating + UAT checkpoint
 **UI hint:** yes
 
