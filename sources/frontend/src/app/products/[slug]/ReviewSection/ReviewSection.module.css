@@ -1,0 +1,180 @@
+.section {
+  padding: var(--space-5) var(--space-4);
+  background: var(--surface);
+}
+
+.hint {
+  font-size: var(--text-body-md);
+  color: var(--on-surface-variant);
+  padding: var(--space-3);
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-lg);
+}
+.hintLink {
+  color: var(--primary);
+  text-decoration: underline;
+  margin-left: var(--space-1);
+}
+
+.form {
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  margin-bottom: var(--space-5);
+  display: flex;
+  flex-direction: column;
+}
+.formLabel {
+  font-size: var(--text-title-sm);
+  font-weight: var(--weight-semibold);
+  margin-bottom: var(--space-3);
+}
+.starWidget {
+  display: flex;
+  flex-direction: row;
+  gap: var(--space-1);
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+.starFilled, .starEmpty {
+  width: 44px;
+  height: 44px;
+  font-size: 24px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.starFilled { color: var(--secondary-container); }
+.starEmpty { color: var(--outline-variant); }
+.starFilled:focus-visible, .starEmpty:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.textareaLabel {
+  font-size: var(--text-body-md);
+  color: var(--on-surface-variant);
+  margin-top: var(--space-3);
+  margin-bottom: var(--space-1);
+}
+.textarea {
+  width: 100%;
+  resize: vertical;
+  padding: var(--space-3);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-body-lg);
+  font-family: inherit;
+}
+.textarea:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+.charCount, .charCountWarn {
+  text-align: right;
+  font-size: var(--text-body-sm);
+  margin-top: var(--space-1);
+}
+.charCount { color: var(--on-surface-variant); }
+.charCountWarn { color: var(--error); }
+.fieldError {
+  color: var(--error);
+  font-size: var(--text-body-sm);
+  margin-top: var(--space-1);
+}
+.submitRow {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-3);
+}
+
+.listHeading {
+  font-size: var(--text-title-sm);
+  font-weight: var(--weight-semibold);
+  border-bottom: 1px solid var(--surface-container);
+  padding-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.reviewList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.reviewItem {
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--surface-container);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+}
+.reviewHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.avatar {
+  width: 36px; height: 36px;
+  border-radius: var(--radius-full);
+  background: var(--surface-container);
+  color: var(--on-surface-variant);
+  font-size: var(--text-title-sm);
+  font-weight: var(--weight-semibold);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.reviewerName {
+  font-size: var(--text-title-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--on-surface);
+}
+.readOnlyStars {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: var(--space-1);
+}
+.reviewDate {
+  font-size: var(--text-body-sm);
+  color: var(--on-surface-variant);
+  margin-left: auto;
+}
+.reviewContent {
+  font-size: var(--text-body-md);
+  color: var(--on-surface);
+  line-height: var(--leading-relaxed);
+  margin-top: var(--space-2);
+}
+
+.loadMoreRow {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-4);
+}
+.emptyState {
+  font-size: var(--text-body-md);
+  color: var(--on-surface-variant);
+  padding: var(--space-4);
+  text-align: center;
+}
+
+.eligibilitySkeleton, .skeletonList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.skeletonCard {
+  height: 80px;
+  background: var(--surface-container);
+  border-radius: var(--radius-xl);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}

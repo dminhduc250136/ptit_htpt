@@ -15,6 +15,7 @@ import { addToCart } from '@/services/cart';
 import { isApiError } from '@/services/errors';
 import { formatPrice } from '@/services/api';
 import type { Product } from '@/types';
+import ReviewSection from './ReviewSection/ReviewSection';
 
 export default function ProductDetailPage() {
   const params = useParams<{ slug: string }>();
@@ -335,12 +336,7 @@ export default function ProductDetailPage() {
               <p style={{ color: 'var(--on-surface-variant)' }}>Chưa có thông số kỹ thuật.</p>
             )}
             {activeTab === 'reviews' && (
-              <div className={styles.reviewsContent}>
-                <div className={styles.reviewPlaceholder}>
-                  <p>Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá sản phẩm này!</p>
-                  <Button variant="secondary">Viết đánh giá</Button>
-                </div>
-              </div>
+              <ReviewSection productId={product.id} slug={slug ?? ''} />
             )}
           </div>
         </div>
