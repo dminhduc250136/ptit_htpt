@@ -49,7 +49,11 @@ spring:
 
         # user-service me: /api/users/me/** → /users/me/** (PHẢI đứng TRƯỚC user-service-base
         # để /api/users/me/password KHÔNG match catch-all /api/users/{id} với id="me/password".
-        # Phase 10 sẽ extend với GET/PATCH /api/users/me cho profile editing.)
+        # Phase 10: GET/PATCH /api/users/me cho profile editing — đã triển khai.
+        # Phase 11: /api/users/me/addresses/** → /users/me/addresses/** qua route user-service-me
+        #   (seg capture group: /api/users/me/(?<seg>.*) → seg=addresses/123 → /users/me/addresses/123)
+        #   AddressController @RequestMapping("/users/me/addresses") match đúng.
+        #   KHÔNG cần route riêng user-service-me-addresses vì user-service-me/** đã bao phủ.
         - id: user-service-me-base
           uri: http://user-service:8080
           predicates:
