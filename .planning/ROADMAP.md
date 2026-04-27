@@ -47,7 +47,7 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
 
 ## Phases
 
-- [ ] **Phase 9: Residual Closure & Verification** — Đóng AUTH-06 + AUTH-07 password change + UI-02 admin dashboard + Playwright E2E re-baseline cho v1.1.
+- [x] **Phase 9: Residual Closure & Verification** — Đóng AUTH-06 + AUTH-07 password change + UI-02 admin dashboard + Playwright E2E re-baseline cho v1.1. *(Complete 2026-04-27 — 5 plans, 4/4 automated checks PASS, 5 UAT items pending docker stack)*
 - [ ] **Phase 10: User-Svc Schema Cluster + Profile Editing** — V3 avatar BYTEA, gateway `/users/me/*` routes, profile editing UI (rhf+zod foundation).
 - [ ] **Phase 11: Address Book + Order History Filtering** — V4 addresses, address CRUD + checkout integration, order filter bar trên `/profile/orders`.
 - [ ] **Phase 12: Wishlist** — V5 wishlists, heart icon trên product card/PDP, `/profile/wishlist` page với move-to-cart.
