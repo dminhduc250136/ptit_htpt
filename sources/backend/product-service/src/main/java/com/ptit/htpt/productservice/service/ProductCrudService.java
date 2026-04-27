@@ -176,8 +176,8 @@ public class ProductCrudService {
         product.thumbnailUrl() != null ? product.thumbnailUrl() : "",
         categoryRef,
         product.brand(),
-        BigDecimal.ZERO,                               // rating default
-        0,                                             // reviewCount default
+        product.avgRating() != null ? product.avgRating() : BigDecimal.ZERO,
+        product.reviewCount(),
         product.stock(),                               // D-02: đọc từ ProductEntity.stock (Phase 8 PERSIST-01)
         product.status(),
         Collections.emptyList(),                       // tags default
