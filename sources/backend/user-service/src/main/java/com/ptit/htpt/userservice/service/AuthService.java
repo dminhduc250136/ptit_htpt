@@ -49,7 +49,7 @@ public class AuthService {
         String hash = passwordEncoder.encode(req.password());
         UserEntity entity = UserEntity.create(req.username(), req.email(), hash, "USER");
         userRepo.save(entity);
-        String token = jwtUtils.issueToken(entity.id(), entity.username(), entity.roles());
+        String token = jwtUtils.issueToken(entity.id(), entity.username(), entity.fullName(), entity.roles());
         return new AuthResponseDto(token, UserMapper.toDto(entity));
     }
 
@@ -66,7 +66,7 @@ public class AuthService {
         if (!passwordEncoder.matches(req.password(), entity.passwordHash())) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
-        String token = jwtUtils.issueToken(entity.id(), entity.username(), entity.roles());
+        String token = jwtUtils.issueToken(entity.id(), entity.username(), entity.fullName(), entity.roles());
         return new AuthResponseDto(token, UserMapper.toDto(entity));
     }
 }
