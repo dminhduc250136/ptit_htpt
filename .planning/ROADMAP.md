@@ -106,7 +106,14 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
   3. Concurrent set-default 2 addresses (2 tab) → DB chỉ giữ 1 row `is_default=true` per user (partial unique index enforced).
   4. User vào `/profile/orders` → filter bar (status dropdown + date range native input + keyword search) → URL state encode (`?status=PAID&from=2026-04-01&to=2026-04-30&q=ORD-123`); back/forward browser preserve filter.
   5. Date range timezone correct: đơn lúc 23:59 GMT+7 ngày 30/4 hiển thị khi filter "tháng 4" (KHÔNG miss do UTC offset).
-**Plans:** TBD
+**Plans:** 6 plans
+Plans:
+- [ ] 11-01-PLAN.md — Backend user-service: V4 Flyway migration + AddressEntity/Repository/Service/Controller (ACCT-05)
+- [ ] 11-02-PLAN.md — Backend order-service: extend listMyOrders() voi filter params (status/from/to/q) + UTC+7 timezone (ACCT-02)
+- [ ] 11-03-PLAN.md — [BLOCKING] Gateway route verify + user-service restart -> Flyway V4 apply
+- [ ] 11-04-PLAN.md — Frontend types (SavedAddress) + service functions (5 address CRUD + listMyOrders filter)
+- [ ] 11-05-PLAN.md — Frontend components: AddressCard + AddressForm + AddressPicker + OrderFilterBar
+- [ ] 11-06-PLAN.md — Frontend pages: /profile/addresses + /profile/orders + profile tab redirects + checkout AddressPicker
 **UI hint:** yes
 
 ### Phase 12: Wishlist
