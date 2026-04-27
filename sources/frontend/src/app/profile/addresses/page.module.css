@@ -1,0 +1,78 @@
+/* Reuse CSS vars từ profile/page.module.css */
+.page { min-height: 80vh; }
+.pageHeader { background-color: var(--surface-container-low); padding: var(--space-6) 0; }
+.container { max-width: var(--max-width); margin: 0 auto; padding-left: var(--space-4); padding-right: var(--space-4); }
+.pageTitle { font-family: var(--font-family-headline); font-size: var(--text-headline-lg); font-weight: var(--weight-bold); }
+.content { padding: var(--space-6) var(--space-4); }
+.layout { display: grid; grid-template-columns: 260px 1fr; gap: var(--space-6); align-items: start; }
+
+/* Sidebar */
+.sidebar { position: sticky; top: 96px; display: flex; flex-direction: column; gap: var(--space-4); }
+.sideNav { display: flex; flex-direction: column; gap: var(--space-1); }
+.navItem {
+  display: flex; align-items: center; gap: var(--space-3);
+  padding: var(--space-3) var(--space-4); border-radius: var(--radius-lg);
+  background: transparent; border: none; cursor: pointer;
+  font-size: var(--text-body-md); font-family: var(--font-family-body);
+  color: var(--on-surface-variant); transition: all var(--transition-fast);
+  text-align: left; text-decoration: none;
+}
+.navItem:hover { background: var(--surface-container-low); }
+.navActive { background: var(--primary-fixed) !important; color: var(--primary); font-weight: var(--weight-medium); }
+
+/* Main */
+.main { min-height: 400px; }
+.section { background: var(--surface-container-lowest); border-radius: var(--radius-xl); padding: var(--space-5); }
+.sectionTitle { font-size: var(--text-title-lg); font-weight: var(--weight-semibold); margin-bottom: 0; }
+
+/* Page header row */
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+/* Address list */
+.addressList { display: flex; flex-direction: column; gap: var(--space-3); }
+
+/* Empty state */
+.emptyState {
+  display: flex; flex-direction: column; align-items: center;
+  gap: var(--space-4); padding: var(--space-8) var(--space-4);
+  text-align: center;
+}
+.emptyBody { display: flex; flex-direction: column; gap: var(--space-2); }
+.emptyBody h3 { font-size: var(--text-title-md); font-weight: var(--weight-semibold); }
+.emptyBody p { color: var(--on-surface-variant); font-size: var(--text-body-md); }
+.emptyActions { display: flex; gap: var(--space-3); }
+
+/* Modal (custom overlay — dùng cho create/edit vì AddressForm tự có submit) */
+.modalOverlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; padding: var(--space-4);
+}
+.modal {
+  background: var(--surface-container-lowest); border-radius: var(--radius-2xl);
+  padding: var(--space-5); max-width: 520px; width: 100%;
+  animation: fadeIn 0.2s ease; max-height: 90vh; overflow-y: auto;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.modalHeader {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: var(--space-4);
+}
+.modalTitle { font-size: var(--text-title-lg); font-weight: var(--weight-semibold); }
+.modalClose {
+  background: none; border: none; font-size: 1.2rem; cursor: pointer;
+  color: var(--outline); padding: var(--space-1);
+}
+
+@media (max-width: 768px) {
+  .layout { grid-template-columns: 1fr; }
+  .sidebar { position: static; }
+  .sideNav { flex-direction: row; overflow-x: auto; gap: var(--space-2); }
+  .navItem { white-space: nowrap; padding: var(--space-2) var(--space-3); }
+  .headerRow { flex-direction: column; align-items: flex-start; gap: var(--space-3); }
+}
