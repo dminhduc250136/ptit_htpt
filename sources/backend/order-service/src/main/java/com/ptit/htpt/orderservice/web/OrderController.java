@@ -32,8 +32,22 @@ public class OrderController {
   public ApiResponse<Map<String, Object>> listOrders(
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
-      @RequestParam(defaultValue = "updatedAt,desc") String sort
+      @RequestParam(defaultValue = "updatedAt,desc") String sort,
+      // Phase 11 / ACCT-02 (D-10, D-11, D-12): filter params
+      @RequestParam(required = false) String status,
+      @RequestParam(required = false) String from,
+      @RequestParam(required = false) String to,
+      @RequestParam(required = false) String q,
+      @RequestHeader(value = "X-User-Id", required = false) String userId
   ) {
+    // Nếu có userId → dùng listMyOrders với filter (ACCT-02 path)
+    // Nếu không có userId → fallback listOrders cũ (backward compat cho admin/test)
+    if (userId != null && !userId.isBlank()) {
+      OrderCrudService.ListMyOrdersQuery query = new OrderCrudService.ListMyOrdersQuery(
+          userId, status, from, to, q, page, size, sort
+      );
+      return ApiResponse.of(200, "Orders listed", orderCrudService.listMyOrders(query));
+    }
     return ApiResponse.of(200, "Orders listed", orderCrudService.listOrders(page, size, sort, false));
   }
 
