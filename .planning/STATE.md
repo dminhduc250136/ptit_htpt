@@ -3,23 +3,23 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-27T05:30:00.000Z"
-last_activity: 2026-04-27 -- Phase 11 context gathered
+last_updated: "2026-04-27T15:30:00.000Z"
+last_activity: 2026-04-27 -- Phase 11 COMPLETE (17/17 verified, 4 UAT items human_needed)
 progress:
   total_phases: 7
-  completed_phases: 2
-  total_plans: 8
-  completed_plans: 8
-  percent: 71
+  completed_phases: 3
+  total_plans: 20
+  completed_plans: 14
+  percent: 86
 ---
 
 ## Current Position
 
-Phase: Phase 11 — Address Book + Order History Filtering
-Plan: Not started
-Status: Ready for planning
-Last activity: 2026-04-27 -- Phase 10 complete, advancing to Phase 11
-Resume file: .planning/phases/11-address-book-order-history-filtering/11-CONTEXT.md
+Phase: Phase 12 — Wishlist
+Plan: Not yet planned
+Status: Ready to plan
+Last activity: 2026-04-27 -- Phase 11 verification PASSED (17/17), code review done (5 warnings, 6 info, 0 critical), human UAT persisted (11-HUMAN-UAT.md)
+Resume file: .planning/phases/11-address-book-order-history-filtering/11-VERIFICATION.md
 
 ## Project Reference
 
@@ -73,9 +73,11 @@ Không có blocker.
 - Foundation v1.0 + v1.1 + v1.2 P9-P10 reuse được: ApiErrorResponse + traceId envelope; Swagger/OpenAPI codegen; Postgres + JPA + Flyway 5 services; auth thật (JWT HS256); admin CRUD qua gateway; FE typed services; rhf+zod pattern (P10 lần đầu); Playwright E2E suite (re-baseline P9).
 - v1.1 priority rule applied: nếu feature invisible to end-user → defer; nếu visible → ship.
 - Phase 10 decisions: hasAvatar=false (D-06, avatar defer D-08); rhfHandleSubmit rename (tránh collision Phase 9); useAuth().login() thay manual localStorage (refinement D-07).
-- UAT debt: 5 items Phase 10 cần docker stack (10-HUMAN-UAT.md, status: partial).
+- UAT debt: 5 items Phase 10 cần docker stack (10-HUMAN-UAT.md, status: partial); 4 items Phase 11 cần browser + backend stack (11-HUMAN-UAT.md, status: human_needed).
 
 ## Next Steps
 
-1. Discuss Phase 11 (Address Book + Order History Filtering — ACCT-02, ACCT-05, ACCT-06).
-2. Phase 11 scope: V4 addresses Flyway migration, address CRUD API + FE, checkout integration, order filter bar `/profile/orders`.
+1. Plan Phase 12 — `/gsd-plan-phase 12` (Wishlist: V5 wishlists migration, heart icon toggle, `/profile/wishlist` page, move-to-cart).
+2. Execute Phase 12 — `/gsd-execute-phase 12`.
+3. Sau Phase 12: Phase 13 Reviews & Ratings → Phase 14 Advanced Search → Phase 15 Polish + Audit.
+4. UAT debt cần giải quyết: 10-HUMAN-UAT.md (5 items) + 11-HUMAN-UAT.md (4 items) khi có docker stack chạy.
