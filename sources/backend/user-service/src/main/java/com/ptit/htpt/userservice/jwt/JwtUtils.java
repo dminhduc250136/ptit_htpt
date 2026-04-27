@@ -34,18 +34,20 @@ public class JwtUtils {
     }
 
     /**
-     * Phát hành JWT HS256 với claims: sub=userId, username, roles.
+     * Phát hành JWT HS256 với claims: sub=userId, username, name, roles.
      *
      * @param userId   UUID string của user
      * @param username username của user
+     * @param fullName tên đầy đủ của user (có thể null — fallback về username, D-10)
      * @param roles    roles string (ví dụ: "USER" hoặc "ADMIN")
      * @return JWT compact string
      */
-    public String issueToken(String userId, String username, String roles) {
+    public String issueToken(String userId, String username, String fullName, String roles) {
         Instant now = Instant.now();
         return Jwts.builder()
             .subject(userId)
             .claim("username", username)
+            .claim("name", (fullName != null && !fullName.isBlank()) ? fullName : username)  // D-10: fallback về username
             .claim("roles", roles)
             .issuedAt(Date.from(now))
             .expiration(Date.from(now.plusMillis(expirationMs)))
