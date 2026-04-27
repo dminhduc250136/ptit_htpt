@@ -31,4 +31,17 @@ public interface OrderRepository extends JpaRepository<OrderEntity, String> {
       @Param("to") Instant to,
       @Param("q") String q
   );
+
+  /**
+   * Phase 13 / Plan 02 (D-01, D-02): Check buyer eligibility — user đã có order DELIVERED
+   * chứa productId chưa. Dùng cho internal endpoint check từ product-svc.
+   *
+   * <p>Hardcode status='DELIVERED' theo D-02 lock (không nhận status làm param).
+   * COUNT > 0 thay vì EXISTS vì JPQL không support EXISTS subquery độc lập trên Hibernate 6.
+   */
+  @Query("SELECT COUNT(o) > 0 FROM OrderEntity o JOIN o.items i " +
+         "WHERE o.userId = :userId AND o.status = 'DELIVERED' AND i.productId = :productId")
+  boolean existsDeliveredOrderWithProduct(
+      @Param("userId") String userId,
+      @Param("productId") String productId);
 }
