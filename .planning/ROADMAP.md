@@ -48,7 +48,7 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
 ## Phases
 
 - [x] **Phase 9: Residual Closure & Verification** — Đóng AUTH-06 + AUTH-07 password change + UI-02 admin dashboard + Playwright E2E re-baseline cho v1.1. *(Complete 2026-04-27 — 5 plans, 4/4 automated checks PASS, 5 UAT items pending docker stack)*
-- [ ] **Phase 10: User-Svc Schema Cluster + Profile Editing** — V3 avatar BYTEA, gateway `/users/me/*` routes, profile editing UI (rhf+zod foundation).
+- [x] **Phase 10: User-Svc Schema Cluster + Profile Editing** — V3 avatar BYTEA, gateway `/users/me/*` routes, profile editing UI (rhf+zod foundation). *(Complete 2026-04-27 — 3 plans, tsc+build PASS, ACCT-03 shipped; ACCT-04 avatar deferred per D-08)*
 - [ ] **Phase 11: Address Book + Order History Filtering** — V4 addresses, address CRUD + checkout integration, order filter bar trên `/profile/orders`.
 - [ ] **Phase 12: Wishlist** — V5 wishlists, heart icon trên product card/PDP, `/profile/wishlist` page với move-to-cart.
 - [ ] **Phase 13: Reviews & Ratings** — V4 reviews + V5 avg_rating cached cols, recompute from scratch, verified-buyer eligibility, PDP review section.
@@ -88,9 +88,9 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
   3. User upload `.exe` hoặc file > 2MB → backend reject 422 với error code rõ ràng; FE hiển thị field-level error (không crash).
   4. Gateway route order verified: `user-service-me` ĐỨNG TRƯỚC `user-service-base` — `PATCH /api/users/me` không match `/api/users/{id}` với id="me".
 **Plans:** 3 plans
-- [ ] 10-01-PLAN.md — Backend GET/PATCH /users/me + UserDto.hasAvatar (ACCT-03)
-- [ ] 10-02-PLAN.md — Frontend deps install (react-hook-form + zod + @hookform/resolvers — set rhf+zod foundation cho v1.2)
-- [ ] 10-03-PLAN.md — Frontend services + Profile Info section + Avatar placeholder (ACCT-03; ACCT-04 deferred per CONTEXT D-08)
+- [x] 10-01-PLAN.md — Backend GET/PATCH /users/me + UserDto.hasAvatar (ACCT-03)
+- [x] 10-02-PLAN.md — Frontend deps install (react-hook-form + zod + @hookform/resolvers — set rhf+zod foundation cho v1.2)
+- [x] 10-03-PLAN.md — Frontend services + Profile Info section + Avatar placeholder (ACCT-03; ACCT-04 deferred per CONTEXT D-08)
 
 **Note:** ACCT-04 (avatar upload) DEFERRED to backlog per CONTEXT D-08 — Phase 10 ship Profile Editing only. Success Criteria 2 & 3 (avatar upload flows) deferred together. SC-1 và SC-4 vẫn trong scope.
 **UI hint:** yes
