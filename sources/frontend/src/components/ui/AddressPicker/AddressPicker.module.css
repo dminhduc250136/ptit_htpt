@@ -1,0 +1,129 @@
+.container {
+  position: relative;
+  width: 100%;
+}
+
+.trigger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 40px;
+  padding: 0 var(--space-3);
+  background: var(--surface-container-lowest);
+  color: var(--primary);
+  border: 1.5px solid var(--primary);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-body-md);
+  font-weight: var(--weight-semibold);
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.trigger:hover {
+  background: var(--primary-fixed);
+}
+
+.dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-1));
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  max-height: 240px;
+  overflow-y: auto;
+  padding: var(--space-1) 0;
+}
+
+.item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  cursor: pointer;
+  font-size: var(--text-body-md);
+  color: var(--on-surface);
+  transition: background 0.1s ease;
+  outline: none;
+}
+
+.item:hover {
+  background: var(--surface-container-low);
+}
+
+.item:focus-visible {
+  background: var(--surface-container-low);
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+.itemDefault {
+  background: var(--primary-fixed);
+}
+
+.itemDefault:hover {
+  background: var(--primary-fixed);
+  filter: brightness(0.97);
+}
+
+.itemSelected {
+  font-weight: var(--weight-semibold);
+}
+
+.itemText {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.checkMark {
+  color: var(--primary);
+  font-weight: var(--weight-semibold);
+  flex-shrink: 0;
+}
+
+.emptyState {
+  padding: var(--space-4) var(--space-3);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.emptyText {
+  font-size: var(--text-body-md);
+  color: var(--on-surface-variant);
+  margin: 0;
+}
+
+.emptyLink {
+  font-size: var(--text-body-md);
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.skeletonRow {
+  height: 40px;
+  margin: var(--space-1) var(--space-3);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(
+    90deg,
+    var(--surface-container-low) 25%,
+    var(--surface-container) 50%,
+    var(--surface-container-low) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
