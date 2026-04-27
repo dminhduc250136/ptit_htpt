@@ -124,7 +124,8 @@ export interface Product {
   category: Category;
   brand?: string;
   specifications?: Specification[];
-  rating: number;
+  rating?: number;           // legacy — deprecated; dùng avgRating từ Phase 13
+  avgRating?: number;        // Phase 13: real avg từ BE (thay hardcode ZERO)
   reviewCount: number;
   stock: number;
   status: 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK';
@@ -228,14 +229,13 @@ export interface CreateOrderRequest {
 
 
 // ===== REVIEW (Part of Product Service) =====
+// Phase 13: align với BE DTO ReviewService.toResponse — D-11 + Pitfall 6
 export interface Review {
   id: string;
-  userId: string;
-  userName: string;
-  userAvatar?: string;
   productId: string;
-  rating: number;
-  comment: string;
-  images?: string[];
-  createdAt: string;
+  userId: string;
+  reviewerName: string;       // snapshot từ JWT 'name' — D-11
+  rating: number;             // 1-5
+  content?: string | null;    // nullable — D-06
+  createdAt: string;          // ISO 8601
 }
