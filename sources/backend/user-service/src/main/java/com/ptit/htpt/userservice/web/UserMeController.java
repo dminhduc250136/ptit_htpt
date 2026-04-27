@@ -1,13 +1,17 @@
 package com.ptit.htpt.userservice.web;
 
 import com.ptit.htpt.userservice.api.ApiResponse;
+import com.ptit.htpt.userservice.domain.UserDto;
 import com.ptit.htpt.userservice.jwt.JwtUtils;
 import com.ptit.htpt.userservice.service.UserPasswordService;
+import com.ptit.htpt.userservice.service.UserProfileService;
 import io.jsonwebtoken.Claims;
 import jakarta.validation.Valid;
 import java.util.Map;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -32,11 +36,47 @@ import org.springframework.web.server.ResponseStatusException;
 public class UserMeController {
 
     private final UserPasswordService passwordService;
+    private final UserProfileService profileService;
     private final JwtUtils jwtUtils;
 
-    public UserMeController(UserPasswordService passwordService, JwtUtils jwtUtils) {
+    public UserMeController(UserPasswordService passwordService,
+                            UserProfileService profileService,
+                            JwtUtils jwtUtils) {
         this.passwordService = passwordService;
+        this.profileService = profileService;
         this.jwtUtils = jwtUtils;
+    }
+
+    /**
+     * GET /users/me — lấy profile của user hiện tại.
+     *
+     * @param authHeader Authorization Bearer token (required để xác định userId).
+     * @return 200 + UserDto với hasAvatar=false (Phase 10).
+     * @throws ResponseStatusException 401 nếu thiếu/invalid Authorization header.
+     */
+    @GetMapping
+    public ApiResponse<UserDto> getMe(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader
+    ) {
+        String userId = extractUserIdFromBearer(authHeader);
+        return ApiResponse.of(200, "Profile loaded", profileService.getMe(userId));
+    }
+
+    /**
+     * PATCH /users/me — cập nhật profile (fullName, phone) của user hiện tại.
+     *
+     * @param authHeader Authorization Bearer token (required để xác định userId).
+     * @param body       {fullName?, phone?} — nullable optional fields, validated.
+     * @return 200 + UserDto updated.
+     * @throws ResponseStatusException 401 nếu thiếu/invalid Authorization header.
+     */
+    @PatchMapping
+    public ApiResponse<UserDto> updateMe(
+            @RequestHeader(value = HttpHeaders.AUTHORIZATION, required = false) String authHeader,
+            @Valid @RequestBody UpdateMeRequest body
+    ) {
+        String userId = extractUserIdFromBearer(authHeader);
+        return ApiResponse.of(200, "Đã cập nhật", profileService.updateMe(userId, body));
     }
 
     /**
