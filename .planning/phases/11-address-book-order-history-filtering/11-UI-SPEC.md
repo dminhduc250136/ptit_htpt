@@ -60,12 +60,12 @@ Declared values — tất cả lấy từ CSS custom properties đã tồn tại
 |------|----------------|------|--------|-------------|----------------------|
 | Body | `--text-body-md` / `.text-body-md` | 14px | 400 (`--weight-regular`) | 1.6 (`--leading-relaxed`) | Address text, order list metadata, filter labels |
 | Body Large | `--text-body-lg` / `.text-body-lg` | 16px | 400 (`--weight-regular`) | 1.6 (`--leading-relaxed`) | Modal body, empty state body copy |
-| Title | `--text-title-sm` / `.text-title-sm` | 14px | 500 (`--weight-medium`) | 1.5 (`--leading-normal`) | Address fullName, order code badge |
+| Title | `--text-title-sm` / `.text-title-sm` | 14px | 600 (`--weight-semibold`) | 1.5 (`--leading-normal`) | Address fullName, order code badge |
 | Heading | `--text-title-lg` / `.text-title-lg` | 22px | 600 (`--weight-semibold`) | 1.5 (`--leading-normal`) | Page section titles, modal title |
 
 **Active weights trong Phase 11:**
 - Weight 400 (`--weight-regular`): body text, metadata, placeholder text
-- Weight 600 (`--weight-semibold`): address fullName, section headings, CTA button labels, default badge
+- Weight 600 (`--weight-semibold`): address fullName, section headings, CTA button labels, default badge, Title role
 
 **Source:** `globals.css` §TYPOGRAPHY TOKENS + `profile/page.module.css` existing `.orderCard`, `.addressCard` classes
 
@@ -140,7 +140,7 @@ Liệt kê từng component cần dùng hoặc tạo mới — executor dùng li
 │ Layout: sidebar (260px) + main (1fr)                │
 │ Sidebar: profile nav (reuse profile/page.tsx nav)   │
 │ Main:                                               │
-│   Address list — flex col, gap 12px                 │
+│   Address list — flex col, gap: var(--space-3)      │
 │   ┌─ AddressCard ─────────────────────────────────┐ │
 │   │ [Mặc định badge] fullName  phone              │ │
 │   │ street, ward, district, city                  │ │
@@ -149,6 +149,8 @@ Liệt kê từng component cần dùng hoặc tạo mới — executor dùng li
 │   (empty state khi không có địa chỉ)               │
 └─────────────────────────────────────────────────────┘
 ```
+
+**Primary visual anchor:** Button "Thêm địa chỉ mới" (accent color, top-right của page header) — element nổi bật nhất trên màn hình địa chỉ, luôn visible trừ khi đạt giới hạn 10 địa chỉ.
 
 - Max addresses hiển thị: 10 (backend cap). Không cần pagination cho addresses.
 - Khi đạt 10 addresses: button "Thêm địa chỉ mới" bị disabled + tooltip "Đã đạt giới hạn 10 địa chỉ".
@@ -192,6 +194,8 @@ Liệt kê từng component cần dùng hoặc tạo mới — executor dùng li
 │   — pagination giữ nguyên                          │
 └─────────────────────────────────────────────────────┘
 ```
+
+**Primary visual anchor:** OrderFilterBar sticky (sau header) — user gaze đi đến filter trước khi scan danh sách đơn hàng; filter bar là interactive focal point chính của trang.
 
 - Filter bar: `display: flex`, `gap: --space-2` (8px), `flex-wrap: wrap` trên mobile.
 - Filter bar background: `--surface-container-low`, `padding: --space-3 --space-4`, `border-radius: --radius-xl`.
@@ -243,7 +247,7 @@ Nguyễn Văn A  |  0912 345 678
 - Text: `--primary` (#0056D2)
 - Font: `--text-label-sm` (11px uppercase) + `--weight-semibold`
 - Border-radius: `--radius-full` (pill shape)
-- Padding: 2px 8px
+- Padding: 4px 8px (var(--space-1) var(--space-2))
 
 ---
 
@@ -272,6 +276,8 @@ Nguyễn Văn A  |  0912 345 678
 | Hover | `--surface-container` bg, `translateY(-1px)` |
 | Default address | `--surface-container-low` bg + badge "Mặc định" |
 | Loading (set-default) | Button spinner, card opacity 0.7 |
+
+**Inline action buttons "Sửa" / "Xóa":** Context noun được cung cấp bởi surrounding card (hiển thị fullName + địa chỉ). Aria-label cụ thể khai báo trong Accessibility Contract bên dưới để screen readers đọc đúng.
 
 ### AddressPicker dropdown states
 
@@ -358,6 +364,8 @@ Nguyễn Văn A  |  0912 345 678
 - "Xóa bộ lọc" button: `aria-label="Xóa tất cả bộ lọc đang áp dụng"`
 - Badge "Mặc định": `aria-label="Địa chỉ mặc định"` hoặc sr-only text
 - Disabled "Thêm địa chỉ mới" khi đạt limit: `aria-disabled="true"` + `title` tooltip
+- Inline action "Sửa" trên AddressCard: `aria-label="Sửa địa chỉ {fullName}"` — context noun từ card prop
+- Inline action "Xóa" trên AddressCard: `aria-label="Xóa địa chỉ {fullName}"` — context noun từ card prop
 
 ---
 
@@ -374,17 +382,18 @@ Nguyễn Văn A  |  0912 345 678
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: FLAG (non-blocking — focal points explicit in both pages)
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** APPROVED
 
 ---
 
 *Phase: 11 — Address Book + Order History Filtering*
 *UI-SPEC generated: 2026-04-27*
+*Revised: 2026-04-27 — fixed Typography weight (Title: 500→600) + Spacing gap (12px→var(--space-3)/16px)*
 *Sources: 11-CONTEXT.md (15 decisions), globals.css (full token audit), profile/page.module.css, checkout/page.module.css, Button/Badge/Modal components*
