@@ -47,6 +47,22 @@ spring:
           filters:
             - RewritePath=/api/users/admin/(?<seg>.*), /admin/users/${seg}
 
+        # user-service me: /api/users/me/** → /users/me/** (PHẢI đứng TRƯỚC user-service-base
+        # để /api/users/me/password KHÔNG match catch-all /api/users/{id} với id="me/password".
+        # Phase 10 sẽ extend với GET/PATCH /api/users/me cho profile editing.)
+        - id: user-service-me-base
+          uri: http://user-service:8080
+          predicates:
+            - Path=/api/users/me
+          filters:
+            - RewritePath=/api/users/me, /users/me
+        - id: user-service-me
+          uri: http://user-service:8080
+          predicates:
+            - Path=/api/users/me/**
+          filters:
+            - RewritePath=/api/users/me/(?<seg>.*), /users/me/${seg}
+
         # user-service: /api/users -> /users, /api/users/{id} -> /users/{id}
         - id: user-service-base
           uri: http://user-service:8080
