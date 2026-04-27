@@ -106,7 +106,11 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
   2. User CHƯA mua product (no order DELIVERED) submit review → backend trả 422 `REVIEW_NOT_ELIGIBLE`; FE hide form với hint "Chỉ user đã mua mới review được".
   3. PDP review list hiển thị paginated 10/page, sort newest first, mỗi item show reviewer displayName (snapshot) + rating sao + content (rendered as plain text — XSS payload `<script>` hiển thị literal text, KHÔNG execute).
   4. Product card + PDP header hiển thị `avg_rating` (1 decimal) + `review_count` từ cached cols; recompute from scratch (`SELECT AVG, COUNT FROM reviews WHERE product_id=?`) sau mỗi insert/delete — KHÔNG drift.
-**Plans:** TBD
+**Plans:** 4 plans
+- [ ] 13-01-PLAN.md — user-svc JwtUtils + AuthService thêm claim 'name' (fullName)
+- [ ] 13-02-PLAN.md — order-svc internal eligibility endpoint (/internal/orders/eligibility) + OrderRepository query
+- [ ] 13-03-PLAN.md — product-svc V4 reviews + V5 avg_rating + ReviewEntity/Repo/Service/Controller + Jsoup sanitize + RestTemplate eligibility re-check + tests
+- [ ] 13-04-PLAN.md — FE ReviewSection (StarWidget, Form, List) + types align + ProductCard/PDP avgRating + UAT checkpoint
 **UI hint:** yes
 
 ### Phase 14: Basic Search Filters
@@ -147,7 +151,7 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
 | 10. User-Svc Schema + Profile Editing | 3/3 | ✓ Complete | 2026-04-27 |
 | 11. Address Book + Order Filtering | 6/6 | ✓ Complete | 2026-04-27 |
 | 12. Wishlist | — | ~~SKIPPED~~ (defer v1.3) | — |
-| 13. Reviews & Ratings | 0/? | Not started | — |
+| 13. Reviews & Ratings | 0/4 | Not started | — |
 | 14. Basic Search Filters | 0/? | Not started | — |
 | 15. Public Polish + Milestone Audit | 0/? | Not started | — |
 
