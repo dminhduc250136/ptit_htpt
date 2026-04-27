@@ -4,7 +4,7 @@ milestone: v1.2
 milestone_name: "UI/UX Completion"
 status: ready_to_plan
 last_updated: "2026-04-27T00:00:00.000Z"
-last_activity: "2026-04-27 — Phase 9 complete (5/5 plans, 4/4 automated PASS). 5 human UAT items pending docker stack. Next: /gsd-discuss-phase 10."
+last_activity: "2026-04-27 — Phase 10 context captured (profile editing only, avatar deferred). Next: /gsd-plan-phase 10."
 progress:
   total_phases: 7
   completed_phases: 1
@@ -15,11 +15,11 @@ progress:
 
 ## Current Position
 
-Phase: Phase 9 — Residual Closure & Verification (context captured)
+Phase: Phase 10 — User-Svc Schema Cluster + Profile Editing (context captured)
 Plan: —
 Status: Ready to plan
-Last activity: 2026-04-26 — CONTEXT.md captured (4 gray areas: middleware/stats/admin scope/TEST-01)
-Resume file: .planning/phases/09-residual-closure-verification/09-CONTEXT.md
+Last activity: 2026-04-27 — CONTEXT.md captured (avatar deferred, profile form only — scope trimmed per user intent)
+Resume file: .planning/phases/10-user-svc-schema-profile-editing/10-CONTEXT.md
 
 ## Project Reference
 
@@ -75,5 +75,5 @@ Không có blocker. Pre-phase setup hoàn tất, ready for `/gsd-plan-phase 9`.
 
 ## Next Steps
 
-1. Run `/gsd-plan-phase 9` để tạo plan cho Phase 9 (Residual Closure & Verification — AUTH-06, AUTH-07, UI-02, TEST-01).
-2. Plan-phase agents reference Flyway V-number table trong ROADMAP.md trước khi sinh migration files.
+1. Run `/gsd-plan-phase 10` để tạo plan cho Phase 10 (User-Svc Schema + Profile Editing — ACCT-03; ACCT-04 avatar deferred).
+2. Phase 10 scope: GET + PATCH /users/me backend, profile form rhf+zod, navbar localStorage refresh. Không có Flyway migration Phase 10 (V3 avatar defer).
