@@ -4,7 +4,7 @@
  * Bearer token auto-attached bởi http.ts.
  */
 import type { User, PaginatedResponse, SavedAddress, AddressBody } from '@/types';
-import { httpGet, httpPatch, httpDelete, httpPost } from './http';
+import { httpGet, httpPatch, httpPut, httpDelete, httpPost } from './http';
 
 export interface ListUsersParams {
   page?: number;
@@ -89,7 +89,7 @@ export function createAddress(body: AddressBody): Promise<SavedAddress> {
 
 /** Cập nhật address theo id (chỉ owner). */
 export function updateAddress(id: string, body: AddressBody): Promise<SavedAddress> {
-  return httpPatch<SavedAddress>(`/api/users/me/addresses/${encodeURIComponent(id)}`, body);
+  return httpPut<SavedAddress>(`/api/users/me/addresses/${encodeURIComponent(id)}`, body);
 }
 
 /** Xóa address theo id (hard-delete, chỉ owner). */
@@ -99,5 +99,5 @@ export function deleteAddress(id: string): Promise<void> {
 
 /** Đặt address là mặc định (clear others). */
 export function setDefaultAddress(id: string): Promise<SavedAddress> {
-  return httpPatch<SavedAddress>(`/api/users/me/addresses/${encodeURIComponent(id)}/default`, {});
+  return httpPut<SavedAddress>(`/api/users/me/addresses/${encodeURIComponent(id)}/default`, {});
 }
