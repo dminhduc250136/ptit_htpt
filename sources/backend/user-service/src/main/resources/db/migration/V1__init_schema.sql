@@ -5,10 +5,11 @@ CREATE TABLE user_svc.users (
   username VARCHAR(80) NOT NULL,
   email VARCHAR(200) NOT NULL,
   password_hash VARCHAR(120) NOT NULL,
-  roles VARCHAR(200) NOT NULL DEFAULT 'USER',
+  roles VARCHAR(200) NOT NULL DEFAULT 'CUSTOMER',
   deleted BOOLEAN NOT NULL DEFAULT FALSE,
   created_at TIMESTAMP WITH TIME ZONE NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
   CONSTRAINT uq_users_username UNIQUE (username),
-  CONSTRAINT uq_users_email UNIQUE (email)
+  CONSTRAINT uq_users_email UNIQUE (email),
+  CONSTRAINT ck_users_role CHECK (roles IN ('ADMIN', 'CUSTOMER'))
 );

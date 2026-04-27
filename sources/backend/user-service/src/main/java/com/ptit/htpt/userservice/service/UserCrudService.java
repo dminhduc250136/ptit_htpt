@@ -63,7 +63,7 @@ public class UserCrudService {
         // Plan 04 scope: chỉ persistence; admin tạo user qua admin tool có hash sẵn,
         // hoặc Phase 6 register endpoint sẽ hash trước khi gọi service này.
         request.passwordHash(),
-        request.roles() == null || request.roles().isBlank() ? "USER" : request.roles()
+        request.roles() == null || request.roles().isBlank() ? "CUSTOMER" : request.roles()
     );
     return UserMapper.toDto(userRepo.save(entity));
   }

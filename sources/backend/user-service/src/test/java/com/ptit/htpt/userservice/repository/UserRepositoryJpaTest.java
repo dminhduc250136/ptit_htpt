@@ -69,7 +69,7 @@ class UserRepositoryJpaTest {
   private UserEntity newUser(String username, String email) {
     Instant now = Instant.now();
     return UserEntity.create(username, email,
-        "$2a$10$TMH2spmmPRD90vJz8w5yz.G0o4AR/Hio2RU1yBwjjT1ClTLqF5lFu", "USER");
+        "$2a$10$TMH2spmmPRD90vJz8w5yz.G0o4AR/Hio2RU1yBwjjT1ClTLqF5lFu", "CUSTOMER");
   }
 
   @Test

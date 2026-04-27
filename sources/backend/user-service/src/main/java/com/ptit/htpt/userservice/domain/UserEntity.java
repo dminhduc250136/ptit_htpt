@@ -78,7 +78,7 @@ public class UserEntity {
   public static UserEntity create(String username, String email, String passwordHash, String roles) {
     Instant now = Instant.now();
     return new UserEntity(UUID.randomUUID().toString(), username, email, passwordHash,
-        roles == null || roles.isBlank() ? "USER" : roles, null, null, false, now, now);
+        roles == null || roles.isBlank() ? "CUSTOMER" : roles, null, null, false, now, now);
   }
 
   public void update(String username, String email, String roles) {

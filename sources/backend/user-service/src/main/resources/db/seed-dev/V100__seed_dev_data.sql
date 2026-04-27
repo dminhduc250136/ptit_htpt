@@ -9,4 +9,4 @@ VALUES
   ('00000000-0000-0000-0000-000000000001', 'admin',     'admin@tmdt.local',
    '$2a$10$TMH2spmmPRD90vJz8w5yz.G0o4AR/Hio2RU1yBwjjT1ClTLqF5lFu', 'ADMIN', FALSE, NOW(), NOW()),
   ('00000000-0000-0000-0000-000000000002', 'demo_user', 'demo@tmdt.local',
-   '$2a$10$TMH2spmmPRD90vJz8w5yz.G0o4AR/Hio2RU1yBwjjT1ClTLqF5lFu', 'USER',  FALSE, NOW(), NOW());
+   '$2a$10$TMH2spmmPRD90vJz8w5yz.G0o4AR/Hio2RU1yBwjjT1ClTLqF5lFu', 'CUSTOMER',  FALSE, NOW(), NOW());
