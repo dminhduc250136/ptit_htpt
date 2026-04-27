@@ -43,7 +43,7 @@ Dự án thử nghiệm GSD workflow trên codebase e-commerce laptop (Spring Bo
 **Account features:**
 - [ ] **Wishlist / Favorites** — save sản phẩm, trang wishlist, move to cart
 - [ ] **Order history filtering** — filter theo status/date, search trong /profile/orders
-- [ ] **User profile editing** — edit fullName/phone/avatar/password trong /profile/settings
+- [x] **User profile editing** — GET/PATCH /api/users/me, form rhf+zod tại /profile/settings, navbar sync via useAuth().login() — Validated in Phase 10: User-Svc Schema + Profile Editing
 
 **Discovery features:**
 - [ ] **Product reviews & ratings** — sao + comment trên product detail, average rating
