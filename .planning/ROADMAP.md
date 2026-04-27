@@ -107,8 +107,8 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
   3. PDP review list hiển thị paginated 10/page, sort newest first, mỗi item show reviewer displayName (snapshot) + rating sao + content (rendered as plain text — XSS payload `<script>` hiển thị literal text, KHÔNG execute).
   4. Product card + PDP header hiển thị `avg_rating` (1 decimal) + `review_count` từ cached cols; recompute from scratch (`SELECT AVG, COUNT FROM reviews WHERE product_id=?`) sau mỗi insert/delete — KHÔNG drift.
 **Plans:** 4 plans
-- [ ] 13-01-PLAN.md — user-svc JwtUtils + AuthService thêm claim 'name' (fullName)
-- [ ] 13-02-PLAN.md — order-svc internal eligibility endpoint (/internal/orders/eligibility) + OrderRepository query
+- [x] 13-01-PLAN.md — user-svc JwtUtils + AuthService thêm claim 'name' (fullName) *(2026-04-27)*
+- [x] 13-02-PLAN.md — order-svc internal eligibility endpoint (/internal/orders/eligibility) + OrderRepository query *(2026-04-27)*
 - [ ] 13-03-PLAN.md — product-svc V4 reviews + V5 avg_rating + ReviewEntity/Repo/Service/Controller + Jsoup sanitize + RestTemplate eligibility re-check + tests
 - [ ] 13-04-PLAN.md — FE ReviewSection (StarWidget, Form, List) + types align + ProductCard/PDP avgRating + UAT checkpoint
 **UI hint:** yes
