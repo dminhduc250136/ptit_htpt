@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-27T05:00:00.000Z"
-last_activity: 2026-04-27 -- Phase 10 execution complete
+last_updated: "2026-04-27T05:30:00.000Z"
+last_activity: 2026-04-27 -- Phase 10 complete, advancing to Phase 11
 progress:
   total_phases: 7
   completed_phases: 2
@@ -15,19 +15,19 @@ progress:
 
 ## Current Position
 
-Phase: Phase 10 — User-Svc Schema Cluster + Profile Editing
-Plan: All 3 plans complete
-Status: Verifying
-Last activity: 2026-04-27 -- Phase 10 execution complete
-Resume file: .planning/phases/10-user-svc-schema-profile-editing/10-CONTEXT.md
+Phase: Phase 11 — Address Book + Order History Filtering
+Plan: Not started
+Status: Ready to discuss
+Last activity: 2026-04-27 -- Phase 10 complete, advancing to Phase 11
+Resume file: None
 
 ## Project Reference
 
-See: `.planning/PROJECT.md` (updated 2026-04-26 — Current Milestone: v1.2)
+See: `.planning/PROJECT.md` (updated 2026-04-27 — Current Milestone: v1.2)
 
 **Core value:** Demo end-to-end shopping experience hoạt động với real data ở mọi điểm user nhìn thấy, đồng thời rèn quy trình GSD từ planning → execute → verify → archive.
 
-**Current focus:** v1.2 UI/UX Completion — close residual gaps v1.1 + thêm 8 visible features (account/discovery/checkout/public polish).
+**Current focus:** v1.2 UI/UX Completion — Phase 11: Address Book + Order History Filtering.
 
 ## Resume Cheat-Sheet
 
@@ -65,17 +65,17 @@ See: `.planning/PROJECT.md` (updated 2026-04-26 — Current Milestone: v1.2)
 
 ## Blockers
 
-Không có blocker. Pre-phase setup hoàn tất, ready for `/gsd-plan-phase 9`.
+Không có blocker.
 
 ## Accumulated Context
 
 - Project: tmdt-use-gsd — dự án thử nghiệm GSD workflow (Spring Boot microservices + Next.js + API gateway + Docker Compose).
-- Foundation v1.0 + v1.1 reuse được: ApiErrorResponse + traceId envelope; Swagger/OpenAPI codegen; Postgres + JPA + Flyway 5 services; auth thật (JWT HS256); admin CRUD qua gateway; FE typed services; middleware route protection (admin only — sẽ mở rộng Phase 9); Playwright E2E suite (re-baseline Phase 9).
+- Foundation v1.0 + v1.1 + v1.2 P9-P10 reuse được: ApiErrorResponse + traceId envelope; Swagger/OpenAPI codegen; Postgres + JPA + Flyway 5 services; auth thật (JWT HS256); admin CRUD qua gateway; FE typed services; rhf+zod pattern (P10 lần đầu); Playwright E2E suite (re-baseline P9).
 - v1.1 priority rule applied: nếu feature invisible to end-user → defer; nếu visible → ship.
-- v1.2 phase split: 7 phases adopted (synthesizer recommendation). Schema-heavy phases sớm (P10 user-svc, P13 product-svc) gom Flyway migrations. Public polish cuối (P15).
-- Research artifacts đầy đủ trong `.planning/research/` (4 files + SUMMARY).
+- Phase 10 decisions: hasAvatar=false (D-06, avatar defer D-08); rhfHandleSubmit rename (tránh collision Phase 9); useAuth().login() thay manual localStorage (refinement D-07).
+- UAT debt: 5 items Phase 10 cần docker stack (10-HUMAN-UAT.md, status: partial).
 
 ## Next Steps
 
-1. Run `/gsd-plan-phase 10` để tạo plan cho Phase 10 (User-Svc Schema + Profile Editing — ACCT-03; ACCT-04 avatar deferred).
-2. Phase 10 scope: GET + PATCH /users/me backend, profile form rhf+zod, navbar localStorage refresh. Không có Flyway migration Phase 10 (V3 avatar defer).
+1. Discuss Phase 11 (Address Book + Order History Filtering — ACCT-02, ACCT-05, ACCT-06).
+2. Phase 11 scope: V4 addresses Flyway migration, address CRUD API + FE, checkout integration, order filter bar `/profile/orders`.
