@@ -3,8 +3,8 @@
 -- full_name, phone, street, ward, district, city, is_default, created_at
 
 CREATE TABLE user_svc.addresses (
-    id          UUID         NOT NULL DEFAULT gen_random_uuid() PRIMARY KEY,
-    user_id     UUID         NOT NULL,
+    id          VARCHAR(36)  NOT NULL PRIMARY KEY,
+    user_id     VARCHAR(36)  NOT NULL,
     full_name   VARCHAR(100) NOT NULL,
     phone       VARCHAR(20)  NOT NULL,
     street      VARCHAR(200) NOT NULL,
