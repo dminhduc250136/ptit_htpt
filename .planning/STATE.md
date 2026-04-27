@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-27T16:00:00.000Z"
-last_activity: 2026-04-27 -- Scope trim: Phase 12 skip, REV-04/SEARCH-03/SEARCH-04/lightbox deferred v1.3
+last_updated: "2026-04-27T18:00:00.000Z"
+last_activity: 2026-04-27 -- Phase 13 planned (4 plans, 3 waves) — ready to execute
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 20
+  total_plans: 24
   completed_plans: 14
   percent: 86
 ---
@@ -16,10 +16,10 @@ progress:
 ## Current Position
 
 Phase: Phase 13 — Reviews & Ratings
-Plan: Not yet planned
-Status: UI-SPEC approved — ready to plan
-Last activity: 2026-04-27 -- Phase 13 UI-SPEC approved (6/6 dimensions PASS)
-Resume file: .planning/phases/13-reviews-ratings/13-UI-SPEC.md
+Plan: 4 plans (13-01..13-04), 3 waves
+Status: Ready to execute
+Last activity: 2026-04-27 -- Phase 13 planned, verification passed (1 blocker resolved)
+Resume file: .planning/phases/13-reviews-ratings/
 
 ## Project Reference
 
@@ -77,7 +77,6 @@ Không có blocker.
 
 ## Next Steps
 
-1. Plan Phase 12 — `/gsd-plan-phase 12` (Wishlist: V5 wishlists migration, heart icon toggle, `/profile/wishlist` page, move-to-cart).
-2. Execute Phase 12 — `/gsd-execute-phase 12`.
-3. Sau Phase 12: Phase 13 Reviews & Ratings → Phase 14 Advanced Search → Phase 15 Polish + Audit.
-4. UAT debt cần giải quyết: 10-HUMAN-UAT.md (5 items) + 11-HUMAN-UAT.md (4 items) khi có docker stack chạy.
+1. Execute Phase 13 — `/gsd-execute-phase 13` (Wave 1: 13-01 + 13-02 parallel → Wave 2: 13-03 → Wave 3: 13-04 checkpoint).
+2. Sau Phase 13: Phase 14 Advanced Search → Phase 15 Polish + Audit.
+3. UAT debt cần giải quyết: 10-HUMAN-UAT.md (5 items) + 11-HUMAN-UAT.md (4 items) khi có docker stack chạy.
