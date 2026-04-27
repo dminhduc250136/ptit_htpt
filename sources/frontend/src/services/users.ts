@@ -49,3 +49,21 @@ export interface ChangePasswordBody {
 export function changeMyPassword(body: ChangePasswordBody): Promise<{ changed: true }> {
   return httpPost<{ changed: true }>('/api/users/me/password', body);
 }
+
+// ============================================================
+// Phase 10 / ACCT-03. Self-service profile read & update.
+// Endpoints backend: GET /api/users/me, PATCH /api/users/me.
+// ============================================================
+
+export interface UpdateMeBody {
+  fullName?: string;
+  phone?: string;
+}
+
+export function getMe(): Promise<User> {
+  return httpGet<User>('/api/users/me');
+}
+
+export function patchMe(body: UpdateMeBody): Promise<User> {
+  return httpPatch<User>('/api/users/me', body);
+}
