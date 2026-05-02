@@ -198,7 +198,7 @@ Plans:
 - [x] 22-03-PLAN.md — GET /api/chat/sessions + GET /api/chat/sessions/[id]/messages (owner-only) ✅ 2026-05-02
 - [x] 22-04-PLAN.md — POST /api/admin/orders/[id]/suggest-reply (admin role gate, 1-shot) ✅ 2026-05-02
 - [x] 22-05-PLAN.md — Customer chat UI: FloatingChatButton + ChatPanel + useChat hook + sessions sidebar + mount layout ✅ 2026-05-02
-- [ ] 22-06-PLAN.md — Admin order detail "AI gợi ý phản hồi" button + SuggestReplyModal
+- [x] 22-06-PLAN.md — Admin order detail "AI gợi ý phản hồi" button + SuggestReplyModal ✅ 2026-05-02
 - [ ] 22-07-PLAN.md — Playwright E2E (chatbot-customer / chatbot-admin / chatbot-edge) + 22-VERIFICATION.md
 **UI hint**: yes
 
@@ -214,7 +214,7 @@ Plans:
 | 19. Hoàn Thiện Admin: Charts + Low-Stock | 0/? | Not started | - |
 | 20. Hệ Thống Coupon | 0/? | Not started | - |
 | 21. Hoàn Thiện Reviews | 0/? | Not started | - |
-| 22. AI Chatbot Claude API MVP | 5/7 | In progress | - |
+| 22. AI Chatbot Claude API MVP | 6/7 | In progress | - |
 
 ---
 

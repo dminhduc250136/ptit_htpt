@@ -68,7 +68,7 @@
 - [ ] **AI-02** — System prompt thiết kế: vai trò "trợ lý mua sắm tmdt-use-gsd", domain electronics, ngôn ngữ Vietnamese, có thể trả lời FAQ + Q&A sản phẩm + recommend từ catalog. **Prompt caching** với `cache_control: { type: 'ephemeral' }` từ ngày 1.
 - [ ] **AI-03** — Context injection: top-N sản phẩm liên quan (semantic match đơn giản qua keyword/category) inject vào user message với XML tag `<product_context>...</product_context>` để chống prompt injection từ user-generated content.
 - [ ] **AI-04** — Chat history persist DB: schema `chat_sessions` (id, user_id, title, created_at, updated_at) + `chat_messages` (id, session_id, role, content, created_at). Sliding window 10 turns gần nhất gửi vào API. User xem được lịch sử sessions cũ.
-- [ ] **AI-05** — Admin "suggest reply" template: trong `/admin/orders/[id]`, button "AI suggest reply" generate gợi ý phản hồi customer dựa trên order context. Admin manual review + send. KHÔNG auto-confirm order.
+- [x] **AI-05** — Admin "suggest reply" template: trong `/admin/orders/[id]`, button "AI suggest reply" generate gợi ý phản hồi customer dựa trên order context. Admin manual review + send. KHÔNG auto-confirm order. ✅ 2026-05-02 (Phase 22 P04 server endpoint + P06 SuggestReplyModal UI)
 
 ### ORDER — Order Detail Items Fix
 
@@ -156,7 +156,7 @@
 | AI-02 | Phase 22 | — | Active |
 | AI-03 | Phase 22 | — | Active |
 | AI-04 | Phase 22 | — | Active |
-| AI-05 | Phase 22 | — | Active |
+| AI-05 | Phase 22 | 22-04 + 22-06 | Satisfied 2026-05-02 |
 
 **Total active REQs: 27** (SEED 4 + ORDER 1 + ADMIN-06 1 + STORE 3 + ADMIN-01-05 5 + COUP 5 + REV 3 + AI 5)
 **Mapped: 27/27** (100% coverage)
