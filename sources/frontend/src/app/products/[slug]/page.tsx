@@ -210,61 +210,72 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* Stock */}
+              {/* Stock — Phase 15 PUB-04 (D-15): 3-tier badge với icon prefix WCAG 1.4.1 */}
               <div className={styles.stockInfo}>
-                {(product.stock ?? 0) > 0 ? (
-                  <span className={styles.inStock}>✓ Còn hàng ({product.stock} sản phẩm)</span>
-                ) : (
-                  <span className={styles.outOfStock}>✗ Hết hàng</span>
+                {(product.stock ?? 0) >= 10 && (
+                  <Badge variant="success">✓ Còn hàng</Badge>
+                )}
+                {(product.stock ?? 0) > 0 && (product.stock ?? 0) < 10 && (
+                  <Badge variant="warning">⚠ Sắp hết hàng (còn {product.stock})</Badge>
+                )}
+                {(product.stock ?? 0) === 0 && (
+                  <Badge variant="danger">✗ Hết hàng</Badge>
                 )}
               </div>
 
-              {/* Quantity & Add to Cart */}
-              <div className={styles.actions}>
-                <div className={styles.quantitySelector}>
-                  <button
-                    className={styles.qtyBtn}
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={quantity <= 1}
-                  >−</button>
-                  <span className={styles.qtyValue}>{quantity}</span>
-                  <button
-                    className={styles.qtyBtn}
-                    onClick={() => setQuantity(Math.min(product.stock || 1, quantity + 1))}
-                    disabled={quantity >= (product.stock || 1)}
-                  >+</button>
+              {/* Quantity & Add to Cart — Phase 15 PUB-04 (D-16): hide hoàn toàn khi stock=0 */}
+              {(product.stock ?? 0) > 0 ? (
+                <div className={styles.actions}>
+                  <div className={styles.quantitySelector}>
+                    <button
+                      type="button"
+                      className={styles.qtyBtn}
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      disabled={quantity <= 1}
+                    >−</button>
+                    <span className={styles.qtyValue}>{quantity}</span>
+                    <button
+                      type="button"
+                      className={styles.qtyBtn}
+                      onClick={() => setQuantity((q) => Math.min(product.stock ?? 1, q + 1))}
+                      disabled={quantity >= (product.stock ?? 1)}
+                    >+</button>
+                  </div>
+                  <Button
+                    size="lg"
+                    fullWidth
+                    loading={addingToCart}
+                    onClick={async () => {
+                      setAddingToCart(true);
+                      try {
+                        addToCart(
+                          {
+                            id: product.id,
+                            name: product.name,
+                            thumbnailUrl: product.thumbnailUrl,
+                            price: product.price,
+                            // BUG-FIX (cart-stock-cap): truyền stock để cart.ts lưu snapshot
+                            // và updateQuantity có thể enforce giới hạn trên
+                            stock: product.stock ?? 0,
+                          },
+                          quantity,
+                        );
+                        showToast('Đã thêm vào giỏ hàng', 'success');
+                      } catch {
+                        showToast('Không thể thêm vào giỏ hàng', 'error');
+                      } finally {
+                        setAddingToCart(false);
+                      }
+                    }}
+                  >
+                    Thêm vào giỏ hàng
+                  </Button>
                 </div>
-                <Button
-                  size="lg"
-                  fullWidth
-                  disabled={product.stock === 0}
-                  loading={addingToCart}
-                  onClick={async () => {
-                    setAddingToCart(true);
-                    try {
-                      addToCart(
-                        {
-                          id: product.id,
-                          name: product.name,
-                          thumbnailUrl: product.thumbnailUrl,
-                          price: product.price,
-                          // BUG-FIX (cart-stock-cap): truyền stock để cart.ts lưu snapshot
-                          // và updateQuantity có thể enforce giới hạn trên
-                          stock: product.stock ?? 0,
-                        },
-                        quantity,
-                      );
-                      showToast('Đã thêm vào giỏ hàng', 'success');
-                    } catch {
-                      showToast('Không thể thêm vào giỏ hàng', 'error');
-                    } finally {
-                      setAddingToCart(false);
-                    }
-                  }}
-                >
-                  {product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ hàng'}
-                </Button>
-              </div>
+              ) : (
+                <p className={styles.outOfStockMessage}>
+                  Sản phẩm tạm hết — vui lòng quay lại sau.
+                </p>
+              )}
 
               <Button variant="secondary" size="lg" fullWidth onClick={() => router.push('/cart')}>
                 ♡ Xem giỏ hàng

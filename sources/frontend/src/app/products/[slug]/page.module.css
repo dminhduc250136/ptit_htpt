@@ -212,21 +212,18 @@
   text-decoration: line-through;
 }
 
-/* Stock */
+/* Stock — Phase 15 PUB-04 (D-15): chuyển sang Badge component 3-tier */
 .stockInfo { margin-top: var(--space-1); }
 
-.inStock {
-  font-size: var(--text-body-sm);
-  color: var(--secondary-container);
-  font-weight: var(--weight-semibold);
-  line-height: var(--leading-normal);
-}
-
-.outOfStock {
-  font-size: var(--text-body-sm);
-  color: var(--error);
-  font-weight: var(--weight-semibold);
-  line-height: var(--leading-normal);
+/* Out-of-stock inline message — Phase 15 PUB-04 (D-16) */
+.outOfStockMessage {
+  font-size: var(--text-body-md);
+  font-weight: var(--weight-medium);
+  color: var(--on-surface-variant);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-container-low);
+  border-radius: var(--radius-lg);
+  margin: var(--space-3) 0;
 }
 
 /* Actions */
