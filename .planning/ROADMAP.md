@@ -141,7 +141,12 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
   3. PDP stock badge color-coded: green "Còn hàng" (stock ≥10), yellow "Sắp hết hàng" (1≤stock<10), red "Hết hàng" (stock=0); add-to-cart button hidden khi stock=0.
   4. Playwright smoke E2E: 3-4 critical path tests (address-at-checkout, review submission, profile editing, homepage navigation) PASS trên fresh docker stack; toàn bộ v1.1 baseline vẫn PASS.
   5. Milestone audit completed (audit doc + verifier scan + tag `v1.2`); 17/17 active REQs satisfied hoặc gaps documented.
-**Plans:** TBD
+**Plans:** 5 plans (4 waves)
+- [ ] 15-00-PLAN.md — Wave 0 prep: hero WebP assets + Badge variants extend + selector audit + manual checklist
+- [ ] 15-01-PLAN.md — Wave 1 homepage: hero next/image + Featured carousel scroll-snap + New Arrivals dedupe
+- [ ] 15-02-PLAN.md — Wave 1 PDP: breadcrumb brand refactor + 3-tier stock badge + hide add-to-cart + thumbnail a11y
+- [ ] 15-03-PLAN.md — Wave 2 smoke E2E: 4 Playwright tests (homepage/checkout/review/profile) + skip-if-no-data degradation
+- [ ] 15-04-PLAN.md — Wave 3 milestone closure: /gsd-audit-milestone v1.2 + MILESTONES update + git tag v1.2 annotated local
 **UI hint:** yes
 
 ---
@@ -156,7 +161,7 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
 | 12. Wishlist | — | ~~SKIPPED~~ (defer v1.3) | — |
 | 13. Reviews & Ratings | 0/4 | Not started | — |
 | 14. Basic Search Filters | 0/3 | Not started | — |
-| 15. Public Polish + Milestone Audit | 0/? | Not started | — |
+| 15. Public Polish + Milestone Audit | 0/5 | Not started | — |
 
 ---
 
