@@ -33,3 +33,29 @@
 
 @media (max-width: 1024px) { .statsGrid { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 768px) { .statsGrid { grid-template-columns: 1fr; } }
+
+/* === Phase 19 Plan 19-04: charts grid + dropdown === */
+.timeWindowRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.timeWindowRow label {
+  font-weight: var(--weight-medium);
+}
+.timeWindowRow select {
+  padding: 8px var(--space-3);
+  border: 1px solid var(--outline);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--on-surface);
+  cursor: pointer;
+}
+.chartsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-4);
+}
+@media (max-width: 768px) {
+  .chartsGrid { grid-template-columns: 1fr; }
+}
