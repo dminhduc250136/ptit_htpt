@@ -171,10 +171,10 @@ Plans:
 **Plans:** 4 plans
 
 Plans:
-- [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
-- [ ] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
-- [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
-- [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
+- [ ] 21-01-PLAN.md — V7 migration + ReviewEntity mutators + Repository visibility finders + AdminReviewSpecifications + edit-window config
+- [ ] 21-02-PLAN.md — ReviewService 5 mutation methods + recompute helper + ReviewController PATCH/DELETE + AdminReviewController + tests
+- [ ] 21-03-PLAN.md — FE author UX: services/reviews.ts extend + types SortKey/AdminReview + ReviewSection sort/edit/delete + ReviewList dropdown/actions + ReviewForm edit mode
+- [ ] 21-04-PLAN.md — FE admin moderation /admin/reviews page + sidebar nav + Playwright E2E specs (author edit + admin moderation)
 **UI hint**: yes
 
 ---
