@@ -138,6 +138,16 @@ public class OrderEntity {
     this.paymentMethod = paymentMethod;
   }
 
+  /**
+   * Phase 20 / Plan 20-03 (D-08, D-12): cho phép OrderCrudService set lại total
+   * sau khi tính discount từ coupon. Bumps updatedAt để trigger optimistic versioning
+   * nếu sau này thêm @Version.
+   */
+  public void setTotal(BigDecimal total) {
+    this.total = total;
+    this.updatedAt = Instant.now();
+  }
+
   public boolean deleted() { return deleted; }
   public Instant createdAt() { return createdAt; }
   public Instant updatedAt() { return updatedAt; }

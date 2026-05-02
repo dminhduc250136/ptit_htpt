@@ -1,6 +1,7 @@
 package com.ptit.htpt.orderservice.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.ptit.htpt.orderservice.domain.CouponEntity;
 import com.ptit.htpt.orderservice.domain.OrderDto;
 import com.ptit.htpt.orderservice.domain.OrderEntity;
 import com.ptit.htpt.orderservice.domain.OrderItemEntity;
@@ -43,15 +44,18 @@ public class OrderCrudService {
   private final OrderItemRepository orderItemRepository;
   private final ObjectMapper objectMapper;
   private final RestTemplate restTemplate;
+  private final CouponRedemptionService couponRedemptionService;
 
   public OrderCrudService(OrderRepository orderRepository,
                           OrderItemRepository orderItemRepository,
                           ObjectMapper objectMapper,
-                          RestTemplate restTemplate) {
+                          RestTemplate restTemplate,
+                          CouponRedemptionService couponRedemptionService) {
     this.orderRepository = orderRepository;
     this.orderItemRepository = orderItemRepository;
     this.objectMapper = objectMapper;
     this.restTemplate = restTemplate;
+    this.couponRedemptionService = couponRedemptionService;
   }
 
   /**
@@ -110,7 +114,8 @@ public class OrderCrudService {
     // D-04: Validate stock trước khi persist — throw 409 STOCK_SHORTAGE nếu quantity > stock
     validateStockOrThrow(command.items());
 
-    BigDecimal totalAmount = command.items().stream()
+    // D-10: Server compute subtotal từ items — KHÔNG tin client cartTotal
+    BigDecimal subtotal = command.items().stream()
         .map(item -> item.unitPrice().multiply(BigDecimal.valueOf(item.quantity())))
         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -122,10 +127,26 @@ public class OrderCrudService {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid shippingAddress format");
     }
 
-    // Tạo và persist OrderEntity
-    OrderEntity order = OrderEntity.create(userId, totalAmount, "PENDING", command.note());
+    // Tạo OrderEntity với subtotal làm total mặc định (no coupon path)
+    OrderEntity order = OrderEntity.create(userId, subtotal, "PENDING", command.note());
     order.setShippingAddress(shippingAddressJson);
     order.setPaymentMethod(command.paymentMethod());
+
+    // === COUPON STEP (D-08, D-09, D-10, D-12) ===
+    // KHÔNG tin client discountAmount — server compute lại từ subtotal qua
+    // CouponPreviewService.computeDiscount. atomicRedeem trong cùng @Transactional
+    // → fail (CONFLICT_OR_EXHAUSTED hoặc ALREADY_REDEEMED) → toàn transaction rollback.
+    if (command.couponCode() != null && !command.couponCode().isBlank()) {
+      // D-09: re-fetch coupon by code (KHÔNG dùng id từ preview — tránh TOCTOU window)
+      CouponEntity coupon = couponRedemptionService.atomicRedeem(
+          command.couponCode(), userId, order.id());
+      // D-10: server-side discount math từ subtotal (cap ≤ subtotal)
+      BigDecimal discountAmount = CouponPreviewService.computeDiscount(coupon, subtotal);
+      order.setDiscountAmount(discountAmount);
+      order.setCouponCode(coupon.code());
+      order.setTotal(subtotal.subtract(discountAmount));
+    }
+    // No coupon path: discountAmount giữ default BigDecimal.ZERO, couponCode null
 
     // Tạo OrderItemEntity cho từng item — cascade ALL sẽ persist cùng order
     // D-06: productName snapshot lấy trực tiếp từ command (FE truyền item.name từ cart state)
@@ -261,7 +282,10 @@ public class OrderCrudService {
       @NotEmpty List<@Valid OrderItemRequest> items,
       @NotNull @Valid ShippingAddressRequest shippingAddress,
       @NotBlank String paymentMethod,
-      String note
+      String note,
+      // Phase 20 / Plan 20-03 (D-12): optional coupon code. null/blank → tạo order như cũ
+      // (backward compat). Validation lỏng — server sẽ tra DB qua atomicRedeem để xác thực.
+      String couponCode
   ) {}
 
   public record OrderItemRequest(
