@@ -55,7 +55,7 @@ Các decisions dưới đây kế thừa từ `STATE.md > v1.3 locks` (đã lock
 
 ### DB Schema — `chat_svc` (auto-selected)
 - **D-19:** Tables (init qua raw pg trong route handler, idempotent `CREATE TABLE IF NOT EXISTS` chạy lần đầu app khởi động hoặc qua admin trigger):
-  - `chat_svc.chat_sessions` — `id BIGSERIAL PK`, `user_id BIGINT NOT NULL` (logical FK đến `user_svc.users.id`, KHÔNG hard FK cross-schema), `title VARCHAR(200)`, `created_at TIMESTAMPTZ DEFAULT now()`, `updated_at TIMESTAMPTZ DEFAULT now()`. Index `(user_id, updated_at DESC)`.
+  - `chat_svc.chat_sessions` — `id BIGSERIAL PK`, `user_id VARCHAR(36) NOT NULL` (logical FK đến `user_svc.users.id`, type khớp UUID hiện tại — verified bằng `V1__init_schema.sql`; KHÔNG hard FK cross-schema), `title VARCHAR(200)`, `created_at TIMESTAMPTZ DEFAULT now()`, `updated_at TIMESTAMPTZ DEFAULT now()`. Index `(user_id, updated_at DESC)`.
   - `chat_svc.chat_messages` — `id BIGSERIAL PK`, `session_id BIGINT NOT NULL REFERENCES chat_sessions(id) ON DELETE CASCADE`, `role VARCHAR(16) NOT NULL CHECK (role IN ('user','assistant'))`, `content TEXT NOT NULL`, `created_at TIMESTAMPTZ DEFAULT now()`. Index `(session_id, created_at)`.
 - **D-20:** Title auto-generate = 50 ký tự đầu của user message đầu tiên (trim + ellipsis); admin sau có thể đổi (out of scope MVP — chỉ auto).
 - **D-21:** Idempotent init: 1 lần kiểm tra `to_regclass('chat_svc.chat_sessions')` mỗi process boot — nếu null thì chạy init script. KHÔNG chạy mỗi request.
