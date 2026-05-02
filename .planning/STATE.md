@@ -2,26 +2,26 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: completed
-last_updated: "2026-05-02T15:30:00Z"
-last_activity: 2026-05-02 — Phase 16 COMPLETE — Plan 16-03 E2E spec + VERIFICATION.md (3/3 plans, Phase 16 ✓)
+status: verifying
+last_updated: "2026-05-02T14:54:01.907Z"
+last_activity: 2026-05-02
 progress:
   total_phases: 7
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
-  percent: 14
+  total_plans: 4
+  completed_plans: 4
+  percent: 100
 ---
 
 ## Current Position
 
-Phase: Phase 16 — Seed Catalog Hiện Thực ✅ COMPLETE (3/3 plans)
-Plan: 16-01 ✅ DONE | 16-02 ✅ DONE | 16-03 ✅ DONE
-Status: Phase 16 closed (artifacts ready). Manual UAT (smoke SQL + profile=prod test + add-to-cart) defer cho `/gsd-verify-work` per 16-VERIFICATION.md. Sẵn sàng /gsd-plan-phase 17.
-Last activity: 2026-05-02 — Plan 16-03 done: seed-catalog.spec.ts (7 tests) + 16-VERIFICATION.md (5 sections) — commits f842cd2 + 5f8257a
+Phase: 18
+Plan: Not started
+Status: Phase 17 hoàn tất Wave 3 — E2E regression-guard locked-in. Awaiting verifier.
+Last activity: 2026-05-02
 
 ```
-Progress: [███░░░░░░░░░░░░░░░░░] 14% (3/21 plans, 1/7 phases)
+Progress: [██████████] 100%
 ```
 
 ## Project Reference
@@ -30,7 +30,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 
 **Core value:** Demo end-to-end shopping experience hoạt động với real data ở mọi điểm user nhìn thấy, đồng thời rèn quy trình GSD từ planning → execute → verify → archive.
 
-**Current focus:** Phase 16 — Seed Catalog Hiện Thực. ~100 sản phẩm / 5 tech categories, Unsplash WebP CDN, brand thực tế, Flyway V7 product-svc với Spring profile `dev` isolation.
+**Current focus:** Phase 17 — Sửa Order Detail Items
 
 ## Resume Cheat-Sheet
 
@@ -51,7 +51,11 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | v1.0 | 4 | 14 | 11/11 | PASSED |
 | v1.1 | 4 | 22 | 15/19 SATISFIED + 4 PARTIAL | PASSED (gaps deferred) |
 | v1.2 | 6 (+1 SKIP) | 24 | 17/17 | PASSED |
-| v1.3 | 7 planned | TBD | 4/27 (SEED-01..04) | In progress |
+| v1.3 | 7 planned | TBD | 0/27 | In progress |
+| Phase 17-s-a-order-detail-items P01 | 5min | 2 tasks | 2 files |
+| Phase 17-s-a-order-detail-items P02 | 3min | 2 tasks | 1 file |
+| Phase 17-s-a-order-detail-items P03 | 2min | 2 tasks | 2 files |
+| Phase 17-s-a-order-detail-items P04 | 4min | 2 tasks | 2 files |
 
 ## Decisions (active v1.3 locks)
 

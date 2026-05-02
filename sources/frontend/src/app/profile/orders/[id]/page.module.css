@@ -127,3 +127,37 @@
   50% { opacity: 1; }
   100% { opacity: 0.6; }
 }
+
+/* Phase 17: thumbnail cell layout cho items table */
+.itemCellInner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.itemThumb {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  flex-shrink: 0;
+  object-fit: cover;
+}
+
+.itemThumbPlaceholder {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+  background: var(--surface-container-high);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--on-surface-variant);
+}
+
+.itemBrand {
+  font-size: var(--text-body-sm);
+  color: var(--on-surface-variant);
+  margin-top: 2px;
+}

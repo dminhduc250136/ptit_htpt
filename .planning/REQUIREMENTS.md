@@ -53,7 +53,8 @@
 - [ ] **ADMIN-03** — Order status distribution (pie/donut chart). Counts theo pending/confirmed/shipped/delivered/cancelled. Cùng date dropdown.
 - [ ] **ADMIN-04** — User signups theo thời gian (line chart). Daily new user count.
 - [ ] **ADMIN-05** — Low-stock alert: list/banner các SP có `stock < 10` (threshold configurable trong code). Hiển thị trên admin dashboard hoặc trang riêng.
-- [ ] **ADMIN-06** — Admin order detail items fix: `/admin/orders/[id]` hiển thị full line items (image / name / brand / price / qty / subtotal) — hiện đang là hardcoded placeholder string "Chi tiết sản phẩm sẽ khả dụng sau khi Phase 8 hoàn thiện". `AdminOrder` interface cần thêm `items[]`, BE DTO check.
+- [x] **ADMIN-06
+** — Admin order detail items fix: `/admin/orders/[id]` hiển thị full line items (image / name / brand / price / qty / subtotal) — hiện đang là hardcoded placeholder string "Chi tiết sản phẩm sẽ khả dụng sau khi Phase 8 hoàn thiện". `AdminOrder` interface cần thêm `items[]`, BE DTO check.
 
 ### REV — Review Polish
 
@@ -71,8 +72,10 @@
 
 ### ORDER — Order Detail Items Fix
 
-- [ ] **ORDER-01** — User order detail `/account/orders/[id]` hiển thị full line items. Verify BE `findByIdWithItems()` đã return đúng (research: BE OK), fix FE render nếu thiếu DTO mapping.
-- [ ] **ORDER-02** — Admin order detail items đã cover trong ADMIN-06. Cross-reference (KHÔNG duplicate REQ).
+- [x] **ORDER-01
+** — User order detail `/account/orders/[id]` hiển thị full line items. Verify BE `findByIdWithItems()` đã return đúng (research: BE OK), fix FE render nếu thiếu DTO mapping.
+- [x] **ORDER-02** — Admin order detail items đã cover trong ADMIN-06
+. Cross-reference (KHÔNG duplicate REQ).
 
 *Note: ORDER-02 là pointer, count = 1 unique REQ trong category này.*
 

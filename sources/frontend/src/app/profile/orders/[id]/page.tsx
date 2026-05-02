@@ -2,40 +2,24 @@
 
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button/Button';
 import RetrySection from '@/components/ui/RetrySection/RetrySection';
 import { formatPrice } from '@/services/api';
 import { getOrderById } from '@/services/orders';
 import { isApiError } from '@/services/errors';
+import { statusMap, paymentMethodMap, paymentStatusMap } from '@/lib/orderLabels';
+import { useEnrichedItems } from '@/lib/useEnrichedItems';
 import type { Order } from '@/types';
-
-const statusMap: Record<string, { label: string; variant: 'default' | 'new' | 'hot' | 'sale' | 'out-of-stock' }> = {
-  PENDING: { label: 'Chờ xác nhận', variant: 'default' },
-  CONFIRMED: { label: 'Đã xác nhận', variant: 'new' },
-  SHIPPING: { label: 'Đang giao', variant: 'hot' },
-  DELIVERED: { label: 'Đã giao', variant: 'sale' },
-  CANCELLED: { label: 'Đã hủy', variant: 'out-of-stock' },
-};
-
-const paymentMethodMap: Record<string, string> = {
-  COD: 'Thanh toán khi nhận hàng',
-  BANK_TRANSFER: 'Chuyển khoản ngân hàng',
-  E_WALLET: 'Ví điện tử',
-};
-
-const paymentStatusMap: Record<string, string> = {
-  PENDING: 'Chờ thanh toán',
-  PAID: 'Đã thanh toán',
-  FAILED: 'Thanh toán thất bại',
-  REFUNDED: 'Đã hoàn tiền',
-};
 
 export default function OrderDetailPage({ params }: { params: { id: string } }) {
   const { id } = params;
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+
+  const enriched = useEnrichedItems(order?.items);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -149,32 +133,54 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
             <h3 className={styles.sectionTitle}>Sản phẩm</h3>
 
             {/* Items Table — UI-SPEC §Order Items Table Layout */}
-            <table className={styles.itemsTable}>
-              <thead>
-                <tr className={styles.tableHeader}>
-                  <th className={styles.tableHeaderCell}>Sản phẩm</th>
-                  <th className={styles.tableHeaderCell}>Số lượng</th>
-                  <th className={styles.tableHeaderCell}>Đơn giá</th>
-                  <th className={styles.tableHeaderCell}>Thành tiền</th>
-                </tr>
-              </thead>
-              <tbody>
-                {(order.items ?? []).map((item) => {
-                  const lineTotal = item.lineTotal ?? item.subtotal ?? 0;
-                  const unitPrice = item.unitPrice ?? item.price ?? 0;
-                  return (
-                    <tr key={item.id} className={styles.tableRow}>
-                      <td className={styles.tableCell}>{item.productName}</td>
-                      <td className={styles.tableCell}>{item.quantity}</td>
-                      <td className={styles.tableCell}>{formatPrice(unitPrice)}</td>
-                      <td className={`${styles.tableCell} ${styles.lineTotalCell}`}>
-                        {formatPrice(lineTotal)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            {enriched.length === 0 ? (
+              <p style={{ color: 'var(--on-surface-variant)' }}>Đơn hàng không có sản phẩm</p>
+            ) : (
+              <table className={styles.itemsTable}>
+                <thead>
+                  <tr className={styles.tableHeader}>
+                    <th className={styles.tableHeaderCell}>Sản phẩm</th>
+                    <th className={styles.tableHeaderCell}>Số lượng</th>
+                    <th className={styles.tableHeaderCell}>Đơn giá</th>
+                    <th className={styles.tableHeaderCell}>Thành tiền</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {enriched.map((item) => {
+                    const lineTotal = item.lineTotal ?? item.subtotal ?? 0;
+                    const unitPrice = item.unitPrice ?? item.price ?? 0;
+                    return (
+                      <tr key={item.id} className={styles.tableRow}>
+                        <td className={styles.tableCell}>
+                          <div className={styles.itemCellInner}>
+                            {item.thumbnailUrl ? (
+                              <Image
+                                src={item.thumbnailUrl}
+                                width={64}
+                                height={64}
+                                alt={item.productName}
+                                className={styles.itemThumb}
+                              />
+                            ) : (
+                              <div className={styles.itemThumbPlaceholder} aria-hidden="true">📦</div>
+                            )}
+                            <div>
+                              <div className={styles.itemName}>{item.productName}</div>
+                              <div className={styles.itemBrand}>{item.brand ?? '—'}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className={styles.tableCell}>{item.quantity}</td>
+                        <td className={styles.tableCell}>{formatPrice(unitPrice)}</td>
+                        <td className={`${styles.tableCell} ${styles.lineTotalCell}`}>
+                          {formatPrice(lineTotal)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
 
             {/* Price Breakdown */}
             <div className={styles.priceBreakdown}>
