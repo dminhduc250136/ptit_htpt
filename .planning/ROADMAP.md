@@ -132,7 +132,7 @@ Plans:
 Plans:
 - [x] 19-01-PLAN.md — order-svc AdminChartsController (revenue + top-products + status-distribution) + ProductBatchClient + integration tests ✅ 2026-05-02
 - [x] 19-02-PLAN.md — user-svc AdminChartsController (signups) + repository @Query + integration tests ✅ 2026-05-02
-- [ ] 19-03-PLAN.md — product-svc AdminChartsController (low-stock) + AdminProductBatchController + LowStockService + integration tests
+- [x] 19-03-PLAN.md — product-svc AdminChartsController (low-stock) + AdminProductBatchController + LowStockService + integration tests ✅ 2026-05-02
 - [ ] 19-04-PLAN.md — FE: install recharts@3.8.1 + chart fetchers + 4 chart components + ChartCard + LowStockSection + extend admin/page.tsx + 2 Playwright smoke specs
 **UI hint**: yes
 

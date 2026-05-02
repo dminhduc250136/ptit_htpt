@@ -52,7 +52,7 @@
 - [ ] **ADMIN-02** — Top products bán chạy (bar chart). Top-10 by quantity sold trong window đã chọn. Cùng date dropdown.
 - [ ] **ADMIN-03** — Order status distribution (pie/donut chart). Counts theo pending/confirmed/shipped/delivered/cancelled. Cùng date dropdown.
 - [x] **ADMIN-04** — User signups theo thời gian (line chart). Daily new user count.
-- [ ] **ADMIN-05** — Low-stock alert: list/banner các SP có `stock < 10` (threshold configurable trong code). Hiển thị trên admin dashboard hoặc trang riêng.
+- [x] **ADMIN-05** — Low-stock alert: list/banner các SP có `stock < 10` (threshold configurable trong code). Hiển thị trên admin dashboard hoặc trang riêng.
 - [x] **ADMIN-06
 ** — Admin order detail items fix: `/admin/orders/[id]` hiển thị full line items (image / name / brand / price / qty / subtotal) — hiện đang là hardcoded placeholder string "Chi tiết sản phẩm sẽ khả dụng sau khi Phase 8 hoàn thiện". `AdminOrder` interface cần thêm `items[]`, BE DTO check.
 
@@ -143,7 +143,7 @@
 | ADMIN-02 | Phase 19 | — | Active |
 | ADMIN-03 | Phase 19 | — | Active |
 | ADMIN-04 | Phase 19 | 02 | COMPLETED |
-| ADMIN-05 | Phase 19 | — | Active |
+| ADMIN-05 | Phase 19 | 03 | COMPLETED |
 | COUP-01 | Phase 20 | — | Active |
 | COUP-02 | Phase 20 | — | Active |
 | COUP-03 | Phase 20 | — | Active |

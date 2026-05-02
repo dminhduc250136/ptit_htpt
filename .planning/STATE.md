@@ -3,25 +3,25 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Catalog Realism & Commerce Intelligence
 status: executing
-last_updated: "2026-05-02T16:50:00Z"
+last_updated: "2026-05-02T17:10:00Z"
 last_activity: 2026-05-02
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 14
-  completed_plans: 14
-  percent: 46
+  completed_plans: 15
+  percent: 48
 ---
 
 ## Current Position
 
 Phase: 19-ho-n-thi-n-admin-charts-low-stock (19) — IN PROGRESS
-Plan: 2 of 4 — Plans 01+02 COMPLETE
-Status: Phase 19 Plan 02 done (BE user-svc /admin/users/charts/signups + Range per-svc copy). Next: Plan 03 product-svc low-stock + batch
+Plan: 3 of 4 — Plans 01+02+03 COMPLETE
+Status: Phase 19 Plan 03 done (BE product-svc /admin/products/charts/low-stock + /admin/products/batch enrichment). Next: Plan 04 FE dashboard charts grid + low-stock section
 Last activity: 2026-05-02
 
 ```
-Progress: [████░░░░░░] 46% (3/7 phases complete + Phase 19 P02/4)
+Progress: [████░░░░░░] 48% (3/7 phases complete + Phase 19 P03/4)
 ```
 
 ## Project Reference
@@ -64,8 +64,18 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 18-storage-audit-cart-db P06 | 10min | 2 tasks | 1 file |
 | Phase 19-ho-n-thi-n-admin-charts-low-stock P01 | 25min | 2 tasks | 9 files |
 | Phase 19-ho-n-thi-n-admin-charts-low-stock P02 | 15min | 2 tasks | 7 files |
+| Phase 19-ho-n-thi-n-admin-charts-low-stock P03 | 12min | 2 tasks | 10 files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 19 Plan 03 decisions (2026-05-02):**
+
+- ADMIN-05 BE product-svc layer hoàn tất: ProductRepository.findLowStock @Query (stock<:threshold ORDER BY stock ASC, soft-delete auto-filtered) + LowStockService (LOW_STOCK_THRESHOLD=10 D-08, CAP=50 D-09, record LowStockItem D-10) + ProductBatchService (record ProductSummary match Plan 19-01 wire format, JpaRepository.findAllById built-in)
+- 2 controllers: AdminChartsController GET /admin/products/charts/low-stock + AdminProductBatchController POST /admin/products/batch (path /admin/products/batch không /charts/batch — gateway rewrite catch-all)
+- ProductEntity dùng accessor record-style p.id() / p.name() — verified entity convention, RESEARCH gợi ý p.getId() bị deviation (Rule 1 fix)
+- @RequestBody(required=false) + null guard cho batch controller — defensive null body handling (Rule 2)
+- 17 test cases written (3 IT findLowStock + 2 unit LowStockService + 4 unit ProductBatchService + 4 IT AdminCharts + 4 IT AdminProductBatch) — Maven CLI vẫn chưa khả dụng trên Windows env, defer verify cho Wave check
+- Gateway routes existing /api/products/admin/** đã catch-all cover /charts/low-stock và /batch — KHÔNG modify api-gateway
 
 **Phase 19 Plan 02 decisions (2026-05-02):**
 
@@ -167,3 +177,4 @@ Không có blocker.
 - Phase 18: Kiểm Toán Storage + Cart→DB — **COMPLETED 2026-05-02** (6/6 plans, STORE-01/02/03 closed)
 - Phase 19 Plan 01: order-svc admin chart endpoints — **COMPLETED 2026-05-02** (ADMIN-01/02/03 BE layer done; FE Plan 04 sẽ consume)
 - Phase 19 Plan 02: user-svc admin /signups chart endpoint — **COMPLETED 2026-05-02** (ADMIN-04 BE layer done)
+- Phase 19 Plan 03: product-svc admin /low-stock + /batch endpoints — **COMPLETED 2026-05-02** (ADMIN-05 BE layer done + cross-svc enrichment helper cho Plan 01)
