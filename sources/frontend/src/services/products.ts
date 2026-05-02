@@ -31,6 +31,9 @@ export interface ListProductsParams {
   sort?: string;
   categoryId?: string;
   keyword?: string;
+  brands?: string[];        // NEW (D-08) — repeatable param
+  priceMin?: number;        // NEW
+  priceMax?: number;        // NEW
 }
 
 export function listProducts(params?: ListProductsParams): Promise<PaginatedResponse<Product>> {
@@ -40,6 +43,11 @@ export function listProducts(params?: ListProductsParams): Promise<PaginatedResp
   if (params?.sort)               qs.set('sort', params.sort);
   if (params?.categoryId)         qs.set('categoryId', params.categoryId);
   if (params?.keyword)            qs.set('keyword', params.keyword);
+  if (params?.brands && params.brands.length > 0) {
+    params.brands.forEach((b) => qs.append('brands', b));
+  }
+  if (params?.priceMin !== undefined) qs.set('priceMin', String(params.priceMin));
+  if (params?.priceMax !== undefined) qs.set('priceMax', String(params.priceMax));
   const suffix = qs.toString() ? `?${qs}` : '';
   return httpGet<PaginatedResponse<Product>>(`/api/products${suffix}`);
 }
@@ -61,6 +69,14 @@ export async function getProductBySlug(slug: string): Promise<Product | null> {
 
 export function listCategories(): Promise<PaginatedResponse<Category>> {
   return httpGet<PaginatedResponse<Category>>(`/api/products/categories`);
+}
+
+/**
+ * Phase 14 / SEARCH-01 (D-03): danh sách thương hiệu DISTINCT từ catalog.
+ * Backend trả ApiResponse<List<String>> — http.ts unwrap envelope.
+ */
+export function listBrands(): Promise<string[]> {
+  return httpGet<string[]>(`/api/products/brands`);
 }
 
 // Admin product create/update body — D-03 extended fields
