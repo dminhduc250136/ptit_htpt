@@ -201,6 +201,11 @@ export interface Order {
   totalAmount?: number;    // FE legacy alias cho total
   total?: number;          // D-10: backend field name
   note?: string;
+  // ===== Phase 20 / COUP-05 (Plan 20-03 OrderDto extension) =====
+  /** Số tiền đã giảm theo coupon. 0 nếu không áp dụng coupon. */
+  discountAmount?: number;
+  /** Mã coupon đã áp dụng (snapshot). null/undefined nếu không có coupon. */
+  couponCode?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -225,6 +230,43 @@ export interface CreateOrderRequest {
   shippingAddress: Address;
   paymentMethod: 'COD' | 'BANK_TRANSFER' | 'E_WALLET';
   note?: string;
+  // Phase 20 / COUP-03 (D-19): optional coupon code applied at checkout.
+  // BE atomic redeem step (Plan 20-03) trong cùng order transaction.
+  couponCode?: string;
+}
+
+// ===== COUPON (Phase 20) =====
+/**
+ * CouponPreview: response từ POST /api/orders/coupons/validate (D-13).
+ * Read-only — atomic redemption diễn ra trong POST /api/orders.
+ */
+export interface CouponPreview {
+  code: string;
+  type: 'PERCENT' | 'FIXED';
+  value: number;
+  discountAmount: number;
+  finalTotal: number;
+  message: string;
+}
+
+/**
+ * AdminCoupon: response từ /api/orders/admin/coupons endpoints (Plan 20-02 D-14).
+ * Shape mirror BE CouponDto record.
+ */
+export interface AdminCoupon {
+  id: string;
+  code: string;
+  type: 'PERCENT' | 'FIXED';
+  value: number;
+  minOrderAmount: number;
+  /** null = không giới hạn lượt dùng. */
+  maxTotalUses: number | null;
+  usedCount: number;
+  /** ISO8601. null = không hết hạn. */
+  expiresAt: string | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 
