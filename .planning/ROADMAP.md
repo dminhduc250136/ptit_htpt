@@ -68,7 +68,7 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
   3. FilterSidebar brand multi-select hiển thị brand list đúng domain tech (không còn brand sai domain)
   4. Developer restart với Spring profile `dev` thì seed chạy; restart với profile `prod` thì seed KHÔNG chạy — Flyway V101 idempotent (`ON CONFLICT DO NOTHING`)
 **Plans:** 3 plans
-- [ ] 16-01-PLAN.md — Curate IMAGES.csv (≥100 Unsplash photo IDs cho 5 tech categories)
+- [x] 16-01-PLAN.md — Curate IMAGES.csv (≥100 Unsplash photo IDs cho 5 tech categories) ✅ 2026-05-02 (107 IDs, commit 20be054)
 - [ ] 16-02-PLAN.md — Viết V101__seed_catalog_realistic.sql + patch ROADMAP V7→V101
 - [ ] 16-03-PLAN.md — E2E Playwright spec + manual VERIFICATION.md + human acceptance
 **UI hint**: yes
