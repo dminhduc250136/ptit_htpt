@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Catalog Realism & Commerce Intelligence
 status: executing
-last_updated: "2026-05-02T16:30:00Z"
+last_updated: "2026-05-02T16:50:00Z"
 last_activity: 2026-05-02
 progress:
   total_phases: 7
@@ -16,12 +16,12 @@ progress:
 ## Current Position
 
 Phase: 19-ho-n-thi-n-admin-charts-low-stock (19) — IN PROGRESS
-Plan: 1 of 4 — Plan 01 (order-svc charts) COMPLETE
-Status: Phase 19 Plan 01 done (BE order-svc revenue/top-products/status-distribution + ProductBatchClient). Next: Plan 02 user-svc signups
+Plan: 2 of 4 — Plans 01+02 COMPLETE
+Status: Phase 19 Plan 02 done (BE user-svc /admin/users/charts/signups + Range per-svc copy). Next: Plan 03 product-svc low-stock + batch
 Last activity: 2026-05-02
 
 ```
-Progress: [████░░░░░░] 46% (3/7 phases complete + Phase 19 P01/4)
+Progress: [████░░░░░░] 46% (3/7 phases complete + Phase 19 P02/4)
 ```
 
 ## Project Reference
@@ -63,8 +63,16 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 18-storage-audit-cart-db P05 | 10min | 2 tasks | 7 files |
 | Phase 18-storage-audit-cart-db P06 | 10min | 2 tasks | 1 file |
 | Phase 19-ho-n-thi-n-admin-charts-low-stock P01 | 25min | 2 tasks | 9 files |
+| Phase 19-ho-n-thi-n-admin-charts-low-stock P02 | 15min | 2 tasks | 7 files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 19 Plan 02 decisions (2026-05-02):**
+
+- ADMIN-04 BE user-svc layer hoàn tất: Range enum per-svc copy (KHÔNG shared module — pattern theo JwtRoleGuard precedent) + UserRepository.aggregateSignupsByDay @Query (FUNCTION('DATE', u.createdAt) Postgres dialect) + UserChartsService Java gap-fill (0L cho ngày trống, D-05) + AdminChartsController @GetMapping(/signups) với JwtRoleGuard.requireAdmin
+- 13 test cases written (5 RangeTest + 2 UserRepositorySignupsIT + 6 AdminChartsControllerIT) — Maven CLI vẫn chưa khả dụng trên Windows env, defer verify cho Wave check
+- Plan 02 INDEPENDENT với Plan 01 (different svc, different repo) — parallel-executable cùng Wave 1
+- Gateway routes existing /api/users/admin/** đã catch-all cover /api/users/admin/charts/** automatically — KHÔNG modify api-gateway
 
 **Phase 19 Plan 01 decisions (2026-05-02):**
 
@@ -158,3 +166,4 @@ Không có blocker.
 - Phase 17: Sửa Order Detail Items — **COMPLETED 2026-05-02** (4/4 plans, ORDER-01 + ADMIN-06)
 - Phase 18: Kiểm Toán Storage + Cart→DB — **COMPLETED 2026-05-02** (6/6 plans, STORE-01/02/03 closed)
 - Phase 19 Plan 01: order-svc admin chart endpoints — **COMPLETED 2026-05-02** (ADMIN-01/02/03 BE layer done; FE Plan 04 sẽ consume)
+- Phase 19 Plan 02: user-svc admin /signups chart endpoint — **COMPLETED 2026-05-02** (ADMIN-04 BE layer done)
