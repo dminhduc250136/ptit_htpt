@@ -3,23 +3,23 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-27T21:00:00.000Z"
-last_activity: 2026-04-27 -- Phase 13 Wave 2 complete — 13-03 product-service review backend (V4+V5+ReviewService+Controller)
+last_updated: "2026-05-02T00:00:00.000Z"
+last_activity: 2026-05-02 -- Phase 13 closed (13-04 UAT deferred); next Phase 14 basic search filters
 progress:
   total_phases: 6
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 24
-  completed_plans: 17
-  percent: 89
+  completed_plans: 18
+  percent: 92
 ---
 
 ## Current Position
 
-Phase: Phase 13 — Reviews & Ratings
-Plan: Wave 2 complete (13-03 ✓) — next: Wave 3 (13-04 checkpoint)
-Status: Executing — Wave 3
-Last activity: 2026-04-27 -- Wave 2 complete: product-service review backend shipped
-Resume file: .planning/phases/13-reviews-ratings/
+Phase: Phase 14 — Basic Search Filters (next)
+Plan: chưa bắt đầu — 3 plans / 2 waves đã planned (SEARCH-01 brand, SEARCH-02 price)
+Status: Ready to execute Phase 14
+Last activity: 2026-05-02 -- Phase 13 closed; runtime fixes V6 + JWT env var; orders bugfixes (out-of-scope) committed riêng
+Resume file: .planning/phases/14-basic-search-filters/
 
 ## Project Reference
 
@@ -27,7 +27,7 @@ See: `.planning/PROJECT.md` (updated 2026-04-27 — Current Milestone: v1.2)
 
 **Core value:** Demo end-to-end shopping experience hoạt động với real data ở mọi điểm user nhìn thấy, đồng thời rèn quy trình GSD từ planning → execute → verify → archive.
 
-**Current focus:** v1.2 UI/UX Completion — Phase 11: Address Book + Order History Filtering.
+**Current focus:** v1.2 UI/UX Completion — Phase 14: Basic Search Filters (Brand + Price).
 
 ## Resume Cheat-Sheet
 
