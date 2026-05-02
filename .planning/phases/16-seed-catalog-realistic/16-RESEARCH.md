@@ -793,9 +793,11 @@ docker compose exec postgres psql -U tmdt -d tmdt -c \
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Inventory entries cho 100 SP mới có cần thiết để add-to-cart hoạt động?**
+> Các open questions dưới đây đã được address qua decisions trong CONTEXT.md hoặc tasks trong plans. Cross-reference: Q1 → Plan 16-03 Task 3.3 (manual smoke + Plan 16-04 fallback nếu fail). Q2 → Plan 16-02 Task 2.2 (patch ROADMAP). Q3 → accept cho dev DB (document trong VERIFICATION). Q4 → Plan 16-01 (IMAGES.csv curation). Q5 → CONTEXT D-22 (placeholder fallback acceptable).
+
+1. **RESOLVED (Q1):** **Inventory entries cho 100 SP mới có cần thiết để add-to-cart hoạt động?**
    - What we know: D-06 defer. inventory_items.product_id KHÔNG có FK cross-schema.
    - What's unclear: BE OrderService/CartService có check inventory.quantity > 0 trước khi add-to-cart không? Nếu có và row missing → fail with NPE hoặc 404.
    - Recommendation: Plan phase add 1 manual smoke task (add `prod-pho-001` to cart). Nếu fail → tạo sub-plan `inventory-svc/db/seed-dev/V3__seed_catalog_inventory.sql`. Đây là **vấn đề thực sự cần planner verify**.
