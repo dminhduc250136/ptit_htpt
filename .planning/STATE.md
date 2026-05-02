@@ -3,23 +3,23 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-02T07:02:00.000Z"
-last_activity: 2026-05-02 -- Phase 14-01 backend JPQL brands + price filter completed (3 tasks, compile + package PASS via Docker maven)
+last_updated: "2026-05-02T07:30:00.000Z"
+last_activity: 2026-05-02 -- Phase 14 closed — basic search filters (brand multi-select + price range) shipped end-to-end; UAT visible items PASS sau 2 round CSS polish
 progress:
   total_phases: 6
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 24
-  completed_plans: 19
-  percent: 95
+  completed_plans: 21
+  percent: 100
 ---
 
 ## Current Position
 
-Phase: Phase 14 — Basic Search Filters (in progress)
-Plan: 14-01 DONE (backend JPQL); 14-02 DONE (FE FilterSidebar); 14-03 next (wire products page)
-Status: Wave 1 backend foundation complete — Plan 14-03 ready to execute
-Last activity: 2026-05-02 -- Plan 14-01 backend JPQL: ProductRepository.findWithFilters + findDistinctBrands; ProductCrudService.listBrands 8-arg overload; GET /products/brands; Maven Docker compile + package PASS
-Resume file: .planning/phases/14-basic-search-filters/14-03-*-PLAN.md
+Phase: Phase 14 — Basic Search Filters (DONE) → next Phase 15 Polish + Audit
+Plan: 14-01 + 14-02 + 14-03 đều closed; UAT visible PASS (2 round CSS polish: price input overflow + sidebar scrollbar gutter)
+Status: Phase 14 closed, milestone v1.2 ready cho final phase 15
+Last activity: 2026-05-02 -- Phase 14 closed; brand seed data đã bơm 9 brands vào product_svc.products để UAT meaningfully (note debt cho seed migration)
+Resume file: .planning/phases/15-*/ (chưa tạo) hoặc /gsd-progress để chọn next
 
 ## Project Reference
 
