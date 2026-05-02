@@ -3,25 +3,25 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: completed
-last_updated: "2026-05-02T14:42:00Z"
-last_activity: 2026-05-02 — Phase 16 Plan 02 COMPLETE — V101 seed catalog (100 SP / 5 tech cat) + ROADMAP V7→V101 patch
+last_updated: "2026-05-02T15:30:00Z"
+last_activity: 2026-05-02 — Phase 16 COMPLETE — Plan 16-03 E2E spec + VERIFICATION.md (3/3 plans, Phase 16 ✓)
 progress:
   total_phases: 7
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
-  percent: 10
+  completed_plans: 3
+  percent: 14
 ---
 
 ## Current Position
 
-Phase: Phase 16 — Seed Catalog Hiện Thực (2/3 plans complete)
-Plan: 16-01 ✅ DONE | 16-02 ✅ DONE | 16-03 next (E2E + manual VERIFICATION)
-Status: Plan 16-02 COMPLETE (commits d46f028 + 3aca025). Sẵn sàng execute Plan 16-03 (E2E Playwright + acceptance).
-Last activity: 2026-05-02 — Plan 16-02 done: V101__seed_catalog_realistic.sql (100 SP, 25 distinct brands, 5 tech cat) + ROADMAP V7→V101 drift fix
+Phase: Phase 16 — Seed Catalog Hiện Thực ✅ COMPLETE (3/3 plans)
+Plan: 16-01 ✅ DONE | 16-02 ✅ DONE | 16-03 ✅ DONE
+Status: Phase 16 closed (artifacts ready). Manual UAT (smoke SQL + profile=prod test + add-to-cart) defer cho `/gsd-verify-work` per 16-VERIFICATION.md. Sẵn sàng /gsd-plan-phase 17.
+Last activity: 2026-05-02 — Plan 16-03 done: seed-catalog.spec.ts (7 tests) + 16-VERIFICATION.md (5 sections) — commits f842cd2 + 5f8257a
 
 ```
-Progress: [██░░░░░░░░░░░░░░░░░░] 10% (2/21 plans, 0/7 phases)
+Progress: [███░░░░░░░░░░░░░░░░░] 14% (3/21 plans, 1/7 phases)
 ```
 
 ## Project Reference
@@ -116,8 +116,8 @@ Không có blocker.
 
 ## Next Steps
 
-1. `/gsd-plan-phase 16` — Plan Phase 16: Seed Catalog Hiện Thực (SEED-01..04)
-2. Execute Phase 16 plans
+1. ✅ Phase 16 COMPLETE (3/3 plans, SEED-01..04 satisfied artifacts-side; manual UAT defer)
+2. `/gsd-verify-work` — chạy 16-VERIFICATION.md sections (smoke SQL + prod negative + add-to-cart + Playwright + UI walkthrough)
 3. `/gsd-plan-phase 17` → Execute Phase 17: Sửa Order Detail Items
 4. `/gsd-plan-phase 18` → Execute Phase 18: Kiểm Toán Storage + Cart→DB
 5. `/gsd-plan-phase 19` → Execute Phase 19: Admin Charts + Low-Stock

@@ -127,10 +127,10 @@
 
 | REQ-ID | Phase | Plan(s) | Status |
 |--------|-------|---------|--------|
-| SEED-01 | Phase 16 | — | Active |
-| SEED-02 | Phase 16 | — | Active |
-| SEED-03 | Phase 16 | — | Active |
-| SEED-04 | Phase 16 | — | Active |
+| SEED-01 | Phase 16 | 16-02 | Satisfied (2026-05-02) |
+| SEED-02 | Phase 16 | 16-01, 16-02 | Satisfied (2026-05-02) |
+| SEED-03 | Phase 16 | 16-01, 16-02, 16-03 | Satisfied (2026-05-02 — runtime verify defer 16-VERIFICATION.md §4) |
+| SEED-04 | Phase 16 | 16-02, 16-03 | Satisfied (2026-05-02 — prod negative test defer 16-VERIFICATION.md §2) |
 | ORDER-01 | Phase 17 | — | Active |
 | ADMIN-06 | Phase 17 | — | Active |
 | STORE-01 | Phase 18 | — | Active |

@@ -45,7 +45,7 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 
 ## Phases
 
-- [ ] **Phase 16: Seed Catalog Hiện Thực** — ~100 sản phẩm / 5 tech categories + Unsplash WebP + brand thực tế
+- [x] **Phase 16: Seed Catalog Hiện Thực** ✅ 2026-05-02 — ~100 sản phẩm / 5 tech categories + Unsplash WebP + brand thực tế (3/3 plans, manual UAT defer cho `/gsd-verify-work`)
 - [ ] **Phase 17: Sửa Order Detail Items** — Fix hardcoded placeholder, hiển thị full line items cả user + admin
 - [ ] **Phase 18: Kiểm Toán Storage + Cart→DB** — Audit localStorage/sessionStorage + migrate cart sang DB per-user
 - [ ] **Phase 19: Hoàn Thiện Admin: Charts + Low-Stock** — 4 analytics charts + low-stock alert dashboard
@@ -70,7 +70,7 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 **Plans:** 3 plans
 - [x] 16-01-PLAN.md — Curate IMAGES.csv (≥100 Unsplash photo IDs cho 5 tech categories) ✅ 2026-05-02 (107 IDs, commit 20be054)
 - [x] 16-02-PLAN.md — V101__seed_catalog_realistic.sql + patch ROADMAP V7→V101 ✅ 2026-05-02 (100 SP / 25 brands, commits d46f028 + 3aca025)
-- [ ] 16-03-PLAN.md — E2E Playwright spec + manual VERIFICATION.md + human acceptance
+- [x] 16-03-PLAN.md — E2E Playwright spec + manual VERIFICATION.md + human acceptance ✅ 2026-05-02 (seed-catalog.spec.ts 7 tests + 16-VERIFICATION.md 5 sections, commits f842cd2 + 5f8257a; checkpoint auto-approved trong auto mode, manual UAT defer cho /gsd-verify-work)
 **UI hint**: yes
 
 ---
