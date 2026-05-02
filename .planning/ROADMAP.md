@@ -25,7 +25,7 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 | Service | Version | Purpose | Phase |
 |---------|---------|---------|-------|
 | product-svc | V101 | Seed ~100 sản phẩm trong db/seed-dev/ (Spring profile `dev` only) | Phase 16 |
-| order-svc | V3 | Coupons + coupon_redemptions tables | Phase 20 |
+| order-svc | V5 | Coupons + coupon_redemptions tables (V5 vì V4 đã shipped Phase 18) | Phase 20 |
 | order-svc | V4 | Carts + cart_items tables | Phase 18 |
 | chat_svc | — | Schema init qua Next.js API route (raw pg driver, không Flyway) | Phase 22 |
 
@@ -148,13 +148,15 @@ Plans:
   2. Admin tại `/admin/coupons` tạo, chỉnh sửa, disable/delete coupon với đầy đủ field: type (% hoặc fixed), value, min_order, expiry, max_total_uses
   3. Hai user cùng dùng coupon "last slot" đồng thời → chỉ 1 user thành công (race condition safe, KHÔNG double-redemption)
   4. Đơn hàng tại `/account/orders/[id]` và `/admin/orders/[id]` hiển thị coupon code + discount amount nếu order có áp dụng coupon
-**Plans:** 4 plans
+**Plans:** 6 plans
 
 Plans:
-- [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
-- [ ] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
-- [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
-- [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
+- [ ] 20-01-PLAN.md — BE foundation: Flyway V5 migration + JPA entities + repositories (CouponEntity, CouponRedemptionEntity, OrderEntity extension)
+- [ ] 20-02-PLAN.md — BE service + admin controller: CouponService CRUD + CouponPreviewService.validate + CouponRedemptionService.atomicRedeem + AdminCouponController + error code enum + DTOs
+- [ ] 20-03-PLAN.md — BE integration: extend OrderCrudService.create với atomic coupon + extend OrderEntity discountAmount/couponCode + extend OrderDto + POST /orders/coupons/validate + race condition IT (D-25)
+- [ ] 20-04-PLAN.md — Gateway routes (user coupons + admin coupons) + ROADMAP patch (V3 → V5)
+- [ ] 20-05-PLAN.md — FE checkout coupon section: useApplyCoupon mutation + Input/Áp dụng button + chip + auto-revalidate + extend createOrder body với couponCode + error toast mapping
+- [ ] 20-06-PLAN.md — FE admin /admin/coupons page (rhf+zod+modal CRUD) + sidebar nav link + extend /profile/orders/[id] và /admin/orders/[id] hiển thị couponCode + discountAmount
 **UI hint**: yes
 
 ---
@@ -168,13 +170,10 @@ Plans:
   1. Tác giả review thấy nút "Sửa" và "Xoá" trên review của mình — sửa thành công cập nhật nội dung; xoá thành công ẩn review khỏi danh sách công khai nhưng avg_rating recalculate đúng
   2. Người dùng chọn sort "Mới nhất" / "Đánh giá cao nhất" / "Đánh giá thấp nhất" → danh sách review thay đổi thứ tự ngay lập tức (query param `?sort=`)
   3. Admin tại `/admin/reviews` thấy danh sách tất cả reviews, filter được theo visible/hidden, có thể hide hoặc unhide review bất kỳ — review bị hide không hiển thị cho user thường
-**Plans:** 4 plans
+**Plans:** TBD (sẽ chốt khi `/gsd-plan-phase 21` chạy)
 
 Plans:
-- [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
-- [ ] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
-- [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
-- [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
+- [ ] (TBD) — Plans sẽ được chốt khi planner chạy cho Phase 21
 **UI hint**: yes
 
 ---
@@ -190,13 +189,10 @@ Plans:
   3. Người dùng mở lại chatbot sau khi đóng tab → thấy lịch sử chat sessions cũ, có thể tiếp tục conversation
   4. Admin tại `/admin/orders/[id]` click "AI suggest reply" → nhận gợi ý phản hồi customer dựa trên context order — admin review và gửi thủ công (KHÔNG auto-confirm)
   5. API key Anthropic KHÔNG bao giờ xuất hiện trong Network tab của browser (proxy qua Next.js API route)
-**Plans:** 4 plans
+**Plans:** TBD (sẽ chốt khi `/gsd-ai-integration-phase 22` chạy)
 
 Plans:
-- [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
-- [ ] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
-- [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
-- [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
+- [ ] (TBD) — Plans sẽ được chốt khi AI integration workflow chạy cho Phase 22
 **UI hint**: yes
 
 ---
