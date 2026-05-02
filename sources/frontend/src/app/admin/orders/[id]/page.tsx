@@ -193,6 +193,21 @@ export default function AdminOrderDetailPage() {
             </tbody>
           </table>
         )}
+        {/* Phase 20 / COUP-05 (D-23): coupon snapshot block — chỉ render khi có coupon.
+            BE Plan 20-03 đã set totalAmount = subtotal - discountAmount trước khi save,
+            nên KHÔNG cần subtract discount lần nữa ở FE — chỉ hiển thị 2 dòng info bổ sung. */}
+        {order.couponCode && (
+          <div style={{ borderTop: '1px solid rgba(195,198,214,0.15)', marginTop: 'var(--space-3)', paddingTop: 'var(--space-3)', textAlign: 'right' }}>
+            <div style={{ marginBottom: 'var(--space-1)' }}>
+              <span style={{ color: 'var(--on-surface-variant)' }}>Mã giảm giá: </span>
+              <strong>{order.couponCode}</strong>
+            </div>
+            <div style={{ color: 'var(--success, #10b981)' }}>
+              <span>Giảm giá: </span>
+              <strong>-{(order.discountAmount ?? 0).toLocaleString('vi-VN')}₫</strong>
+            </div>
+          </div>
+        )}
         <div style={{ borderTop: '1px solid rgba(195,198,214,0.15)', marginTop: 'var(--space-3)', paddingTop: 'var(--space-3)', textAlign: 'right' }}>
           <span style={{ fontWeight: 700, fontSize: 'var(--text-title-sm)' }}>Tổng cộng: </span>
           <span style={{ color: 'var(--primary)', fontWeight: 700 }}>
