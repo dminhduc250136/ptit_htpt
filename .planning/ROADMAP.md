@@ -124,7 +124,10 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
   2. User check 2 brands (Dell + HP) + price 10-20M → backend JPQL `WHERE (:brands IS NULL OR brand IN :brands) AND (:priceMin IS NULL OR price >= :priceMin) AND (:priceMax IS NULL OR price <= :priceMax)` → results match; same-facet OR, cross-facet AND.
   3. Validate price min > max → client reject inline error, KHÔNG gọi server.
   4. Filter reset button xóa toàn bộ facet selection về default (không cần URL encode).
-**Plans:** TBD
+**Plans:** 3 plans
+- [ ] 14-01-backend-jpql-brands-PLAN.md — product-svc ProductRepository JPQL findWithFilters + findDistinctBrands + ProductCrudService refactor 8-arg overload + ProductController extend params + new GET /products/brands
+- [ ] 14-02-frontend-filter-sidebar-PLAN.md — FilterSidebar component (Brand checkboxes + 2 price input + 4 preset chip + Reset + validate min>max + a11y label/aria-pressed/role=alert)
+- [ ] 14-03-wire-products-page-PLAN.md — services/products.ts extend ListProductsParams + listBrands() + wire FilterSidebar vào /products/page.tsx + remove client-side .filter() + empty state copy D-12 + UAT checkpoint
 **UI hint:** yes
 
 ### Phase 15: Public Polish + Milestone Audit
@@ -152,7 +155,7 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
 | 11. Address Book + Order Filtering | 6/6 | ✓ Complete | 2026-04-27 |
 | 12. Wishlist | — | ~~SKIPPED~~ (defer v1.3) | — |
 | 13. Reviews & Ratings | 0/4 | Not started | — |
-| 14. Basic Search Filters | 0/? | Not started | — |
+| 14. Basic Search Filters | 0/3 | Not started | — |
 | 15. Public Polish + Milestone Audit | 0/? | Not started | — |
 
 ---
