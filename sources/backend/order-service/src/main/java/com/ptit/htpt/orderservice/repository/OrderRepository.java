@@ -18,11 +18,11 @@ public interface OrderRepository extends JpaRepository<OrderEntity, String> {
    * status=null → bỏ qua filter status. from=null / to=null → bỏ qua filter date.
    * q tìm kiếm trên id (LOWER LIKE) — D-13: order ID only, không join items.
    */
-  @Query("SELECT o FROM OrderEntity o WHERE o.userId = :userId " +
-         "AND (:status IS NULL OR o.status = :status) " +
-         "AND (:from IS NULL OR o.createdAt >= :from) " +
-         "AND (:to IS NULL OR o.createdAt <= :to) " +
-         "AND (:q IS NULL OR LOWER(o.id) LIKE LOWER(CONCAT('%', :q, '%'))) " +
+  @Query("SELECT DISTINCT o FROM OrderEntity o LEFT JOIN FETCH o.items WHERE o.userId = :userId " +
+         "AND (cast(:status as string) IS NULL OR o.status = :status) " +
+         "AND (cast(:from as timestamp) IS NULL OR o.createdAt >= :from) " +
+         "AND (cast(:to as timestamp) IS NULL OR o.createdAt <= :to) " +
+         "AND (cast(:q as string) IS NULL OR LOWER(o.id) LIKE LOWER(CONCAT('%', cast(:q as string), '%'))) " +
          "ORDER BY o.createdAt DESC")
   List<OrderEntity> findByUserIdWithFilters(
       @Param("userId") String userId,
