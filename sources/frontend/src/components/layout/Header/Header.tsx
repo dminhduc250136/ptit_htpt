@@ -6,12 +6,15 @@ import { useRouter } from 'next/navigation';
 import styles from './Header.module.css';
 import { useAuth } from '@/providers/AuthProvider';
 import { logout as apiLogout } from '@/services/auth';
+import { useCart } from '@/hooks/useCart';
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { isAuthenticated, user, logout } = useAuth();
+  const { data: cartItems = [] } = useCart();
+  const cartCount = cartItems.reduce((sum, i) => sum + i.quantity, 0);
   const router = useRouter();
   const userMenuRef = useRef<HTMLDivElement>(null);
 
@@ -115,7 +118,7 @@ export default function Header() {
               <line x1="3" y1="6" x2="21" y2="6" />
               <path d="M16 10a4 4 0 0 1-8 0" />
             </svg>
-            <span className={styles.cartBadge}>0</span>
+            <span className={styles.cartBadge}>{cartCount}</span>
           </Link>
 
           {/* Mobile hamburger */}
