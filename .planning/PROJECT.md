@@ -40,9 +40,17 @@ Dự án thử nghiệm GSD workflow trên codebase e-commerce laptop (Spring Bo
 ✓ **Basic search filters** — JPQL cast IS NULL + FilterSidebar component + brand multi-select + price range debounce 400ms (SEARCH-01/02) — Phase 14
 ✓ **Public polish** — Hero next/image priority + Featured CSS scroll-snap + 3-tier stock badge + brand-based breadcrumb + 4 Playwright smoke E2E (PUB-01/02/03/04 + TEST-02) — Phase 15
 
-### Active (v1.3 — TBD)
+### Active (v1.3 — Catalog Realism & Commerce Intelligence)
 
-Chưa define — chạy `/gsd-new-milestone` để bootstrap. Backlog candidates xem `Deferred (v1.3+)` bên dưới.
+7 trục scope (locked 2026-05-02 qua /gsd-new-milestone):
+
+- **SEED catalog realistic** — ~100 SP / 5 categories (điện thoại/laptop/chuột/bàn phím/tai nghe), Unsplash WebP CDN, brand realistic
+- **STORAGE audit + cart→DB** — grep toàn FE localStorage/sessionStorage, classify, migrate user-data sang DB per-user (cart confirmed leak)
+- **ADMIN completion** — 4 charts (revenue/time, top products, order status pie, signups + low-stock) + admin order detail items
+- **REV-04+ Review polish** — author edit/delete + sort by helpful/newest/rating + admin moderation (hide/approve)
+- **AI Chatbot (Claude API MVP)** — customer FAQ+product Q&A+recommendation, admin suggest reply, streaming + chat history persist DB (NO agentic tool-use)
+- **ORDER-DETAIL items fix** — 1 phase debug BE/FE, hiển thị full line items cả /account/orders/[id] + /admin/orders/[id]
+- **COUPON system** — % off + fixed amount, min order + expiry + max usage/user, 1 mã/đơn, admin CRUD /admin/coupons + FE checkout input
 
 ### Deferred (v1.3+)
 
@@ -112,18 +120,38 @@ From codebase analysis, areas worth monitoring:
 - Performance optimization (N+1 queries, caching)
 - Comprehensive test coverage (currently minimal)
 
-## Current Milestone: v1.3 — TBD (planning pending)
+## Current Milestone: v1.3 — Catalog Realism & Commerce Intelligence
 
-**Status:** v1.2 SHIPPED 2026-05-02 (passed — 17/17 active REQs satisfied). Tag `v1.2` annotated local. v1.3 scope chưa define — chạy `/gsd-new-milestone` hoặc `/gsd-roadmap` để bootstrap.
+**Goal:** Nâng demo flow lên "real-data, intelligent, persistent" — catalog đầy đủ ảnh thật, dữ liệu user persist DB không leak qua localStorage, admin có insight panel, AI chatbot tư vấn, coupon + review hoàn thiện.
 
-**v1.3 backlog candidates (deferred from v1.2):**
-- ACCT-01 wishlist (Phase 12 plans cần re-plan với V5 migration)
-- REV-04 author edit/delete + SEARCH-03 rating filter + SEARCH-04 URL state + in-stock + clear-all
+**Target features (7 trục):**
+
+1. SEED catalog realistic (~100 SP / 5 categories + Unsplash WebP)
+2. STORAGE audit + cart→DB migration (audit toàn FE)
+3. ADMIN completion (4 charts + low-stock alert + admin order detail items)
+4. REVIEW polish (REV-04 author edit/delete + sort + admin moderation)
+5. AI Chatbot Claude API MVP (customer FAQ/Q&A/recommendation + admin suggest reply, streaming + history persist)
+6. ORDER-DETAIL items fix (1 phase debug BE/FE, user + admin)
+7. COUPON system (% off + fixed amount + admin CRUD)
+
+**Key locks:**
+- Phase numbering tiếp tục từ **Phase 16** (KHÔNG reset)
+- Research enabled — 4 parallel researchers (Stack/Features/Architecture/Pitfalls)
+- AI provider: **Claude API** (skill `claude-api` có sẵn) — dùng `/gsd-ai-integration-phase` cho phase chatbot
+- Visible-first priority giữ nguyên — backend hardening D1..D17 vẫn defer (trừ phần liên quan storage audit nếu khám phá security leak)
+- Language Vietnamese cho docs/commits
+
+**Status:** Scope locked 2026-05-02. Research → Requirements → Roadmap đang chạy.
+
+**Backlog defer v1.4+:**
+- ACCT-01 wishlist (re-plan với V5 migration)
+- SEARCH-03 rating filter + SEARCH-04 URL state + in-stock + clear-all
 - PUB-03 lightbox + axe-core a11y gate
 - TEST-02 full E2E suite (8+ tests)
-- ACCT-04 avatar upload (deferred D-08 backlog)
-
-**Phase numbering:** tiếp tục từ Phase 16 (KHÔNG reset).
+- ACCT-04 avatar upload (multipart Thumbnailator)
+- Multi-step checkout (Shipping → Payment → Review)
+- Recently viewed / Related products
+- Helpful votes trên reviews
 
 ## Current State
 
@@ -145,18 +173,9 @@ Cumulative foundation (v1.0 + v1.1 + v1.2):
 - **E2E**: Playwright suite (14 v1.1 baseline tests + 4 v1.2 smoke tests covering homepage/checkout/review/profile)
 - **3 git tags**: `v1.0`, `v1.1`, `v1.2`
 
-## Next Milestone Goals (v1.3 — TBD)
+## Next Milestone Goals (v1.4 — TBD)
 
-Pending scope definition. Top candidates từ v1.2 deferral:
-
-- ACCT-01 wishlist (V5 migration ready)
-- REV-04 + SEARCH-03 + SEARCH-04 advanced discovery
-- PUB-03 lightbox + a11y hardening
-- TEST-02 full E2E suite
-- ACCT-04 avatar upload (multipart + Thumbnailator)
-- Backend hardening D1..D17 (revisit nếu có triggering event)
-
-Chạy `/gsd-new-milestone` để bootstrap scope cụ thể.
+Pending v1.3 close. Backlog v1.4+ đã liệt kê ở "Current Milestone v1.3" → "Backlog defer v1.4+".
 
 <details>
 <summary>Previous milestones (shipped)</summary>
@@ -202,4 +221,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-02 — Milestone v1.2 UI/UX Completion SHIPPED (passed: 17/17 active REQs satisfied; tag v1.2 annotated local pending user push). Next: v1.3 scope planning.*
+*Last updated: 2026-05-02 — Milestone v1.3 Catalog Realism & Commerce Intelligence STARTED (7 trục locked: seed catalog / storage audit / admin charts / review polish / Claude AI chatbot MVP / order detail fix / coupon system). Phase numbering từ Phase 16. Research → Requirements → Roadmap đang chạy.*
