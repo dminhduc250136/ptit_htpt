@@ -3,23 +3,23 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-02T00:00:00.000Z"
-last_activity: 2026-05-02 -- Phase 13 closed (13-04 UAT deferred); next Phase 14 basic search filters
+last_updated: "2026-05-02T07:02:00.000Z"
+last_activity: 2026-05-02 -- Phase 14-01 backend JPQL brands + price filter completed (3 tasks, compile + package PASS via Docker maven)
 progress:
   total_phases: 6
   completed_phases: 4
   total_plans: 24
-  completed_plans: 18
-  percent: 92
+  completed_plans: 19
+  percent: 95
 ---
 
 ## Current Position
 
-Phase: Phase 14 — Basic Search Filters (next)
-Plan: chưa bắt đầu — 3 plans / 2 waves đã planned (SEARCH-01 brand, SEARCH-02 price)
-Status: Ready to execute Phase 14
-Last activity: 2026-05-02 -- Phase 13 closed; runtime fixes V6 + JWT env var; orders bugfixes (out-of-scope) committed riêng
-Resume file: .planning/phases/14-basic-search-filters/
+Phase: Phase 14 — Basic Search Filters (in progress)
+Plan: 14-01 DONE (backend JPQL); 14-02 DONE (FE FilterSidebar); 14-03 next (wire products page)
+Status: Wave 1 backend foundation complete — Plan 14-03 ready to execute
+Last activity: 2026-05-02 -- Plan 14-01 backend JPQL: ProductRepository.findWithFilters + findDistinctBrands; ProductCrudService.listBrands 8-arg overload; GET /products/brands; Maven Docker compile + package PASS
+Resume file: .planning/phases/14-basic-search-filters/14-03-*-PLAN.md
 
 ## Project Reference
 
