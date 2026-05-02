@@ -1,10 +1,11 @@
 ---
 phase: 14
 slug: basic-search-filters
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-02
+reviewed_at: 2026-05-02
 ---
 
 # Phase 14 — UI Design Contract (Basic Search Filters)
