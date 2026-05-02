@@ -4,21 +4,21 @@ milestone: v1.2
 milestone_name: milestone
 status: executing
 last_updated: "2026-05-02T00:00:00.000Z"
-last_activity: 2026-05-02 -- Phase 15 Wave 0 complete (15-00) — hero WebP assets + Badge variants + selector audit + manual checklist
+last_activity: 2026-05-02 -- Phase 15 Plan 15-01 complete — homepage hero next/image + Featured CSS scroll-snap carousel + single-fetch dedupe slice(8,16)
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 24
-  completed_plans: 18
-  percent: 92
+  completed_plans: 19
+  percent: 96
 ---
 
 ## Current Position
 
 Phase: Phase 15 — Public Polish + Milestone Audit
-Plan: Wave 0 complete (15-00 ✓) — next: Wave 1 (15-01 homepage + 15-02 PDP parallel)
-Status: Executing — Wave 1
-Last activity: 2026-05-02 -- Wave 0 complete: hero WebP assets + Badge variants + selector audit
+Plan: 15-01 complete (Wave 1 homepage ✓) — next: 15-02 PDP polish (breadcrumb brand + 3-tier stock badge + hide add-to-cart + thumbnail a11y)
+Status: Executing — Wave 1 (15-02 next)
+Last activity: 2026-05-02 -- 15-01 complete: hero next/image priority + Featured carousel + dedupe single-fetch
 Resume file: .planning/phases/15-public-polish-milestone-audit/
 
 ## Project Reference
