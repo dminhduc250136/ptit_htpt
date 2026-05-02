@@ -24,7 +24,7 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 
 | Service | Version | Purpose | Phase |
 |---------|---------|---------|-------|
-| product-svc | V7 | Seed ~100 sản phẩm (Spring profile `dev` only) | Phase 16 |
+| product-svc | V101 | Seed ~100 sản phẩm trong db/seed-dev/ (Spring profile `dev` only) | Phase 16 |
 | order-svc | V3 | Coupons + coupon_redemptions tables | Phase 20 |
 | order-svc | V4 | Carts + cart_items tables | Phase 18 |
 | chat_svc | — | Schema init qua Next.js API route (raw pg driver, không Flyway) | Phase 22 |
@@ -37,8 +37,8 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 | @anthropic-ai/sdk | 0.92.0 | Claude API chatbot (Next.js API route proxy) | Phase 22 |
 
 **Spring profile `dev` isolation:**
-- Seed migration `V7` phải ở `classpath:db/seed/dev/` (KHÔNG phải `classpath:db/migration/`)
-- `application-dev.yml` thêm `spring.flyway.locations` include seed path
+- Seed migration `V101` phải ở `classpath:db/seed-dev/` (KHÔNG phải `classpath:db/migration/`) — tiếp nối V100 đã có
+- `application.yml` profile=dev đã include `classpath:db/seed-dev` trong `spring.flyway.locations` — KHÔNG cần sửa config (verified RESEARCH Finding 1)
 - Production profile KHÔNG chạy seed
 
 ---
