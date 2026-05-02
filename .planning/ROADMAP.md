@@ -46,7 +46,7 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 ## Phases
 
 - [ ] **Phase 16: Seed Catalog Hiện Thực** — ~100 sản phẩm / 5 tech categories + Unsplash WebP + brand thực tế
-- [ ] **Phase 17: Sửa Order Detail Items** — Fix hardcoded placeholder, hiển thị full line items cả user + admin
+- [x] **Phase 17: Sửa Order Detail Items** — Fix hardcoded placeholder, hiển thị full line items cả user + admin (4/4 plans complete 2026-05-02)
 - [ ] **Phase 18: Kiểm Toán Storage + Cart→DB** — Audit localStorage/sessionStorage + migrate cart sang DB per-user
 - [ ] **Phase 19: Hoàn Thiện Admin: Charts + Low-Stock** — 4 analytics charts + low-stock alert dashboard
 - [ ] **Phase 20: Hệ Thống Coupon** — % off + fixed amount, admin CRUD, checkout input, atomic redemption
@@ -87,7 +87,7 @@ Plans:
 - [x] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
 - [x] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
 - [x] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
-- [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
+- [x] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
 **UI hint**: yes
 
 ---
