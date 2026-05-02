@@ -69,7 +69,7 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
   4. Developer restart với Spring profile `dev` thì seed chạy; restart với profile `prod` thì seed KHÔNG chạy — Flyway V101 idempotent (`ON CONFLICT DO NOTHING`)
 **Plans:** 3 plans
 - [x] 16-01-PLAN.md — Curate IMAGES.csv (≥100 Unsplash photo IDs cho 5 tech categories) ✅ 2026-05-02 (107 IDs, commit 20be054)
-- [ ] 16-02-PLAN.md — Viết V101__seed_catalog_realistic.sql + patch ROADMAP V7→V101
+- [x] 16-02-PLAN.md — V101__seed_catalog_realistic.sql + patch ROADMAP V7→V101 ✅ 2026-05-02 (100 SP / 25 brands, commits d46f028 + 3aca025)
 - [ ] 16-03-PLAN.md — E2E Playwright spec + manual VERIFICATION.md + human acceptance
 **UI hint**: yes
 
@@ -169,7 +169,7 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 16. Seed Catalog Hiện Thực | 0/? | Not started | - |
+| 16. Seed Catalog Hiện Thực | 2/3 | In progress | - |
 | 17. Sửa Order Detail Items | 0/? | Not started | - |
 | 18. Kiểm Toán Storage + Cart→DB | 0/? | Not started | - |
 | 19. Hoàn Thiện Admin: Charts + Low-Stock | 0/? | Not started | - |
