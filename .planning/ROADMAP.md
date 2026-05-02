@@ -81,7 +81,7 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
   1. Người dùng vào `/account/orders/[id]` thấy danh sách line items với ảnh sản phẩm, tên, brand, đơn giá, số lượng, thành tiền — KHÔNG có placeholder text
   2. Admin vào `/admin/orders/[id]` thấy đúng danh sách sản phẩm chi tiết (KHÔNG còn chuỗi "Chi tiết sản phẩm sẽ khả dụng sau khi Phase 8 hoàn thiện")
   3. `AdminOrder` TypeScript interface có trường `items: OrderItem[]` và FE parse `ApiResponse<OrderDto>` unwrap đúng
-**Plans:** 4 plans
+**Plans:** 4/4 plans complete
 
 Plans:
 - [x] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
@@ -105,10 +105,10 @@ Plans:
 **Plans:** 4 plans
 
 Plans:
-- [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
-- [ ] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
-- [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
-- [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
+- [x] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
+- [x] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
+- [x] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
+- [x] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
 **UI hint**: yes
 
 ---
@@ -203,7 +203,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 16. Seed Catalog Hiện Thực | 0/? | Not started | - |
-| 17. Sửa Order Detail Items | 2/4 | In progress | - |
+| 17. Sửa Order Detail Items | 4/4 | Complete    | 2026-05-02 |
 | 18. Kiểm Toán Storage + Cart→DB | 0/? | Not started | - |
 | 19. Hoàn Thiện Admin: Charts + Low-Stock | 0/? | Not started | - |
 | 20. Hệ Thống Coupon | 0/? | Not started | - |
