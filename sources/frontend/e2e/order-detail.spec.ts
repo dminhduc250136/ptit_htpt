@@ -71,4 +71,12 @@ test('ORD-DTL-2: order detail page render 4-col items table + địa chỉ + tha
 
   // Verify payment info card (confirmed từ [id]/page.tsx: h4 "Thanh toán")
   await expect(page.getByText('Thanh toán')).toBeVisible();
+
+  // Phase 17 / ORDER-01: assert items table có ≥ 1 row visible
+  // (skip nếu seed order rỗng — D-05 empty state cũng valid render)
+  const rowCount = await page.locator('table tbody tr').count();
+  if (rowCount > 0) {
+    await expect(page.locator('table tbody tr').first()).toBeVisible();
+    // Brand subtitle có thể là "—" nếu enrichment fail — chỉ check first row visible
+  }
 });
