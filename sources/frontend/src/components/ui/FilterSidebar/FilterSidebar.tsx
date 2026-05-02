@@ -183,6 +183,7 @@ export default function FilterSidebar({
             className={`${styles.priceInput} ${priceError ? styles.invalid : ''}`}
             type="text"
             inputMode="numeric"
+            size={1}
             placeholder="Từ"
             value={priceMinDraft}
             onChange={(e) => setPriceMinDraft(e.target.value)}
@@ -198,6 +199,7 @@ export default function FilterSidebar({
             className={`${styles.priceInput} ${priceError ? styles.invalid : ''}`}
             type="text"
             inputMode="numeric"
+            size={1}
             placeholder="Đến"
             value={priceMaxDraft}
             onChange={(e) => setPriceMaxDraft(e.target.value)}
