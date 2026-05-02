@@ -37,6 +37,13 @@ public class ReviewEntity {
   @Column(name = "updated_at", nullable = false)
   private Instant updatedAt;
 
+  // Phase 21 / Plan 01 — moderation lifecycle (D-20).
+  @Column(name = "deleted_at")
+  private Instant deletedAt;          // null = active
+
+  @Column(nullable = false)
+  private boolean hidden = false;
+
   protected ReviewEntity() { /* JPA */ }
 
   private ReviewEntity(String id, String productId, String userId, String reviewerName,
@@ -57,6 +64,23 @@ public class ReviewEntity {
         productId, userId, reviewerName, rating, content, Instant.now());
   }
 
+  // Phase 21 mutators (REV-04 + REV-06).
+  public void markDeleted() {
+    this.deletedAt = Instant.now();
+    this.updatedAt = this.deletedAt;
+  }
+
+  public void setHidden(boolean hidden) {
+    this.hidden = hidden;
+    this.updatedAt = Instant.now();
+  }
+
+  public void applyEdit(int newRating, String sanitizedContent) {
+    this.rating = newRating;
+    this.content = sanitizedContent;
+    this.updatedAt = Instant.now();
+  }
+
   // Record-style accessors
   public String id() { return id; }
   public String productId() { return productId; }
@@ -66,6 +90,9 @@ public class ReviewEntity {
   public String content() { return content; }
   public Instant createdAt() { return createdAt; }
   public Instant updatedAt() { return updatedAt; }
+  public Instant deletedAt() { return deletedAt; }
+  public boolean hidden() { return hidden; }
+  public boolean isActive() { return deletedAt == null && !hidden; }
 
   @Override public boolean equals(Object o) {
     if (this == o) return true;
