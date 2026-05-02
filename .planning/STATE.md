@@ -3,25 +3,25 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-02T14:28:10.211Z"
-last_activity: 2026-05-02 -- Phase 17 planning complete
+last_updated: "2026-05-02T14:34:36.760Z"
+last_activity: 2026-05-02
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 4
-  completed_plans: 0
-  percent: 0
+  completed_plans: 1
+  percent: 25
 ---
 
 ## Current Position
 
-Phase: Phase 16 — Seed Catalog Hiện Thực (Not started)
-Plan: —
+Phase: 17 (Sửa Order Detail Items) — EXECUTING
+Plan: 2 of 4
 Status: Ready to execute
-Last activity: 2026-05-02 -- Phase 17 planning complete
+Last activity: 2026-05-02
 
 ```
-Progress: [░░░░░░░░░░░░░░░░░░░░] 0% (0/7 phases)
+Progress: [███░░░░░░░] 25%
 ```
 
 ## Project Reference
@@ -30,7 +30,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 
 **Core value:** Demo end-to-end shopping experience hoạt động với real data ở mọi điểm user nhìn thấy, đồng thời rèn quy trình GSD từ planning → execute → verify → archive.
 
-**Current focus:** Phase 16 — Seed Catalog Hiện Thực. ~100 sản phẩm / 5 tech categories, Unsplash WebP CDN, brand thực tế, Flyway V7 product-svc với Spring profile `dev` isolation.
+**Current focus:** Phase 17 — Sửa Order Detail Items
 
 ## Resume Cheat-Sheet
 
@@ -52,6 +52,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | v1.1 | 4 | 22 | 15/19 SATISFIED + 4 PARTIAL | PASSED (gaps deferred) |
 | v1.2 | 6 (+1 SKIP) | 24 | 17/17 | PASSED |
 | v1.3 | 7 planned | TBD | 0/27 | In progress |
+| Phase 17-s-a-order-detail-items P01 | 5min | 2 tasks | 2 files |
 
 ## Decisions (active v1.3 locks)
 
