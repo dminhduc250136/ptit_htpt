@@ -81,7 +81,13 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
   1. Người dùng vào `/account/orders/[id]` thấy danh sách line items với ảnh sản phẩm, tên, brand, đơn giá, số lượng, thành tiền — KHÔNG có placeholder text
   2. Admin vào `/admin/orders/[id]` thấy đúng danh sách sản phẩm chi tiết (KHÔNG còn chuỗi "Chi tiết sản phẩm sẽ khả dụng sau khi Phase 8 hoàn thiện")
   3. `AdminOrder` TypeScript interface có trường `items: OrderItem[]` và FE parse `ApiResponse<OrderDto>` unwrap đúng
-**Plans:** TBD
+**Plans:** 4 plans
+
+Plans:
+- [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
+- [ ] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
+- [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
+- [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
 **UI hint**: yes
 
 ---
@@ -96,7 +102,13 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
   2. Guest add vào giỏ → login → giỏ hàng merge đúng, không bị duplicate item
   3. Audit report (SUMMARY.md) liệt kê tất cả `localStorage`/`sessionStorage` keys được classify: (a) đã migrate sang DB, (b) UI preference giữ lại hợp lý, (c) auth-token reviewed
   4. Cart localStorage không chứa dữ liệu user sau khi logout
-**Plans:** TBD
+**Plans:** 4 plans
+
+Plans:
+- [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
+- [ ] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
+- [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
+- [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
 **UI hint**: yes
 
 ---
@@ -112,7 +124,13 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
   3. Admin thấy phân phối trạng thái đơn hàng (pie/donut chart) với counts thật: pending/confirmed/shipped/delivered/cancelled
   4. Admin thấy biểu đồ user signups mới theo ngày (line chart) với số liệu thật từ user-svc
   5. Admin thấy danh sách/banner sản phẩm có `stock < 10` trực tiếp trên dashboard — click được để vào trang edit sản phẩm đó
-**Plans:** TBD
+**Plans:** 4 plans
+
+Plans:
+- [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
+- [ ] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
+- [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
+- [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
 **UI hint**: yes
 
 ---
@@ -127,7 +145,13 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
   2. Admin tại `/admin/coupons` tạo, chỉnh sửa, disable/delete coupon với đầy đủ field: type (% hoặc fixed), value, min_order, expiry, max_total_uses
   3. Hai user cùng dùng coupon "last slot" đồng thời → chỉ 1 user thành công (race condition safe, KHÔNG double-redemption)
   4. Đơn hàng tại `/account/orders/[id]` và `/admin/orders/[id]` hiển thị coupon code + discount amount nếu order có áp dụng coupon
-**Plans:** TBD
+**Plans:** 4 plans
+
+Plans:
+- [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
+- [ ] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
+- [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
+- [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
 **UI hint**: yes
 
 ---
@@ -141,7 +165,13 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
   1. Tác giả review thấy nút "Sửa" và "Xoá" trên review của mình — sửa thành công cập nhật nội dung; xoá thành công ẩn review khỏi danh sách công khai nhưng avg_rating recalculate đúng
   2. Người dùng chọn sort "Mới nhất" / "Đánh giá cao nhất" / "Đánh giá thấp nhất" → danh sách review thay đổi thứ tự ngay lập tức (query param `?sort=`)
   3. Admin tại `/admin/reviews` thấy danh sách tất cả reviews, filter được theo visible/hidden, có thể hide hoặc unhide review bất kỳ — review bị hide không hiển thị cho user thường
-**Plans:** TBD
+**Plans:** 4 plans
+
+Plans:
+- [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
+- [ ] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
+- [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
+- [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
 **UI hint**: yes
 
 ---
@@ -157,7 +187,13 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
   3. Người dùng mở lại chatbot sau khi đóng tab → thấy lịch sử chat sessions cũ, có thể tiếp tục conversation
   4. Admin tại `/admin/orders/[id]` click "AI suggest reply" → nhận gợi ý phản hồi customer dựa trên context order — admin review và gửi thủ công (KHÔNG auto-confirm)
   5. API key Anthropic KHÔNG bao giờ xuất hiện trong Network tab của browser (proxy qua Next.js API route)
-**Plans:** TBD
+**Plans:** 4 plans
+
+Plans:
+- [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
+- [ ] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
+- [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
+- [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
 **UI hint**: yes
 
 ---
