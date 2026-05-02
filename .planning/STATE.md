@@ -3,25 +3,25 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Catalog Realism & Commerce Intelligence
 status: executing
-last_updated: "2026-05-02T15:45:00Z"
+last_updated: "2026-05-02T16:30:00Z"
 last_activity: 2026-05-02
 progress:
   total_phases: 7
   completed_phases: 3
-  total_plans: 13
-  completed_plans: 13
-  percent: 43
+  total_plans: 14
+  completed_plans: 14
+  percent: 46
 ---
 
 ## Current Position
 
-Phase: 18-storage-audit-cart-db (18) — COMPLETED
-Plan: 6 of 6 — ALL PLANS COMPLETE
-Status: Phase 16 + 17 + 18 closed. Next: Phase 19 (Admin Charts + Low-Stock)
+Phase: 19-ho-n-thi-n-admin-charts-low-stock (19) — IN PROGRESS
+Plan: 1 of 4 — Plan 01 (order-svc charts) COMPLETE
+Status: Phase 19 Plan 01 done (BE order-svc revenue/top-products/status-distribution + ProductBatchClient). Next: Plan 02 user-svc signups
 Last activity: 2026-05-02
 
 ```
-Progress: [████░░░░░░] 43% (3/7 phases complete)
+Progress: [████░░░░░░] 46% (3/7 phases complete + Phase 19 P01/4)
 ```
 
 ## Project Reference
@@ -62,8 +62,16 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 18-storage-audit-cart-db P04 | 15min | 3 tasks | 3 files |
 | Phase 18-storage-audit-cart-db P05 | 10min | 2 tasks | 7 files |
 | Phase 18-storage-audit-cart-db P06 | 10min | 2 tasks | 1 file |
+| Phase 19-ho-n-thi-n-admin-charts-low-stock P01 | 25min | 2 tasks | 9 files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 19 Plan 01 decisions (2026-05-02):**
+
+- ADMIN-01/02/03 BE order-svc layer hoàn tất: Range enum (D7/D30/D90/ALL parse + toFromInstant) + 3 OrderRepository @Query (revenue/top/status) + ProductBatchClient cross-svc + OrderChartsService (Java gap-fill BigDecimal.ZERO) + AdminChartsController (3 GET endpoints)
+- D-03 + Pitfall #4 áp dụng nghiêm: top-products forward Bearer authHeader xuống ProductBatchClient → product-svc batch endpoint cũng gate JwtRoleGuard. Verified qua AdminChartsControllerIT.verify(productBatchClient).fetchBatch(anyList(), eq("Bearer " + adminToken))
+- Gateway routes existing /api/orders/admin/** đã catch-all cover /api/orders/admin/charts/** — KHÔNG modify api-gateway
+- Maven CLI không có trên Windows env này — tests đã viết (19 cases tổng) nhưng chưa chạy; defer verify cho `/gsd-verify-work` hoặc Plan 04 FE consume khi có Maven+Docker
 
 **Carry-over từ v1.2:**
 
@@ -149,3 +157,4 @@ Không có blocker.
 - Phase 16: Seed Catalog Hiện Thực — **COMPLETED 2026-05-02** (3/3 plans, SEED-01..04)
 - Phase 17: Sửa Order Detail Items — **COMPLETED 2026-05-02** (4/4 plans, ORDER-01 + ADMIN-06)
 - Phase 18: Kiểm Toán Storage + Cart→DB — **COMPLETED 2026-05-02** (6/6 plans, STORE-01/02/03 closed)
+- Phase 19 Plan 01: order-svc admin chart endpoints — **COMPLETED 2026-05-02** (ADMIN-01/02/03 BE layer done; FE Plan 04 sẽ consume)
