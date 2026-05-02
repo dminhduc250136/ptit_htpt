@@ -577,22 +577,11 @@ test('SMOKE-2: address-at-checkout flow', async ({ page }) => {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Test #3 DELIVERED order data strategy**
-   - What we know: D-18 cho phép Claude's discretion ordering tests hoặc dùng API fixtures.
-   - What's unclear: Có admin endpoint nào update order status arbitrary không? Or cần direct SQL?
-   - Recommendation: Trong implementation, thử test ordering trước (test 2 place order → API call internal endpoint update status — nếu có — → test 3 review). Fallback: dùng existing DELIVERED order trong seed nếu V100__seed có; nếu không, plan-checker flag cần human seed addition.
-
-2. **`--success`/`--warning` design tokens existence**
-   - What we know: `Badge.module.css` hiện dùng `var(--secondary-container)`, `var(--error-container)`, `var(--primary-fixed)` — gợi ý theme có Material 3 tokens.
-   - What's unclear: Có `--success`/`--warning` semantic tokens chưa.
-   - Recommendation: Plan đầu tiên grep `globals.css` cho `--success` / `--warning`; nếu không có → fallback `var(--secondary-container)` (green-ish) cho success, hex `#f59e0b` cho warning, `var(--error)` cho danger.
-
-3. **`/checkout` page tồn tại và AddressPicker selector pattern**
-   - What we know: Phase 11 ACCT-06 ship AddressPicker.
-   - What's unclear: Exact data-testid hoặc class selector để Playwright lock onto.
-   - Recommendation: Trước khi viết test #2, grep `app/checkout/` và `components/.../AddressPicker/` xác định stable selector.
+1. **Test #3 DELIVERED order data strategy** — RESOLVED: Strategy A (skip-if-no-DELIVERED) per Plan 15-00 Task 3 + `15-SELECTOR-AUDIT.md`. Smoke test #3 sẽ skip gracefully nếu không có DELIVERED order trong seed; KHÔNG block phase.
+2. **`--success`/`--warning` design tokens existence** — RESOLVED: Verified KHÔNG tồn tại trong `globals.css` (Plan 15-00 Task 1 grep). Badge `.success`/`.warning` dùng fallback hex `#15803d` text + rgba background tints; danger reuse `--error-container` đã có. Implementation in Plan 15-00 Task 2.
+3. **`/checkout` page tồn tại và AddressPicker selector pattern** — RESOLVED: Verified per Plan 15-00 Task 3 + `15-SELECTOR-AUDIT.md` — selector `[role="option"]` ổn định cho AddressPicker; ProfileSettings selectors recorded trong audit doc. Smoke spec dùng các selectors này.
 
 ---
 
