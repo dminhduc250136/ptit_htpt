@@ -32,6 +32,12 @@ import { setTokens, clearTokens, setUserRole } from './token';
 // and paths['/auth/login']['post']['responses']['200']['content']['application/json'].
 export type _PathsSurface = _UsersPaths;
 
+// Phase 18 / D-13: AuthProvider.login() đã trở thành async (merge cart sau setTokens).
+// Sequence: services/auth.ts.login() gọi setTokens() TRƯỚC khi return data →
+// caller (login/page.tsx, register/page.tsx) nhận data → gọi authProvider.login(user) →
+// mergeGuestCartToServer() httpPost với Bearer token đã có sẵn → clearLocalCart on success.
+// Login/register page PHẢI: await authProvider.login(authResponse.user); router.push(...)
+// để đảm bảo cart merge hoàn tất trước khi chuyển trang (tránh cart UI flicker).
 export async function login(body: LoginRequest): Promise<AuthResponse> {
   const data = await httpPost<AuthResponse>('/api/users/auth/login', body);
   setTokens(data.accessToken, data.refreshToken ?? undefined);

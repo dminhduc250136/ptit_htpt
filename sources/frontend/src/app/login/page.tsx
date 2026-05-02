@@ -43,7 +43,9 @@ function LoginPageContent() {
     setLoading(true);
     try {
       const data = await login({ email, password });
-      authLogin({ id: data.user.id, email: data.user.email, name: data.user.username ?? data.user.email });
+      // Phase 18 / D-13: await để đảm bảo mergeGuestCartToServer() hoàn tất
+      // trước khi router.replace chuyển trang — tránh cart UI flicker sau login.
+      await authLogin({ id: data.user.id, email: data.user.email, name: data.user.username ?? data.user.email });
       router.replace(returnTo);
     } catch (err: unknown) {
       if (err instanceof ApiError && err.status === 401) {
