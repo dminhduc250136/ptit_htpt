@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
-milestone_name: TBD
-status: milestone_complete
-last_updated: "2026-05-02T08:15:00.000Z"
-last_activity: 2026-05-02 -- Phase 15 Plan 15-04 complete — Milestone v1.2 SHIPPED (gaps_found, 15/17 active REQs satisfied); audit doc generated, MILESTONES + PROJECT updated, tag v1.2 annotated LOCAL pointing f267bad (push pending user manual per D-22)
+milestone: v1.2
+milestone_name: milestone
+status: planning
+last_updated: "2026-05-02T13:00:05.695Z"
+last_activity: 2026-05-02
 progress:
-  total_phases: 6
-  completed_phases: 5
-  total_plans: 24
-  completed_plans: 22
-  percent: 96
+  total_phases: 7
+  completed_phases: 6
+  total_plans: 26
+  completed_plans: 26
+  percent: 100
 ---
 
 ## Current Position
@@ -18,7 +18,7 @@ progress:
 Phase: Phase 15 — Public Polish + Milestone Audit ✓ COMPLETE
 Plan: 15-04 complete (Wave 3 milestone closure ✓) — Milestone v1.2 SHIPPED (gaps_found verdict)
 Status: milestone_complete — v1.2 closed, v1.3 planning pending (run /gsd-new-milestone hoặc /gsd-roadmap)
-Last activity: 2026-05-02 -- 15-04 complete: audit doc self-generated (15/17 satisfied + 2 pending Phase 14 SEARCH-01/02), MILESTONES.md v1.2 SHIPPED section, PROJECT.md pointer v1.2->v1.3, tag v1.2 LOCAL pending user push
+Last activity: 2026-05-02
 Resume file: .planning/milestones/v1.2-MILESTONE-AUDIT.md (review trước khi push tag)
 
 ## Project Reference
@@ -83,6 +83,25 @@ See: `.planning/PROJECT.md` (updated 2026-04-27 — Current Milestone: v1.2)
 - user-svc: V3 avatar (P10), V4 addresses (P11), V5 wishlists (P12)
 - product-svc: V4 reviews (P13), V5 avg_rating cached (P13), V6 search indexes (P14, optional)
 - order-svc: V3 filter index (optional, P9 hoặc skip)
+
+## Deferred Items
+
+Items acknowledged và defer tại milestone close 2026-05-02 (visible-first priority — backend hardening + manual UAT defer):
+
+| Category | Item | Status |
+|----------|------|--------|
+| debug | orders-api-500 | root_cause_found (fix shipped commit 9dbf114) |
+| debug | products-list-500 | root_cause_found |
+| uat_gap | Phase 06 06-HUMAN-UAT.md | partial — 6 pending scenarios |
+| uat_gap | Phase 07 07-HUMAN-UAT.md | passed — 3 pending scenarios |
+| uat_gap | Phase 09 09-HUMAN-UAT.md | partial — 5 pending scenarios |
+| uat_gap | Phase 10 10-HUMAN-UAT.md | partial — 5 pending scenarios |
+| uat_gap | Phase 11 11-HUMAN-UAT.md | partial — 4 pending scenarios |
+| verification_gap | Phase 06 06-VERIFICATION.md | human_needed |
+| verification_gap | Phase 07 07-VERIFICATION.md | human_needed |
+| verification_gap | Phase 09 09-VERIFICATION.md | human_needed |
+| verification_gap | Phase 10 10-VERIFICATION.md | human_needed |
+| verification_gap | Phase 11 11-VERIFICATION.md | human_needed |
 
 ## Blockers
 

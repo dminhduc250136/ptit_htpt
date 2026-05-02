@@ -5,6 +5,7 @@
 **Goal:** Make API surface consistent and complete (CRUD + Swagger/OpenAPI) and align frontend-backend contracts so E2E validation is reliable.
 
 **Scope highlights:**
+
 - CRUD completeness across services
 - Swagger/OpenAPI for services + gateway
 - Standardized DTOs, status codes, and error formats
@@ -19,6 +20,7 @@
 **Goal:** Biến demo flow từ "stub-verified" thành "real visible end-to-end" — mọi thứ user click trên UI hoạt động với real data thay vì mock/seeded. Audit v1.0 phát hiện in-memory layer → v1.1 mở đầu bằng cluster C0 Database Foundation.
 
 **Scope highlights:**
+
 - C0 Database Foundation — Postgres + JPA + Flyway + seed từ FE mocks (block C1/C2/C3)
 - C1 Real auth flow — backend `/api/users/auth/*` + JWT HS256 + FE form gỡ mock + session persist
 - C2 Admin + Search real CRUD — `/search` keyword + admin/products|orders|users qua gateway
@@ -43,31 +45,37 @@
 - PERSIST-01 cart-side gap — CartItem.stock snapshot + clamp + cart page nút '+' disabled
 - Bug login redirect loop — http.ts skip 401 redirect cho auth endpoints
 
-## v1.2 — UI/UX Completion ✅ SHIPPED (gaps_found)
+## v1.2 — UI/UX Completion ✅ SHIPPED (passed)
 
 **Goal:** Hoàn thiện trải nghiệm UI/UX end-user — close residual gaps từ v1.1 + ship core visible features (account / reviews / basic search / public polish), nâng demo flow lên "trải nghiệm UX gần production-ready".
 
 **Scope highlights:**
-- Phase 9 — Residual closure (AUTH-06 middleware mở rộng, AUTH-07 password change, UI-02 admin dashboard, TEST-01 Playwright re-baseline)
-- Phase 10 — User-svc schema + profile editing (V3 avatar reserved, ACCT-03 fullName/phone)
-- Phase 11 — Address book + order history filtering (V4 addresses, ACCT-02/05/06)
-- Phase 12 — ~~Wishlist~~ SKIPPED (defer v1.3, V5 migration reserved)
-- Phase 13 — Reviews & ratings (V4 reviews + V5 avg_rating cached, REV-01/02/03 verified-buyer)
-- Phase 14 — ~~Basic search filters~~ NOT_STARTED (plans ready, defer execute v1.3)
-- Phase 15 — Public polish + milestone audit (PUB-01/02/03/04 + TEST-02 smoke E2E)
 
-**Status:** Shipped 2026-05-02 (started 2026-04-26, 5/6 active phases complete + 1 SKIPPED + 1 NOT_STARTED, 23/24 plans, 15/17 active REQs satisfied + 2 pending v1.3).
+- Phase 9 — Residual closure (AUTH-06 middleware mở rộng 4 routes, AUTH-07 password change, UI-02 admin dashboard real KPI, TEST-01 Playwright re-baseline 14 tests)
+- Phase 10 — User-svc schema + profile editing (V3 avatar reserved, ACCT-03 fullName/phone qua /profile/settings)
+- Phase 11 — Address book + order history filtering (V4 addresses + cap 10/user, ACCT-02/05/06 + AddressPicker checkout)
+- Phase 12 — ~~Wishlist~~ SKIPPED (scope trim 2026-04-27, V5 migration reserved cho v1.3)
+- Phase 13 — Reviews & ratings (V4 reviews + V5 avg_rating cached, REV-01/02/03 verified-buyer cross-service)
+- Phase 14 — Basic search filters (JPQL cast IS NULL pattern + FilterSidebar component, SEARCH-01 brand multi-select + SEARCH-02 price range)
+- Phase 15 — Public polish + milestone audit (PUB-01/02/03/04 hero next/image + Featured scroll-snap + 3-tier stock badge + breadcrumb + TEST-02 smoke E2E 4 tests)
+
+**Status:** Shipped 2026-05-02 (started 2026-04-26, 6/6 active phases complete + 1 SKIPPED, 24/24 plans, 17/17 active REQs satisfied).
 **Started:** 2026-04-26
 **Closed:** 2026-05-02
-**Audit:** [milestones/v1.2-MILESTONE-AUDIT.md](./milestones/v1.2-MILESTONE-AUDIT.md) (status: gaps_found — proceeded với SEARCH-01/02 pending v1.3)
+**Archive:** [milestones/v1.2-ROADMAP.md](./milestones/v1.2-ROADMAP.md) + [milestones/v1.2-REQUIREMENTS.md](./milestones/v1.2-REQUIREMENTS.md)
+**Audit:** [milestones/v1.2-MILESTONE-AUDIT.md](./milestones/v1.2-MILESTONE-AUDIT.md) (status: passed — re-run sau khi Phase 14 merge)
 **Tag:** `v1.2` (annotated, local — push pending user)
 
-### Known Gaps (deferred v1.3)
+### Known deferred items at close (12 — see STATE.md "Deferred Items")
 
-- **SEARCH-01 + SEARCH-02 pending** — Phase 14 không execute trong v1.2 timeline. Plans (3) planned full chi tiết, ready cho v1.3 execute.
+- 2 debug sessions root_cause_found (orders-api-500 fix shipped 9dbf114; products-list-500)
+- 5 phases với pending UAT scenarios (Phase 06, 07 v1.1 carry-over; 09, 10, 11 v1.2)
+- 5 verification gaps human_needed (cùng phases — manual UAT defer per visible-first priority)
+
+### Deferred to v1.3 (intentional scope trim)
+
 - **ACCT-01 wishlist** — Phase 12 SKIPPED scope trim (V5 migration reserved).
-- **REV-04 author edit/delete + SEARCH-03 rating + SEARCH-04 URL state** — scope trim defer v1.3.
-- **PUB-03-lightbox + TEST-02-full** — scope trim defer v1.3.
+- **REV-04 author edit/delete + SEARCH-03 rating + SEARCH-04 URL state + in-stock** — scope trim defer v1.3.
+- **PUB-03-lightbox + TEST-02-full E2E suite (8+ tests)** — scope trim defer v1.3.
 - **ACCT-04 avatar upload** — Deferred D-08 từ Phase 10 (multipart Thumbnailator scope cut), backlog no phase.
-- **Manual UAT debt** — 5 items Phase 10 + 4 items Phase 11 + manual docker smoke run Phase 15 + Lighthouse LCP measurement — auto-approved auto mode.
 - **Backend hardening invisible** — D1..D17 carry-over (vẫn defer theo visible-first priority).

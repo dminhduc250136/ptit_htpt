@@ -33,35 +33,29 @@ Dự án thử nghiệm GSD workflow trên codebase e-commerce laptop (Spring Bo
 ✓ **Admin + Search real CRUD** — `/search` keyword + admin/products|orders|users qua gateway (UI-01, UI-03, UI-04) — v1.1
 ✓ **Cart → Order persistence** — ProductEntity.stock persist + OrderItemEntity per-row + shippingAddress/paymentMethod + FE order detail full breakdown (PERSIST-01..03) — v1.1
 
-### Active (v1.2 — UI/UX Completion)
+✓ **v1.2 Residual closure** — AUTH-06 middleware 4-route matcher + AUTH-07 password change + UI-02 admin dashboard real KPI + TEST-01 Playwright re-baseline 14 tests — Phase 9
+✓ **Profile editing** — GET/PATCH /api/users/me, form rhf+zod tại /profile/settings (ACCT-03) — Phase 10
+✓ **Address book + checkout integration** — V4 addresses CRUD cap 10/user + ADDRESS_LIMIT_EXCEEDED 422 + AddressPicker JSONB snapshot (ACCT-02/05/06) — Phase 11
+✓ **Reviews & ratings** — V4 reviews + V5 avg_rating cached + verified-buyer cross-service eligibility (REV-01/02/03) — Phase 13
+✓ **Basic search filters** — JPQL cast IS NULL + FilterSidebar component + brand multi-select + price range debounce 400ms (SEARCH-01/02) — Phase 14
+✓ **Public polish** — Hero next/image priority + Featured CSS scroll-snap + 3-tier stock badge + brand-based breadcrumb + 4 Playwright smoke E2E (PUB-01/02/03/04 + TEST-02) — Phase 15
 
-**Residual closure (carry-over từ v1.1):**
-- [ ] **AUTH-06 closure** — middleware.ts matcher mở rộng `/account|/profile|/checkout` (currently chỉ `/admin`)
-- [ ] **UI-02 closure** — admin landing dashboard (`app/admin/page.tsx`) rewire sang real services (currently KPI = 0)
-- [ ] **Playwright E2E re-baseline** — update suite cho v1.1 features (auth/admin/order detail)
+### Active (v1.3 — TBD)
 
-**Account features:**
-- [ ] **Wishlist / Favorites** — save sản phẩm, trang wishlist, move to cart
-- [ ] **Order history filtering** — filter theo status/date, search trong /profile/orders
-- [x] **User profile editing** — GET/PATCH /api/users/me, form rhf+zod tại /profile/settings, navbar sync via useAuth().login() — Validated in Phase 10: User-Svc Schema + Profile Editing
-
-**Discovery features:**
-- [ ] **Product reviews & ratings** — sao + comment trên product detail, average rating
-- [ ] **Advanced search filters** — brand/price range/rating/in-stock filter trên /search và /products
-
-**Checkout:**
-- [ ] **Address book** — save nhiều địa chỉ, chọn từ saved list khi checkout
-
-**Public polish:**
-- [ ] **Homepage redesign** — hero banner, featured products, categories, new arrivals
-- [ ] **Product detail enhancements** — image gallery, specs table, stock badge, breadcrumb
+Chưa define — chạy `/gsd-new-milestone` để bootstrap. Backlog candidates xem `Deferred (v1.3+)` bên dưới.
 
 ### Deferred (v1.3+)
 
-- [ ] **Nyquist VALIDATION.md** — Phase 6 + Phase 8 + future phases
+- [ ] **ACCT-01 Wishlist** — Phase 12 SKIPPED v1.2 scope trim, V5 migration reserved
+- [ ] **REV-04 Author edit/delete reviews** — scope trim v1.2
+- [ ] **SEARCH-03 rating filter + SEARCH-04 URL state + in-stock + clear-all** — scope trim v1.2
+- [ ] **PUB-03 lightbox + axe-core a11y gate** — scope trim v1.2 (thumbnail swap đủ)
+- [ ] **TEST-02 full E2E suite (8+ tests)** — scope trim v1.2 (smoke 4 đủ closure)
+- [ ] **ACCT-04 avatar upload** — Deferred D-08 từ Phase 10 (multipart Thumbnailator scope cut)
+- [ ] **Nyquist VALIDATION.md** — carry-over từ v1.1 (Phase 6 + Phase 8 + v1.2 phases)
 - [ ] **Backend hardening carry-over** — D1, D2, D6, D7, D8, D9, D10, D12, D13, D14, D17 (chỉ pick visible)
-- [ ] **Multi-step checkout** — tách Shipping → Payment → Review (loại khỏi v1.2 scope)
-- [ ] **Recently viewed / Related products** — rule-based recommendations (loại khỏi v1.2 scope)
+- [ ] **Multi-step checkout** — tách Shipping → Payment → Review
+- [ ] **Recently viewed / Related products** — rule-based recommendations
 
 ### Out of Scope
 
@@ -120,12 +114,11 @@ From codebase analysis, areas worth monitoring:
 
 ## Current Milestone: v1.3 — TBD (planning pending)
 
-**Status:** v1.2 SHIPPED 2026-05-02 (gaps_found — 15/17 active REQs satisfied + 2 pending). Tag `v1.2` annotated local. v1.3 scope chưa define — chạy `/gsd-new-milestone` hoặc `/gsd-roadmap` để bootstrap.
+**Status:** v1.2 SHIPPED 2026-05-02 (passed — 17/17 active REQs satisfied). Tag `v1.2` annotated local. v1.3 scope chưa define — chạy `/gsd-new-milestone` hoặc `/gsd-roadmap` để bootstrap.
 
-**v1.3 carry-over (high-priority backlog):**
-- SEARCH-01 + SEARCH-02 (Phase 14 brand+price filter — plans ready, execute đầu phase)
+**v1.3 backlog candidates (deferred from v1.2):**
 - ACCT-01 wishlist (Phase 12 plans cần re-plan với V5 migration)
-- REV-04 author edit/delete + SEARCH-03 rating filter + SEARCH-04 URL state + clear-all
+- REV-04 author edit/delete + SEARCH-03 rating filter + SEARCH-04 URL state + in-stock + clear-all
 - PUB-03 lightbox + axe-core a11y gate
 - TEST-02 full E2E suite (8+ tests)
 - ACCT-04 avatar upload (deferred D-08 backlog)
@@ -134,29 +127,36 @@ From codebase analysis, areas worth monitoring:
 
 ## Current State
 
-**Last shipped:** v1.2 — UI/UX Completion (2026-05-02, gaps_found: 15/17 active satisfied + 2 pending v1.3)
+**Last shipped:** v1.2 — UI/UX Completion (2026-05-02, passed: 17/17 active REQs satisfied)
 
-15/19 requirements SATISFIED + 4/19 PARTIAL (DB-05 và PERSIST-01 closed cuối milestone qua commit `346092b`; AUTH-06 middleware narrow + UI-02 admin landing dashboard defer v1.2). 4 phases / 22 plans / 289 commits trong 2 days. Audit ghi nhận `gaps_found` proceeded với residual partial làm tech debt.
+6/6 active phases complete + 1 SKIPPED (Phase 12 wishlist scope trim) + 24/24 plans done. Audit re-run 09:30 UTC sau Phase 14 merge → verdict PASSED. Tag `v1.2` annotated local pending user push.
 
-Foundation đã có (cumulative v1.0 + v1.1):
+Cumulative foundation (v1.0 + v1.1 + v1.2):
 - 6 services + gateway emit unified `ApiErrorResponse` envelope với traceId propagation
 - Springdoc Swagger UI + OpenAPI codegen pipeline (FE 6 typed modules)
-- **Postgres 16 + JPA + Flyway** trên 5 services (V1 baseline + V2 dev seed từ FE mocks)
-- **Real auth flow**: BCrypt + JWT HS256 24h, FE login/register pages, AuthProvider hydration, middleware admin role gate
-- **Admin CRUD thật**: products (V2 brand/thumbnail/originalPrice), orders (list+detail+status), users (PATCH fullName/phone/roles + soft-delete)
-- **Cart → Order persistence**: ProductEntity.stock (V3), OrderItemEntity per-row + shippingAddress JSON + paymentMethod, FE 4-column items table
-- FE typed HTTP tier + ApiError dispatcher (5 failure branches) + cart stock snapshot/clamp
-- 2 git tags: `v1.0`, `v1.1`
+- **Postgres 16 + JPA + Flyway** trên 5 services (V1 baseline + V2 dev seed + V3 stock + V4 reviews/addresses + V5 avg_rating cached)
+- **Real auth flow**: BCrypt + JWT HS256 24h, AuthProvider hydration, middleware 4-route gate (`/admin|/account|/profile|/checkout`), password change endpoint
+- **Admin CRUD thật**: products + orders + users (PATCH fullName/phone/roles + soft-delete) + admin dashboard 4 real KPI cards
+- **Cart → Order persistence**: ProductEntity.stock + OrderItemEntity per-row + shippingAddress JSONB snapshot + paymentMethod
+- **Account features**: profile editing rhf+zod, address book CRUD cap 10/user + ADDRESS_LIMIT_EXCEEDED, order filter (status + date range + keyword)
+- **Reviews & ratings**: verified-buyer eligibility cross-service, XSS-safe render, avg_rating cached cols
+- **Search filters**: JPQL cast IS NULL pattern, FilterSidebar component (brand multi-select + price range debounce 400ms)
+- **Public polish**: Hero next/image priority WebP, Featured CSS scroll-snap carousel, PDP brand-based breadcrumb, 3-tier stock badge color-coded, thumbnail strip + main image swap
+- **E2E**: Playwright suite (14 v1.1 baseline tests + 4 v1.2 smoke tests covering homepage/checkout/review/profile)
+- **3 git tags**: `v1.0`, `v1.1`, `v1.2`
 
-## Next Milestone Goals (v1.2 — Active)
+## Next Milestone Goals (v1.3 — TBD)
 
-Đã define qua `/gsd-new-milestone` (2026-04-26). Scope visible-first priority:
+Pending scope definition. Top candidates từ v1.2 deferral:
 
-- **Residual closure** — AUTH-06 middleware mở rộng, UI-02 admin dashboard, Playwright E2E re-baseline
-- **Account features** — Wishlist, Order history filtering, User profile editing
-- **Discovery features** — Product reviews & ratings, Advanced search filters
-- **Checkout** — Address book
-- **Public polish** — Homepage redesign, Product detail enhancements
+- ACCT-01 wishlist (V5 migration ready)
+- REV-04 + SEARCH-03 + SEARCH-04 advanced discovery
+- PUB-03 lightbox + a11y hardening
+- TEST-02 full E2E suite
+- ACCT-04 avatar upload (multipart + Thumbnailator)
+- Backend hardening D1..D17 (revisit nếu có triggering event)
+
+Chạy `/gsd-new-milestone` để bootstrap scope cụ thể.
 
 <details>
 <summary>Previous milestones (shipped)</summary>
@@ -165,15 +165,23 @@ Foundation đã có (cumulative v1.0 + v1.1):
 - Complete CRUD endpoints across all microservices (consistent patterns)
 - Swagger/OpenAPI documentation for every service and gateway
 - Frontend-backend API contract alignment (DTOs, status codes, error formats)
-- Cross-service validation and consistent error handling
 - 11/11 REQs MET, Playwright 12/12 PASS
 
 **v1.1 — Real End-User Experience** (2026-04-26)
 - C0 Database Foundation — Postgres + JPA + Flyway + seed từ FE mocks
-- C1 Real auth flow — backend `/api/users/auth/*` + JWT + FE form gỡ mock
+- C1 Real auth flow — JWT HS256 + FE form gỡ mock
 - C2 Admin + Search real CRUD qua gateway
 - C3 Cart → Order persistence visible — full breakdown
-- 15/19 SATISFIED + 4 PARTIAL (residual defer v1.2)
+- 15/19 SATISFIED + 4 PARTIAL (residual defer v1.2 — đều close trong v1.2)
+
+**v1.2 — UI/UX Completion** (2026-05-02)
+- Phase 9 Residual closure (AUTH-06/07, UI-02, TEST-01 close v1.1 partials)
+- Phase 10 User-svc schema + profile editing (ACCT-03)
+- Phase 11 Address book + order history filtering (ACCT-02/05/06)
+- Phase 13 Reviews & ratings verified-buyer (REV-01/02/03)
+- Phase 14 Basic search filters brand+price (SEARCH-01/02)
+- Phase 15 Public polish + smoke E2E (PUB-01/02/03/04, TEST-02)
+- 17/17 active REQs satisfied (Phase 12 wishlist SKIPPED scope trim)
 </details>
 
 ## Evolution
@@ -194,4 +202,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-02 — Milestone v1.2 UI/UX Completion SHIPPED (gaps_found: 15/17 active REQs satisfied; tag v1.2 annotated local pending user push). Next: v1.3 scope planning.*
+*Last updated: 2026-05-02 — Milestone v1.2 UI/UX Completion SHIPPED (passed: 17/17 active REQs satisfied; tag v1.2 annotated local pending user push). Next: v1.3 scope planning.*
