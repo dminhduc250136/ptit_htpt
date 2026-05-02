@@ -48,9 +48,9 @@
 
 ### ADMIN — Charts + Low-Stock + Order Detail Items
 
-- [ ] **ADMIN-01** — Revenue chart theo thời gian (line/area chart). Aggregate `orders` DELIVERED status, dropdown 7d/30d/90d/all. Default 30d.
-- [ ] **ADMIN-02** — Top products bán chạy (bar chart). Top-10 by quantity sold trong window đã chọn. Cùng date dropdown.
-- [ ] **ADMIN-03** — Order status distribution (pie/donut chart). Counts theo pending/confirmed/shipped/delivered/cancelled. Cùng date dropdown.
+- [x] **ADMIN-01** — Revenue chart theo thời gian (line/area chart). Aggregate `orders` DELIVERED status, dropdown 7d/30d/90d/all. Default 30d.
+- [x] **ADMIN-02** — Top products bán chạy (bar chart). Top-10 by quantity sold trong window đã chọn. Cùng date dropdown.
+- [x] **ADMIN-03** — Order status distribution (pie/donut chart). Counts theo pending/confirmed/shipped/delivered/cancelled. Cùng date dropdown.
 - [x] **ADMIN-04** — User signups theo thời gian (line chart). Daily new user count.
 - [x] **ADMIN-05** — Low-stock alert: list/banner các SP có `stock < 10` (threshold configurable trong code). Hiển thị trên admin dashboard hoặc trang riêng.
 - [x] **ADMIN-06
@@ -139,11 +139,11 @@
 | STORE-01 | Phase 18 | 06 | COMPLETED |
 | STORE-02 | Phase 18 | 01-05 | COMPLETED |
 | STORE-03 | Phase 18 | 06 | COMPLETED |
-| ADMIN-01 | Phase 19 | — | Active |
-| ADMIN-02 | Phase 19 | — | Active |
-| ADMIN-03 | Phase 19 | — | Active |
-| ADMIN-04 | Phase 19 | 02 | COMPLETED |
-| ADMIN-05 | Phase 19 | 03 | COMPLETED |
+| ADMIN-01 | Phase 19 | 01, 04 | COMPLETED |
+| ADMIN-02 | Phase 19 | 01, 04 | COMPLETED |
+| ADMIN-03 | Phase 19 | 01, 04 | COMPLETED |
+| ADMIN-04 | Phase 19 | 02, 04 | COMPLETED |
+| ADMIN-05 | Phase 19 | 03, 04 | COMPLETED |
 | COUP-01 | Phase 20 | — | Active |
 | COUP-02 | Phase 20 | — | Active |
 | COUP-03 | Phase 20 | — | Active |

@@ -48,7 +48,7 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 - [x] **Phase 16: Seed Catalog Hiện Thực** ✅ 2026-05-02 — ~100 sản phẩm / 5 tech categories + Unsplash WebP + brand thực tế (3/3 plans, manual UAT defer cho `/gsd-verify-work`)
 - [x] **Phase 17: Sửa Order Detail Items** — Fix hardcoded placeholder, hiển thị full line items cả user + admin (4/4 plans complete 2026-05-02)
 - [x] **Phase 18: Kiểm Toán Storage + Cart→DB** — Audit localStorage/sessionStorage + migrate cart sang DB per-user — **COMPLETED 2026-05-02**
-- [ ] **Phase 19: Hoàn Thiện Admin: Charts + Low-Stock** — 4 analytics charts + low-stock alert dashboard
+- [x] **Phase 19: Hoàn Thiện Admin: Charts + Low-Stock** — 4 analytics charts + low-stock alert dashboard ✅ 2026-05-02
 - [ ] **Phase 20: Hệ Thống Coupon** — % off + fixed amount, admin CRUD, checkout input, atomic redemption
 - [ ] **Phase 21: Hoàn Thiện Reviews** — Author edit/delete + sort controls + admin moderation
 - [ ] **Phase 22: AI Chatbot Claude API MVP** — Customer FAQ + product Q&A + recommendation, streaming, history persist
@@ -133,7 +133,7 @@ Plans:
 - [x] 19-01-PLAN.md — order-svc AdminChartsController (revenue + top-products + status-distribution) + ProductBatchClient + integration tests ✅ 2026-05-02
 - [x] 19-02-PLAN.md — user-svc AdminChartsController (signups) + repository @Query + integration tests ✅ 2026-05-02
 - [x] 19-03-PLAN.md — product-svc AdminChartsController (low-stock) + AdminProductBatchController + LowStockService + integration tests ✅ 2026-05-02
-- [ ] 19-04-PLAN.md — FE: install recharts@3.8.1 + chart fetchers + 4 chart components + ChartCard + LowStockSection + extend admin/page.tsx + 2 Playwright smoke specs
+- [x] 19-04-PLAN.md — FE: install recharts@3.8.1 + chart fetchers + 4 chart components + ChartCard + LowStockSection + extend admin/page.tsx + 2 Playwright smoke specs ✅ 2026-05-02
 **UI hint**: yes
 
 ---

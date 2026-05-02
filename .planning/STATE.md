@@ -3,25 +3,25 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Catalog Realism & Commerce Intelligence
 status: executing
-last_updated: "2026-05-02T17:10:00Z"
+last_updated: "2026-05-02T17:50:00Z"
 last_activity: 2026-05-02
 progress:
   total_phases: 7
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 14
-  completed_plans: 15
-  percent: 48
+  completed_plans: 16
+  percent: 57
 ---
 
 ## Current Position
 
-Phase: 19-ho-n-thi-n-admin-charts-low-stock (19) — IN PROGRESS
-Plan: 3 of 4 — Plans 01+02+03 COMPLETE
-Status: Phase 19 Plan 03 done (BE product-svc /admin/products/charts/low-stock + /admin/products/batch enrichment). Next: Plan 04 FE dashboard charts grid + low-stock section
+Phase: 19-ho-n-thi-n-admin-charts-low-stock (19) — COMPLETED
+Plan: 4 of 4 — All Plans 01+02+03+04 COMPLETE
+Status: Phase 19 Plan 04 done (FE recharts@3.8.1 + 5 fetchers + 6 components + admin/page extend + 2 Playwright specs). Next: Phase 20 Coupon system
 Last activity: 2026-05-02
 
 ```
-Progress: [████░░░░░░] 48% (3/7 phases complete + Phase 19 P03/4)
+Progress: [█████░░░░░] 57% (4/7 phases complete)
 ```
 
 ## Project Reference
@@ -65,8 +65,19 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 19-ho-n-thi-n-admin-charts-low-stock P01 | 25min | 2 tasks | 9 files |
 | Phase 19-ho-n-thi-n-admin-charts-low-stock P02 | 15min | 2 tasks | 7 files |
 | Phase 19-ho-n-thi-n-admin-charts-low-stock P03 | 12min | 2 tasks | 10 files |
+| Phase 19-ho-n-thi-n-admin-charts-low-stock P04 | 18min | 3 tasks | 15 files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 19 Plan 04 decisions (2026-05-02):**
+
+- ADMIN-01..05 FE consume hoàn tất: install recharts@3.8.1 --save-exact (D-11 lock no caret), 5 typed fetchers services/charts.ts, lib/chartFormat.ts (STATUS_COLORS D-12 + statusLabel D-13 VN + Intl.NumberFormat/DateTimeFormat 'vi-VN')
+- 6 components admin/: ChartCard generic 3-state wrapper (D-14), 4 chart components (Revenue/TopProducts/StatusDistribution/UserSignups), LowStockSection với click row → router.push('/admin/products?highlight={id}') (D-10)
+- admin/page.tsx extend (KHÔNG rewrite): KPI row → time-window dropdown (default 30d D-06) → 2x2 charts grid → low-stock full-width (D-07 layout). 5 useCallback loaders với deps [range] cho 3 charts có time-window, deps [] cho status pie + low-stock (D-06 pie KHÔNG bị range)
+- 2 Playwright smoke specs: admin-charts.spec.ts + admin-low-stock.spec.ts (reuse admin storageState từ global-setup.ts Phase 9 D-13). Spec syntax verified bằng tsc; runtime execution defer cho /gsd-verify-work hoặc UAT manual khi docker+browser binaries ready
+- Rule 1 type fix Recharts 3.8.1: Tooltip Formatter signature `Formatter<ValueType, NameType>` accept `value: ValueType | undefined`, KHÔNG accept narrow `: number` annotation per RESEARCH code. Cast Number(v)/String(iso) inside callback body
+- Rule 2 lint fix: eslint-disable `@next/next/no-img-element` cho LowStockSection thumbnail Unsplash CDN (precedent v1.2 SEED-03, KHÔNG cần next/image domain config)
+- Phase 19 hoàn tất 4/4 plans → 5/5 ADMIN-01..05 COMPLETED → ready /gsd-verify-work
 
 **Phase 19 Plan 03 decisions (2026-05-02):**
 
@@ -178,3 +189,5 @@ Không có blocker.
 - Phase 19 Plan 01: order-svc admin chart endpoints — **COMPLETED 2026-05-02** (ADMIN-01/02/03 BE layer done; FE Plan 04 sẽ consume)
 - Phase 19 Plan 02: user-svc admin /signups chart endpoint — **COMPLETED 2026-05-02** (ADMIN-04 BE layer done)
 - Phase 19 Plan 03: product-svc admin /low-stock + /batch endpoints — **COMPLETED 2026-05-02** (ADMIN-05 BE layer done + cross-svc enrichment helper cho Plan 01)
+- Phase 19 Plan 04: FE admin charts grid + low-stock — **COMPLETED 2026-05-02** (recharts@3.8.1 + 5 fetchers + 6 components + admin/page extend + 2 Playwright specs)
+- Phase 19: Hoàn Thiện Admin Charts + Low-Stock — **COMPLETED 2026-05-02** (4/4 plans, ADMIN-01..05 closed)
