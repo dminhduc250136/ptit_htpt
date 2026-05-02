@@ -84,9 +84,9 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 **Plans:** 4 plans
 
 Plans:
-- [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
+- [x] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
 - [x] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
-- [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
+- [x] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
 - [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
 **UI hint**: yes
 
