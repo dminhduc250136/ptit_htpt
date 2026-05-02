@@ -3,25 +3,25 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-02T14:34:36.760Z"
+last_updated: "2026-05-02T14:38:47Z"
 last_activity: 2026-05-02
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 4
-  completed_plans: 1
-  percent: 25
+  completed_plans: 2
+  percent: 50
 ---
 
 ## Current Position
 
 Phase: 17 (Sửa Order Detail Items) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-05-02
 
 ```
-Progress: [███░░░░░░░] 25%
+Progress: [█████░░░░░] 50%
 ```
 
 ## Project Reference
@@ -53,6 +53,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | v1.2 | 6 (+1 SKIP) | 24 | 17/17 | PASSED |
 | v1.3 | 7 planned | TBD | 0/27 | In progress |
 | Phase 17-s-a-order-detail-items P01 | 5min | 2 tasks | 2 files |
+| Phase 17-s-a-order-detail-items P02 | 3min | 2 tasks | 1 file |
 
 ## Decisions (active v1.3 locks)
 

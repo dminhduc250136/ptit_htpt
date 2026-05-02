@@ -85,7 +85,7 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 
 Plans:
 - [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
-- [ ] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
+- [x] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
 - [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
 - [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
 **UI hint**: yes
@@ -203,7 +203,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 16. Seed Catalog Hiện Thực | 0/? | Not started | - |
-| 17. Sửa Order Detail Items | 0/? | Not started | - |
+| 17. Sửa Order Detail Items | 2/4 | In progress | - |
 | 18. Kiểm Toán Storage + Cart→DB | 0/? | Not started | - |
 | 19. Hoàn Thiện Admin: Charts + Low-Stock | 0/? | Not started | - |
 | 20. Hệ Thống Coupon | 0/? | Not started | - |
