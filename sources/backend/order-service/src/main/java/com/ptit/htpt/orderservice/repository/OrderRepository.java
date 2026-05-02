@@ -3,6 +3,7 @@ package com.ptit.htpt.orderservice.repository;
 import com.ptit.htpt.orderservice.domain.OrderEntity;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -12,6 +13,23 @@ public interface OrderRepository extends JpaRepository<OrderEntity, String> {
 
   // Phase 9 / Plan 09-02 (D-06): đếm đơn hàng theo status — dùng cho pendingOrders KPI
   long countByStatus(String status);
+
+  /**
+   * Bug fix (orders-api-500): findAll() trả OrderEntity với items LAZY → khi DTO mapper iterate
+   * items ngoài transaction (open-in-view=false, service không có @Transactional) → ném
+   * LazyInitializationException → 500 INTERNAL_ERROR cho cả /orders (no userId) và /admin/orders.
+   * Dùng LEFT JOIN FETCH để eager-load items trong cùng query, giống pattern của
+   * findByUserIdWithFilters.
+   */
+  @Query("SELECT DISTINCT o FROM OrderEntity o LEFT JOIN FETCH o.items ORDER BY o.updatedAt DESC")
+  List<OrderEntity> findAllWithItems();
+
+  /**
+   * Bug fix (orders-api-500): single-entity fetch với items eager-loaded — tránh lazy init
+   * khi GET /orders/{id} hoặc admin endpoints map sang DTO ngoài transaction.
+   */
+  @Query("SELECT DISTINCT o FROM OrderEntity o LEFT JOIN FETCH o.items WHERE o.id = :id")
+  Optional<OrderEntity> findByIdWithItems(@Param("id") String id);
 
   /**
    * Phase 11 / ACCT-02 (D-12, D-13, D-14): filter orders by userId + optional params.
