@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { ToastProvider } from "@/components/ui/Toast/Toast";
 import { ConditionalShell } from "@/components/layout/ConditionalShell";
+import FloatingChatButton from "@/components/chat/FloatingChatButton/FloatingChatButton";
 
 const beVietnamPro = Be_Vietnam_Pro({
   variable: "--font-be-vietnam-pro",
@@ -30,6 +31,7 @@ export default function RootLayout({
         <AuthProvider>
           <ToastProvider>
             <ConditionalShell>{children}</ConditionalShell>
+          <FloatingChatButton />
           </ToastProvider>
         </AuthProvider>
       </body>
