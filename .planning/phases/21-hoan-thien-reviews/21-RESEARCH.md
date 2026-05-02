@@ -833,7 +833,7 @@ private void recomputeProductRating(String productId) {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 **Không có câu hỏi blocker.** CONTEXT.md đã lock đủ các quyết định. Một số ambiguity nhỏ đã được giải qua Findings:
 
@@ -977,7 +977,7 @@ Câu hỏi cho `/gsd-verify-work` (không cản plan):
 | Gateway correction | HIGH | Application.yml verified line-by-line |
 | Edge cases (recompute drift, slug JOIN) | MEDIUM | A4 + A8 cần Wave 0 verify |
 
-### Open Questions
+### Open Questions (RESOLVED)
 None — all blockers resolved within research. A8 (ProductEntity.updateRatingStats edge case) là verify-only task trong Wave 0, không cản plan.
 
 ### Ready for Planning
