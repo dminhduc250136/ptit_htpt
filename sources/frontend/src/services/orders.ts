@@ -42,7 +42,7 @@ export interface ListOrdersParams {
 export function createOrder(body: CreateOrderRequest, userId?: string): Promise<Order> {
   const headers: Record<string, string> = {};
   if (userId) headers['X-User-Id'] = userId;
-  return httpPost<Order>(`/api/orders/orders`, body, headers);
+  return httpPost<Order>(`/api/orders`, body, headers);
 }
 
 export function listMyOrders(params?: ListOrdersParams): Promise<PaginatedResponse<Order>> {
@@ -56,11 +56,11 @@ export function listMyOrders(params?: ListOrdersParams): Promise<PaginatedRespon
   if (params?.to)    qs.set('to',   params.to);
   if (params?.q)     qs.set('q',    params.q);
   const suffix = qs.toString() ? `?${qs}` : '';
-  return httpGet<PaginatedResponse<Order>>(`/api/orders/orders${suffix}`);
+  return httpGet<PaginatedResponse<Order>>(`/api/orders${suffix}`);
 }
 
 export function getOrderById(id: string): Promise<Order> {
-  return httpGet<Order>(`/api/orders/orders/${encodeURIComponent(id)}`);
+  return httpGet<Order>(`/api/orders/${encodeURIComponent(id)}`);
 }
 
 // Admin order functions — gateway: /api/orders/admin → /admin/orders

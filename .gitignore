@@ -66,3 +66,6 @@ __pycache__/
 
 # MCP config (khong commit .mcp.json chua API keys)
 .mcp.json
+
+# Claude worktree artifact
+.claire/

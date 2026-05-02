@@ -20,6 +20,7 @@ import org.springframework.web.server.ResponseStatusException;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+  private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class);
   private static final int MAX_REJECTED_VALUE_LENGTH = 120;
   private static final String MASKED_VALUE = "***";
   private static final Set<String> SENSITIVE_FIELD_TOKENS = Set.of("password", "token", "secret");
@@ -123,6 +124,7 @@ public class GlobalExceptionHandler {
       Exception ex,
       HttpServletRequest request
   ) {
+    log.error("Unhandled exception at {}", request.getRequestURI(), ex);
     HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
     return org.springframework.http.ResponseEntity.status(status).body(ApiErrorResponse.of(
         status.value(),

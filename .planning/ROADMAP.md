@@ -56,7 +56,7 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
 - [x] **Phase 10: User-Svc Schema Cluster + Profile Editing** — V3 avatar BYTEA, gateway `/users/me/*` routes, profile editing UI (rhf+zod foundation). *(Complete 2026-04-27 — 3 plans, tsc+build PASS, ACCT-03 shipped; ACCT-04 avatar deferred per D-08)*
 - [x] **Phase 11: Address Book + Order History Filtering** — V4 addresses, address CRUD + checkout integration, order filter bar trên `/profile/orders`. *(Complete 2026-04-27 — 6 plans, 17/17 verified, 4 UAT items human_needed)*
 - [~~] **Phase 12: Wishlist** — ~~SKIPPED~~ (deferred v1.3 — không unblock core shopping flow; V5 wishlists migration number reserved)
-- [ ] **Phase 13: Reviews & Ratings** — V4 reviews + V5 avg_rating cached cols, verified-buyer eligibility, PDP review section. *(REV-04 author edit/delete deferred v1.3)*
+- [x] **Phase 13: Reviews & Ratings** — V4 reviews + V5 avg_rating cached cols, verified-buyer eligibility, PDP review section. *(Complete 2026-05-02 — 4 plans, V6 rating type fix + JWT secret externalization; 13-04 6-scenario UAT deferred; REV-04 author edit/delete deferred v1.3)*
 - [ ] **Phase 14: Basic Search Filters** — Brand + Price filter với JPQL optional params, FilterSidebar component. *(SEARCH-03 rating + SEARCH-04 URL state deferred v1.3)*
 - [x] **Phase 15: Public Polish + Milestone Audit** — Homepage hero+featured+categories, PDP thumbnail gallery+specs+breadcrumb+stock badge, smoke E2E, milestone audit + tag v1.2. *(Complete 2026-05-02 — 5/5 plans done; v1.2 SHIPPED gaps_found 15/17 active REQs; tag v1.2 LOCAL pending user push)*
 
@@ -110,7 +110,7 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
 - [x] 13-01-PLAN.md — user-svc JwtUtils + AuthService thêm claim 'name' (fullName) *(2026-04-27)*
 - [x] 13-02-PLAN.md — order-svc internal eligibility endpoint (/internal/orders/eligibility) + OrderRepository query *(2026-04-27)*
 - [x] 13-03-PLAN.md — product-svc V4 reviews + V5 avg_rating + ReviewEntity/Repo/Service/Controller + Jsoup sanitize + RestTemplate eligibility re-check + tests *(2026-04-27)*
-- [ ] 13-04-PLAN.md — FE ReviewSection (StarWidget, Form, List) + types align + ProductCard/PDP avgRating + UAT checkpoint
+- [x] 13-04-PLAN.md — FE ReviewSection (StarWidget, Form, List) + types align + ProductCard/PDP avgRating + UAT checkpoint *(2026-04-27 — UAT deferred 2026-05-02)*
 **UI hint:** yes
 
 ### Phase 14: Basic Search Filters

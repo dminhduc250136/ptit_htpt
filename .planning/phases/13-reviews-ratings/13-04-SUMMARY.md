@@ -114,7 +114,11 @@ metrics:
 
 ## UAT Status
 
-Task 3 (checkpoint:human-verify) — **PENDING human UAT**
+Task 3 (checkpoint:human-verify) — **DEFERRED (2026-05-02)**
+
+User đã accept đóng Phase 13 mà không chạy đủ 6 kịch bản UAT — pattern "executed, verify pending" để mở Phase 14. UAT 6 kịch bản dưới đây vẫn cần chạy trước khi tag milestone v1.2.
+
+Original status: PENDING human UAT
 
 6 kịch bản cần verify:
 1. Guest: hint + link đăng nhập, KHÔNG gọi eligibility endpoint

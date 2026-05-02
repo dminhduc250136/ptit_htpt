@@ -27,7 +27,7 @@ See: `.planning/PROJECT.md` (updated 2026-04-27 — Current Milestone: v1.2)
 
 **Core value:** Demo end-to-end shopping experience hoạt động với real data ở mọi điểm user nhìn thấy, đồng thời rèn quy trình GSD từ planning → execute → verify → archive.
 
-**Current focus:** v1.2 UI/UX Completion — Phase 11: Address Book + Order History Filtering.
+**Current focus:** v1.2 UI/UX Completion — Phase 14: Basic Search Filters (Brand + Price).
 
 ## Resume Cheat-Sheet
 

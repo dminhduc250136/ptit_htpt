@@ -55,6 +55,8 @@
   align-self: start;
   max-height: calc(100vh - 120px);
   overflow-y: auto;
+  padding-right: var(--space-3);
+  scrollbar-gutter: stable;
 }
 
 .sidebarHeader {

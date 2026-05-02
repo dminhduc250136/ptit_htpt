@@ -34,6 +34,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -91,18 +92,31 @@ public class OrderCrudService {
     cartRepository.saveCart(current.softDelete());
   }
 
+  /**
+   * Bug fix (orders-api-500): dùng findAllWithItems() để LEFT JOIN FETCH items.
+   * Trước đây findAll() trả LAZY collection → OrderMapper.toDto() iterate items
+   * ngoài transaction (open-in-view=false) → LazyInitializationException → 500.
+   * @Transactional(readOnly=true) thêm như defense-in-depth: giữ session mở
+   * suốt method nếu sau này có lazy access khác.
+   */
+  @Transactional(readOnly = true)
   public Map<String, Object> listOrders(int page, int size, String sort, boolean includeDeleted) {
     // @SQLRestriction filters deleted=false at JPA layer; includeDeleted=true cần native query.
     // Phase 5: nếu includeDeleted=true vẫn chỉ trả non-deleted (admin endpoints có thể dùng
     // native query Phase 8). Behavior này document trong SUMMARY.
-    List<OrderEntity> all = orderRepository.findAll().stream()
+    List<OrderEntity> all = orderRepository.findAllWithItems().stream()
         .sorted(orderComparator(sort))
         .toList();
     return paginate(all.stream().map(OrderMapper::toDto).toList(), page, size);
   }
 
+  /**
+   * Bug fix (orders-api-500): dùng findByIdWithItems() để fetch-join items —
+   * tránh LazyInitializationException khi map sang DTO ngoài transaction.
+   */
+  @Transactional(readOnly = true)
   public OrderDto getOrder(String id, boolean includeDeleted) {
-    OrderEntity order = orderRepository.findById(id)
+    OrderEntity order = orderRepository.findByIdWithItems(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
     return OrderMapper.toDto(order);
   }
@@ -119,7 +133,13 @@ public class OrderCrudService {
    *
    * <p>Phase 8 Plan 02: persist items (D-06 productName snapshot) + shippingAddress (D-08) + paymentMethod (D-09).
    * D-04 stock validate + D-05 stock deduct wired in Task 4.
+   *
+   * <p>Bug fix (orders-api-500): @Transactional bao toàn bộ persist + map flow.
+   * Trước đây OrderMapper.toDto(saved) chạy ngoài tx → nếu Hibernate detach entity và
+   * mapper iterate items → có thể trigger lazy proxy. items vừa được addItem() trong cùng
+   * scope nên hiện tại an toàn, nhưng @Transactional là defense-in-depth.
    */
+  @Transactional
   public OrderDto createOrderFromCommand(String userId, CreateOrderCommand command) {
     if (userId == null || userId.isBlank()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing X-User-Id session header");
@@ -198,6 +218,7 @@ public class OrderCrudService {
    * D-14: Date string "YYYY-MM-DD" → from = start-of-day UTC+7, to = 23:59:59 UTC+7.
    * D-13: q keyword tìm trên order.id ILIKE — không join order items.
    */
+  @Transactional(readOnly = true)
   public Map<String, Object> listMyOrders(ListMyOrdersQuery query) {
     // Parse status: null hoặc "ALL" → pass null vào repository (bỏ qua filter)
     String statusFilter = (query.status() == null || "ALL".equalsIgnoreCase(query.status()))
