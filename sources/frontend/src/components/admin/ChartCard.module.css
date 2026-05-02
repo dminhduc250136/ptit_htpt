@@ -1,0 +1,31 @@
+.chartCard {
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.chartTitle {
+  font-size: var(--text-title-md);
+  font-weight: var(--weight-bold);
+}
+.chartBody {
+  min-height: 250px;
+}
+.skeleton {
+  height: 250px;
+  background: linear-gradient(90deg, var(--surface-variant) 0%, var(--surface) 50%, var(--surface-variant) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  border-radius: var(--radius-md);
+}
+.errorRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
