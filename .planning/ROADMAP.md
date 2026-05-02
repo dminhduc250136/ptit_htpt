@@ -145,7 +145,7 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
 - [x] 15-00-PLAN.md — Wave 0 prep: hero WebP assets + Badge variants extend + selector audit + manual checklist *(Complete 2026-05-02 — 3 tasks, 6 files; SUMMARY: 15-00-SUMMARY.md)*
 - [x] 15-01-PLAN.md — Wave 1 homepage: hero next/image + Featured carousel scroll-snap + New Arrivals dedupe *(Complete 2026-05-02 — 2 tasks, 2 files; SUMMARY: 15-01-SUMMARY.md)*
 - [x] 15-02-PLAN.md — Wave 1 PDP: breadcrumb brand refactor + 3-tier stock badge + hide add-to-cart + thumbnail a11y *(Complete 2026-05-02 — 2 tasks, 2 files; SUMMARY: 15-02-SUMMARY.md)*
-- [ ] 15-03-PLAN.md — Wave 2 smoke E2E: 4 Playwright tests (homepage/checkout/review/profile) + skip-if-no-data degradation
+- [x] 15-03-PLAN.md — Wave 2 smoke E2E: 4 Playwright tests (homepage/checkout/review/profile) + skip-if-no-data degradation *(Complete 2026-05-02 — 2 tasks, 1 file 251 LOC; auto-approved checkpoint; SUMMARY: 15-03-SUMMARY.md)*
 - [ ] 15-04-PLAN.md — Wave 3 milestone closure: /gsd-audit-milestone v1.2 + MILESTONES update + git tag v1.2 annotated local
 **UI hint:** yes
 
@@ -161,7 +161,7 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
 | 12. Wishlist | — | ~~SKIPPED~~ (defer v1.3) | — |
 | 13. Reviews & Ratings | 0/4 | Not started | — |
 | 14. Basic Search Filters | 0/3 | Not started | — |
-| 15. Public Polish + Milestone Audit | 3/5 | Wave 1 complete (15-01 ✓ + 15-02 ✓) | — |
+| 15. Public Polish + Milestone Audit | 4/5 | Wave 2 complete (15-03 smoke E2E ✓) | — |
 
 ---
 

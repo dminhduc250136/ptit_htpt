@@ -4,21 +4,21 @@ milestone: v1.2
 milestone_name: milestone
 status: executing
 last_updated: "2026-05-02T00:00:00.000Z"
-last_activity: 2026-05-02 -- Phase 15 Plan 15-02 complete — PDP refactor: breadcrumb brand-based + thumbnail a11y + stock badge 3-tier + hide add-to-cart conditional
+last_activity: 2026-05-02 -- Phase 15 Plan 15-03 complete — Wave 2 smoke E2E: 4 Playwright tests (SMOKE-1..4) với Strategy A skip-if-no-data; auto-approved checkpoint Task 3 (manual docker-stack run deferred Plan 15-04)
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 24
-  completed_plans: 20
+  completed_plans: 21
   percent: 100
 ---
 
 ## Current Position
 
 Phase: Phase 15 — Public Polish + Milestone Audit
-Plan: 15-02 complete (Wave 1 PDP ✓) — next: 15-03 Wave 2 smoke E2E (4 Playwright tests homepage/checkout/review/profile + skip-if-no-data degradation)
-Status: Executing — Wave 1 ✓ → Wave 2 (15-03 next)
-Last activity: 2026-05-02 -- 15-02 complete: PDP breadcrumb brand-based + thumbnail a11y + stock badge 3-tier + hide add-to-cart
+Plan: 15-03 complete (Wave 2 smoke E2E ✓) — next: 15-04 Wave 3 milestone closure (audit + MILESTONES update + git tag v1.2 + manual docker-stack smoke run gate)
+Status: Executing — Wave 2 ✓ → Wave 3 (15-04 next, final plan v1.2)
+Last activity: 2026-05-02 -- 15-03 complete: 4 Playwright smoke tests (SMOKE-1 anon homepage, SMOKE-2 checkout, SMOKE-3 review, SMOKE-4 profile) với Strategy A skip-if-no-data; auto-approved checkpoint Task 3
 Resume file: .planning/phases/15-public-polish-milestone-audit/
 
 ## Project Reference
@@ -54,6 +54,12 @@ See: `.planning/PROJECT.md` (updated 2026-04-27 — Current Milestone: v1.2)
 - Badge `.danger` reuse `var(--error-container)` M3 token; `.success/.warning` hard-code hex `#15803d` / `#b45309` (tokens chưa tồn tại)
 - DELIVERED order test strategy: **Strategy A (skip-if-no-data)** per D-18 — precedent `order-detail.spec.ts:50-53`
 - ReviewSection selectors locked Wave 0: rating `getByRole('button', name: /5 sao/)`, textarea `#review-content`, submit `getByRole('button', name: /gửi đánh giá/i)`
+
+**Phase 15 Wave 2 locks (2026-05-02 — Plan 15-03):**
+
+- ReviewSection KHÔNG phải tab — render inline với eligibility hint `getByText(/chỉ người đã mua sản phẩm này/i)` để detect not-eligible
+- AddressPicker dropdown closed-by-default — SMOKE-2 phải click trigger `getByRole('button', { name: /địa chỉ đã lưu/i })` trước khi `[role="option"]` render
+- Auto-approved Task 3 checkpoint (auto mode) — manual `docker compose up && npx playwright test e2e/smoke.spec.ts` deferred Plan 15-04 milestone audit gate
 
 **v1.2 locks (2026-04-26):**
 
