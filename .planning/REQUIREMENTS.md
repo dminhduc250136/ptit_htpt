@@ -42,9 +42,9 @@
 
 ### STORE — Storage Audit + Cart→DB
 
-- [ ] **STORE-01** — Audit toàn FE codebase: grep `localStorage` + `sessionStorage`, classify mọi usage thành 3 nhóm: (a) user-data persist sang DB cần thiết, (b) UI preference giữ localStorage OK, (c) auth-token reviewable security. Output báo cáo trong phase SUMMARY.md.
-- [ ] **STORE-02** — Migrate cart từ `localStorage['cart']` sang DB. Order-svc V4 tạo `carts` + `cart_items` tables (per `user_id`). FE `services/cart.ts` chuyển sang API calls. Idempotent merge endpoint (`ON CONFLICT DO UPDATE`) khi guest login.
-- [ ] **STORE-03** — Migrate các user-data leak khác phát hiện trong STORE-01 (recently viewed / search history / wishlist nếu có / etc.) sang DB hoặc giải thích lý do giữ lại.
+- [x] **STORE-01** — Audit toàn FE codebase: grep `localStorage` + `sessionStorage`, classify mọi usage thành 3 nhóm: (a) user-data persist sang DB cần thiết, (b) UI preference giữ localStorage OK, (c) auth-token reviewable security. Output báo cáo trong phase SUMMARY.md. **COMPLETED Phase 18 Plan 06 — 18-SUMMARY.md §Storage Audit Report.**
+- [x] **STORE-02** — Migrate cart từ `localStorage['cart']` sang DB. Order-svc V4 tạo `carts` + `cart_items` tables (per `user_id`). FE `services/cart.ts` chuyển sang API calls. Idempotent merge endpoint (`ON CONFLICT DO UPDATE`) khi guest login. **COMPLETED Phase 18 Plans 01-05.**
+- [x] **STORE-03** — Migrate các user-data leak khác phát hiện trong STORE-01 (recently viewed / search history / wishlist nếu có / etc.) sang DB hoặc giải thích lý do giữ lại. **COMPLETED Phase 18 Plan 06 — no additional leaks found beyond cart. 18-SUMMARY.md §STORE-03 Disposition.**
 
 ### ADMIN — Charts + Low-Stock + Order Detail Items
 
@@ -136,9 +136,9 @@
 | SEED-04 | Phase 16 | 16-02, 16-03 | Satisfied (2026-05-02 — prod negative test defer 16-VERIFICATION.md §2) |
 | ORDER-01 | Phase 17 | — | Active |
 | ADMIN-06 | Phase 17 | — | Active |
-| STORE-01 | Phase 18 | — | Active |
-| STORE-02 | Phase 18 | — | Active |
-| STORE-03 | Phase 18 | — | Active |
+| STORE-01 | Phase 18 | 06 | COMPLETED |
+| STORE-02 | Phase 18 | 01-05 | COMPLETED |
+| STORE-03 | Phase 18 | 06 | COMPLETED |
 | ADMIN-01 | Phase 19 | — | Active |
 | ADMIN-02 | Phase 19 | — | Active |
 | ADMIN-03 | Phase 19 | — | Active |

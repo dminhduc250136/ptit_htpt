@@ -11,12 +11,11 @@ import Banner from '@/components/ui/Banner/Banner';
 import Modal from '@/components/ui/Modal/Modal';
 import { useToast } from '@/components/ui/Toast/Toast';
 import {
-  readCart,
-  clearCart,
-  removeFromCart,
-  updateQuantity,
-  type CartItem,
-} from '@/services/cart';
+  useCart,
+  useUpdateCartItem,
+  useRemoveCartItem,
+  useClearCart,
+} from '@/hooks/useCart';
 import { createOrder } from '@/services/orders';
 import { listAddresses } from '@/services/users';
 import { isApiError } from '@/services/errors';
@@ -37,19 +36,13 @@ export default function CheckoutPage() {
   const { user } = useAuth();
   const router = useRouter();
 
-  // Hydrate cart via lazy initializer (SSR-safe, avoids set-state-in-effect lint).
-  const [cartItems, setCartItems] = useState<CartItem[]>(() =>
-    typeof window === 'undefined' ? [] : readCart(),
-  );
-  const [hydrated, setHydrated] = useState<boolean>(() => typeof window !== 'undefined');
+  // Phase 18: fetch cart async qua React Query (cả guest localStorage + user DB)
+  const { data: cartItems = [], isLoading: cartLoading } = useCart();
+  const updateMutation = useUpdateCartItem();
+  const removeMutation = useRemoveCartItem();
+  const clearMutation = useClearCart();
 
-  useEffect(() => {
-    const onChange = () => setCartItems(readCart());
-    window.addEventListener('cart:change', onChange);
-    if (!hydrated) setHydrated(true);
-    return () => window.removeEventListener('cart:change', onChange);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const hydrated = !cartLoading;
 
   const [form, setForm] = useState({
     fullName: '',
@@ -136,7 +129,13 @@ export default function CheckoutPage() {
         paymentMethod: form.paymentMethod,
         note: form.note || undefined,
       }, user?.id);                     // Phase 4-06: userId → X-User-Id header (Phase 5: JWT-claim derivation)
-      clearCart();
+
+      // Phase 18: clear cart qua mutation (cả guest localStorage + user DB)
+      try {
+        await clearMutation.mutateAsync();
+      } catch (clearErr) {
+        console.error('[checkout] cart clear failed (non-blocking):', clearErr);
+      }
       router.push('/profile/orders/' + order.id);
     } catch (err) {
       if (!isApiError(err)) {
@@ -322,20 +321,24 @@ export default function CheckoutPage() {
         title="Một số sản phẩm không đủ hàng"
         primaryAction={{
           label: 'Cập nhật số lượng',
-          onClick: () => {
-            stockModal?.forEach((item) => {
-              updateQuantity(item.productId, item.availableQuantity);
-            });
+          onClick: async () => {
+            if (!stockModal) return;
+            await Promise.all(
+              stockModal.map((item) =>
+                updateMutation.mutateAsync({ productId: item.productId, qty: item.availableQuantity })
+              )
+            );
             setStockModal(null);
           },
         }}
         secondaryAction={{
           label: 'Xóa khỏi giỏ',
           variant: 'danger',
-          onClick: () => {
-            stockModal?.forEach((item) => {
-              removeFromCart(item.productId);
-            });
+          onClick: async () => {
+            if (!stockModal) return;
+            await Promise.all(
+              stockModal.map((item) => removeMutation.mutateAsync(item.productId))
+            );
             setStockModal(null);
           },
         }}

@@ -14,7 +14,7 @@
 |----------|------|-----------|----------------|-------|
 | `sources/backend/order-service/src/main/java/com/ptit/htpt/orderservice/web/AdminChartsController.java` | controller | request-response (admin GET) | `sources/backend/order-service/src/main/java/com/ptit/htpt/orderservice/web/AdminStatsController.java` | exact (same svc, same admin pattern) |
 | `sources/backend/order-service/src/main/java/com/ptit/htpt/orderservice/service/OrderChartsService.java` | service | aggregation/transform | `sources/backend/order-service/src/main/java/com/ptit/htpt/orderservice/service/OrderStatsService.java` | exact (same svc, same `@Transactional(readOnly=true)`) |
-| `sources/backend/order-service/src/main/java/com/ptit/htpt/orderservice/service/ProductEnrichmentClient.java` | service (cross-svc client) | request-response (HTTP egress) | `sources/backend/order-service/src/main/java/com/ptit/htpt/orderservice/service/OrderCrudService.java` lines 355–427 (`validateStockOrThrow` / `deductStockAfterPersist`) | role-match (RestTemplate cross-svc + try/catch fallback) |
+| `sources/backend/order-service/src/main/java/com/ptit/htpt/orderservice/service/ProductBatchClient.java` | service (cross-svc client) | request-response (HTTP egress) | `sources/backend/order-service/src/main/java/com/ptit/htpt/orderservice/service/OrderCrudService.java` lines 355–427 (`validateStockOrThrow` / `deductStockAfterPersist`) | role-match (RestTemplate cross-svc + try/catch fallback) |
 | `sources/backend/user-service/src/main/java/com/ptit/htpt/userservice/web/AdminChartsController.java` | controller | request-response | `sources/backend/user-service/src/main/java/com/ptit/htpt/userservice/web/AdminStatsController.java` | exact |
 | `sources/backend/user-service/src/main/java/com/ptit/htpt/userservice/service/UserChartsService.java` | service | aggregation | `sources/backend/order-service/src/main/java/com/ptit/htpt/orderservice/service/OrderStatsService.java` (cross-svc analog — user-svc chưa có UserStatsService riêng aggregation phức tạp) | role-match |
 | `sources/backend/product-service/src/main/java/com/ptit/htpt/productservice/web/AdminChartsController.java` | controller | request-response (GET low-stock + POST batch) | `sources/backend/product-service/src/main/java/com/ptit/htpt/productservice/web/AdminStatsController.java` | exact |
@@ -118,9 +118,9 @@ public ApiResponse<List<TopProductPoint>> topProducts(
 @Service
 public class OrderChartsService {
   private final OrderRepository orderRepo;
-  private final ProductEnrichmentClient productClient;
+  private final ProductBatchClient productClient;
 
-  public OrderChartsService(OrderRepository orderRepo, ProductEnrichmentClient productClient) {
+  public OrderChartsService(OrderRepository orderRepo, ProductBatchClient productClient) {
     this.orderRepo = orderRepo;
     this.productClient = productClient;
   }
@@ -134,18 +134,18 @@ public class OrderChartsService {
 
 ---
 
-### `order-service/service/ProductEnrichmentClient.java` (service, cross-svc HTTP)
+### `order-service/service/ProductBatchClient.java` (service, cross-svc HTTP)
 
 **Analog:** `sources/backend/order-service/src/main/java/com/ptit/htpt/orderservice/service/OrderCrudService.java` lines 355–427
 
 **RestTemplate egress + try/catch fallback pattern** (analog `validateStockOrThrow` lines 361–391):
 ```java
 @Component
-public class ProductEnrichmentClient {
-  private static final Logger log = LoggerFactory.getLogger(ProductEnrichmentClient.class);
+public class ProductBatchClient {
+  private static final Logger log = LoggerFactory.getLogger(ProductBatchClient.class);
   private final RestTemplate restTemplate;
 
-  public ProductEnrichmentClient(RestTemplate restTemplate) {
+  public ProductBatchClient(RestTemplate restTemplate) {
     this.restTemplate = restTemplate;
   }
 
@@ -520,7 +520,7 @@ type CardState<T> = { status: 'loading' | 'success' | 'error'; data?: T; error?:
 | `RevenueChart.tsx` / `TopProductsChart.tsx` / `StatusDistributionChart.tsx` / `UserSignupsChart.tsx` | component (Recharts) | Greenfield — chưa có chart component nào trước đây | RESEARCH §FE Pattern 1, 2, 3 |
 | `LowStockSection.tsx` | component (list+nav) | Pattern list+nav có analog nhỏ ở `admin/products/page.tsx`, nhưng layout row+badge mới | RESEARCH §FE Pattern 4 |
 | `chartFormat.ts` | utility (i18n + colors) | Greenfield — `Intl.NumberFormat`/`DateTimeFormat` chưa được centralize | RESEARCH §FE Pattern 3 lines 532–554 |
-| `ProductEnrichmentClient.java` (cấu trúc batch + auth forwarding) | service | Cross-svc batch endpoint chưa tồn tại; closest: `OrderCrudService` GET single product loop | RESEARCH §Backend Pattern 2 lines 304–334 |
+| `ProductBatchClient.java` (cấu trúc batch + auth forwarding) | service | Cross-svc batch endpoint chưa tồn tại; closest: `OrderCrudService` GET single product loop | RESEARCH §Backend Pattern 2 lines 304–334 |
 
 → Cho các file "no analog" trên, planner reference TRỰC TIẾP RESEARCH.md code patterns.
 
@@ -547,7 +547,7 @@ type CardState<T> = { status: 'loading' | 'success' | 'error'; data?: T; error?:
 
 ### Coverage
 - Files với exact analog (cùng role+flow trong same svc): 9 (3 admin charts controllers, 3 charts services, charts.ts, ChartCard.tsx, page.tsx extension)
-- Files với role-match analog (same role, gần data flow): 3 (ProductEnrichmentClient → OrderCrudService cross-svc; LowStockSection → admin/products nav; UserChartsService → OrderStatsService)
+- Files với role-match analog (same role, gần data flow): 3 (ProductBatchClient → OrderCrudService cross-svc; LowStockSection → admin/products nav; UserChartsService → OrderStatsService)
 - Files với no analog (greenfield Recharts/utility/enum): 5 (4 chart components + chartFormat.ts + Range enum)
 
 ### Key Patterns Identified
@@ -564,6 +564,6 @@ type CardState<T> = { status: 'loading' | 'success' | 'error'; data?: T; error?:
 ### Ready for Planning
 Pattern mapping hoàn tất. Planner có thể reference analog files + line ranges trực tiếp trong PLAN.md actions, đặc biệt:
 - Phase 9 AdminStatsController/OrderStatsService cho BE charts skeleton.
-- Phase 17 / OrderCrudService cross-svc pattern cho ProductEnrichmentClient.
+- Phase 17 / OrderCrudService cross-svc pattern cho ProductBatchClient.
 - Phase 9 KpiCard cho ChartCard wrapper.
 - RESEARCH.md §FE Pattern 1–6 cho 4 Recharts components (no codebase analog).

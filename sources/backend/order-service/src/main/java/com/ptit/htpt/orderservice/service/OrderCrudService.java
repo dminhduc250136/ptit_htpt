@@ -1,14 +1,12 @@
 package com.ptit.htpt.orderservice.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ptit.htpt.orderservice.domain.CartEntity;
 import com.ptit.htpt.orderservice.domain.OrderDto;
 import com.ptit.htpt.orderservice.domain.OrderEntity;
 import com.ptit.htpt.orderservice.domain.OrderItemEntity;
 import com.ptit.htpt.orderservice.domain.OrderMapper;
 import com.ptit.htpt.orderservice.exception.StockShortageException;
 import com.ptit.htpt.orderservice.exception.StockShortageException.StockShortageItem;
-import com.ptit.htpt.orderservice.repository.InMemoryCartRepository;
 import com.ptit.htpt.orderservice.repository.OrderItemRepository;
 import com.ptit.htpt.orderservice.repository.OrderRepository;
 import jakarta.validation.Valid;
@@ -41,55 +39,19 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class OrderCrudService {
   private static final Logger log = LoggerFactory.getLogger(OrderCrudService.class);
-  private final InMemoryCartRepository cartRepository;
   private final OrderRepository orderRepository;
   private final OrderItemRepository orderItemRepository;
   private final ObjectMapper objectMapper;
   private final RestTemplate restTemplate;
 
-  public OrderCrudService(InMemoryCartRepository cartRepository,
-                          OrderRepository orderRepository,
+  public OrderCrudService(OrderRepository orderRepository,
                           OrderItemRepository orderItemRepository,
                           ObjectMapper objectMapper,
                           RestTemplate restTemplate) {
-    this.cartRepository = cartRepository;
     this.orderRepository = orderRepository;
     this.orderItemRepository = orderItemRepository;
     this.objectMapper = objectMapper;
     this.restTemplate = restTemplate;
-  }
-
-  public Map<String, Object> listCarts(int page, int size, String sort, boolean includeDeleted) {
-    List<CartEntity> all = cartRepository.findAllCarts().stream()
-        .filter(cart -> includeDeleted || !cart.deleted())
-        .sorted(cartComparator(sort))
-        .toList();
-    return paginate(all, page, size);
-  }
-
-  public CartEntity getCart(String id, boolean includeDeleted) {
-    CartEntity cart = cartRepository.findCartById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart item not found"));
-    if (!includeDeleted && cart.deleted()) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart item not found");
-    }
-    return cart;
-  }
-
-  public CartEntity createCart(CartUpsertRequest request) {
-    CartEntity cart = CartEntity.create(request.userId(), request.productId(), request.quantity(), request.status());
-    return cartRepository.saveCart(cart);
-  }
-
-  public CartEntity updateCart(String id, CartUpsertRequest request) {
-    CartEntity current = getCart(id, true);
-    CartEntity updated = current.update(request.userId(), request.productId(), request.quantity(), request.status());
-    return cartRepository.saveCart(updated);
-  }
-
-  public void deleteCart(String id) {
-    CartEntity current = getCart(id, true);
-    cartRepository.saveCart(current.softDelete());
   }
 
   /**
@@ -250,17 +212,6 @@ public class OrderCrudService {
     return paginate(dtos, query.page(), query.size());
   }
 
-  private Comparator<CartEntity> cartComparator(String sort) {
-    if (sort == null || sort.isBlank()) {
-      return Comparator.comparing(CartEntity::updatedAt).reversed();
-    }
-    boolean desc = sort.endsWith(",desc");
-    Comparator<CartEntity> comparator = sort.startsWith("userId")
-        ? Comparator.comparing(CartEntity::userId, String.CASE_INSENSITIVE_ORDER)
-        : Comparator.comparing(CartEntity::id);
-    return desc ? comparator.reversed() : comparator;
-  }
-
   private Comparator<OrderEntity> orderComparator(String sort) {
     if (sort == null || sort.isBlank()) {
       return Comparator.comparing(OrderEntity::updatedAt).reversed();
@@ -291,13 +242,6 @@ public class OrderCrudService {
     result.put("isLast", safePage >= Math.max(totalPages - 1, 0));
     return result;
   }
-
-  public record CartUpsertRequest(
-      @NotBlank String userId,
-      @NotBlank String productId,
-      @Min(1) int quantity,
-      @NotBlank String status
-  ) {}
 
   public record OrderUpsertRequest(
       @NotBlank String userId,

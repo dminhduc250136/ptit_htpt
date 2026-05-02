@@ -1,27 +1,27 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: verifying
-last_updated: "2026-05-02T14:54:01.907Z"
+milestone: v1.3
+milestone_name: Catalog Realism & Commerce Intelligence
+status: executing
+last_updated: "2026-05-02T15:45:00Z"
 last_activity: 2026-05-02
 progress:
   total_phases: 7
-  completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
-  percent: 100
+  completed_phases: 3
+  total_plans: 13
+  completed_plans: 13
+  percent: 43
 ---
 
 ## Current Position
 
-Phase: 18
-Plan: Not started
-Status: Phase 17 hoàn tất Wave 3 — E2E regression-guard locked-in. Awaiting verifier.
+Phase: 18-storage-audit-cart-db (18) — COMPLETED
+Plan: 6 of 6 — ALL PLANS COMPLETE
+Status: Phase 16 + 17 + 18 closed. Next: Phase 19 (Admin Charts + Low-Stock)
 Last activity: 2026-05-02
 
 ```
-Progress: [██████████] 100%
+Progress: [████░░░░░░] 43% (3/7 phases complete)
 ```
 
 ## Project Reference
@@ -30,7 +30,11 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 
 **Core value:** Demo end-to-end shopping experience hoạt động với real data ở mọi điểm user nhìn thấy, đồng thời rèn quy trình GSD từ planning → execute → verify → archive.
 
+<<<<<<< HEAD
 **Current focus:** Phase 17 — Sửa Order Detail Items
+=======
+**Current focus:** Phase 19 next — Hoàn Thiện Admin Charts + Low-Stock (ADMIN-01..05)
+>>>>>>> workspace/phase-18-cart-db
 
 ## Resume Cheat-Sheet
 
@@ -52,10 +56,19 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | v1.1 | 4 | 22 | 15/19 SATISFIED + 4 PARTIAL | PASSED (gaps deferred) |
 | v1.2 | 6 (+1 SKIP) | 24 | 17/17 | PASSED |
 | v1.3 | 7 planned | TBD | 0/27 | In progress |
+<<<<<<< HEAD
 | Phase 17-s-a-order-detail-items P01 | 5min | 2 tasks | 2 files |
 | Phase 17-s-a-order-detail-items P02 | 3min | 2 tasks | 1 file |
 | Phase 17-s-a-order-detail-items P03 | 2min | 2 tasks | 2 files |
 | Phase 17-s-a-order-detail-items P04 | 4min | 2 tasks | 2 files |
+=======
+| Phase 18-storage-audit-cart-db P01 | 25 | 3 tasks | 10 files |
+| Phase 18 P02 | 15 | 2 tasks | 2 files |
+| Phase 18-storage-audit-cart-db P03 | 12min | 2 tasks | 4 files |
+| Phase 18-storage-audit-cart-db P04 | 15min | 3 tasks | 3 files |
+| Phase 18-storage-audit-cart-db P05 | 10min | 2 tasks | 7 files |
+| Phase 18-storage-audit-cart-db P06 | 10min | 2 tasks | 1 file |
+>>>>>>> workspace/phase-18-cart-db
 
 ## Decisions (active v1.3 locks)
 
@@ -65,6 +78,20 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 - Visible-first priority giữ nguyên
 - Backend hardening (D1..D17) defer cho đến khi có triggering event (ngoại lệ: storage audit có thể surface security issue)
 - ApiErrorResponse + traceId envelope; Swagger/OpenAPI codegen; Postgres + JPA + Flyway 5 services; auth thật JWT HS256; admin CRUD qua gateway; FE typed services; rhf+zod pattern; Playwright suite
+
+**Phase 18 Plan 06 decisions (2026-05-02):**
+
+- STORE-01 closed: grep confirms 4 localStorage keys (cart/userProfile/accessToken/refreshToken) + 2 cookie keys (auth_present/user_role). Classify xong vao bang audit 18-SUMMARY.md
+- STORE-03 closed: no additional user-data leaks found beyond cart. Wishlist/recently-viewed/search-history KHONG ton tai trong FE codebase hien tai
+- UAT 4 truths auto-approved: workflow._auto_chain_active=true, code review + static analysis thay the manual browser test
+- Phase 18 COMPLETED: 6/6 plans done, STORE-01/02/03 closed, 18-SUMMARY.md committed
+
+**Phase 18 Plan 01 decisions (2026-05-02):**
+
+- CartController.java reset thành stub (Plan 02 replace hoàn toàn) — file cũ reference CartUpsertRequest đã bị xóa cùng với InMemoryCartRepository
+- CartItemEntity.equals/hashCode dựa trên id only (không traverse lazy collection) — tranh LazyInitializationException
+- KHÔNG có unit_price_at_add trong cart_items — cart hiển thị live price, chỉ snapshot khi tạo order
+- upsertAddQuantity native SQL ON CONFLICT DO UPDATE — idempotent ADD semantics (D-05)
 
 **v1.3 locks (2026-05-02 — locked từ research + user answers):**
 
@@ -120,6 +147,7 @@ Không có blocker.
 
 ## Next Steps
 
+<<<<<<< HEAD
 1. ✅ Phase 16 COMPLETE (3/3 plans, SEED-01..04 satisfied artifacts-side; manual UAT defer)
 2. `/gsd-verify-work` — chạy 16-VERIFICATION.md sections (smoke SQL + prod negative + add-to-cart + Playwright + UI walkthrough)
 3. `/gsd-plan-phase 17` → Execute Phase 17: Sửa Order Detail Items
@@ -128,3 +156,14 @@ Không có blocker.
 6. `/gsd-plan-phase 20` → Execute Phase 20: Hệ Thống Coupon
 7. `/gsd-plan-phase 21` → Execute Phase 21: Hoàn Thiện Reviews
 8. `/gsd-ai-integration-phase 22` → Execute Phase 22: AI Chatbot Claude API MVP (dùng AI integration workflow thay plan-phase chuẩn)
+=======
+1. `/gsd-plan-phase 19` → Execute Phase 19: Admin Charts + Low-Stock (ADMIN-01..05)
+2. `/gsd-plan-phase 20` → Execute Phase 20: Hệ Thống Coupon (COUP-01..05)
+3. `/gsd-plan-phase 21` → Execute Phase 21: Hoàn Thiện Reviews (REV-04..06)
+4. `/gsd-ai-integration-phase 22` → Execute Phase 22: AI Chatbot Claude API MVP (dùng AI integration workflow thay plan-phase chuẩn)
+
+**Completed:**
+- Phase 16: Seed Catalog Hiện Thực — (execute khi sẵn sàng)
+- Phase 17: Sửa Order Detail Items — (execute khi sẵn sàng)
+- Phase 18: Kiểm Toán Storage + Cart→DB — **COMPLETED 2026-05-02** (STORE-01, STORE-02, STORE-03 closed)
+>>>>>>> workspace/phase-18-cart-db

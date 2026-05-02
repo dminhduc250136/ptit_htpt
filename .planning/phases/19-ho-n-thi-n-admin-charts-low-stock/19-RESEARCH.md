@@ -816,22 +816,22 @@ Tất cả examples thuộc §Architecture Patterns (Backend Pattern 1–6, FE P
 | A6 | Chart.js render bằng canvas | §Alternatives | LOW — chỉ comparison. |
 | A7 | DataJpaTest @AutoConfigureTestDatabase Replace.NONE + Testcontainers Postgres 16 đã work cho aggregation queries (theo OrderRepositoryJpaTest existing pattern) | Validation | LOW — pattern đã proven trong codebase. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Auth forwarding cho cross-svc batch — kiến trúc đúng chưa?**
    - What we know: Pattern hiện tại (`OrderCrudService` line 365) gọi product-svc qua api-gateway URL — gateway KHÔNG re-check JWT (gateway hiện tại không có security filter). Nhưng product-svc `JwtRoleGuard` sẽ check.
    - What's unclear: Có nên thêm internal endpoint `/internal/products/batch` (no JWT, chỉ trust service-to-service network) hay buộc forward JWT admin?
-   - Recommendation: **Forward JWT admin** — admin token đã có ở browser, order-svc đã có nó từ request, đơn giản nhất + audit trail rõ. Document trong Pitfall 4.
+   - RESOLVED: **Forward JWT admin** — admin token đã có ở browser, order-svc đã có nó từ request, đơn giản nhất + audit trail rõ. Adopted in Plan 19-01 ProductBatchClient + documented Pitfall 4.
 
 2. **Highlight query param ở /admin/products?**
    - What we know: D-10 nói "optional".
    - What's unclear: Planner có muốn add nhỏ enhancement (đọc `?highlight=` → scroll-to-row + open edit modal) không?
-   - Recommendation: **Defer cho 1 follow-up plan nhỏ** nếu planner thấy có thời gian; nếu không, click low-stock chỉ navigate `/admin/products` (đã có Edit button trên mỗi row).
+   - RESOLVED: **Deferred** — Plan 19-04 LowStockSection navigate `/admin/products?highlight={productId}` query param có sẵn nhưng /admin/products không đọc; ghi vào CONTEXT.md Deferred Ideas cho follow-up phase.
 
 3. **Test E2E Playwright cho 4 charts?**
    - What we know: TEST-02 deferred policy; verifier handle artifact-level + manual UAT.
    - What's unclear: Có spec smoke "ADM-CHART-1: render 4 chart cards" + "ADM-LOW-1: low-stock list rendered" giúp regression-guard không?
-   - Recommendation: **Add 2 smoke specs** (ADM-CHART-1 + ADM-LOW-1) — đảm bảo phase 20+ refactor /admin không phá. Cost thấp, value cao. Pattern existing `admin-products.spec.ts`.
+   - RESOLVED: **Add 2 smoke specs** (ADM-CHART-1 + ADM-LOW-1) — adopted in Plan 19-04 Task 3 (e2e/admin-charts.spec.ts + e2e/admin-low-stock.spec.ts), pattern theo existing admin-products.spec.ts.
 
 ## Environment Availability
 

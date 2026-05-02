@@ -1,36 +1,47 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button/Button';
+import { useToast } from '@/components/ui/Toast/Toast';
 import {
-  readCart,
-  removeFromCart,
-  updateQuantity,
-  type CartItem,
-} from '@/services/cart';
+  useCart,
+  useUpdateCartItem,
+  useRemoveCartItem,
+  parseCartError,
+} from '@/hooks/useCart';
 import { formatPrice } from '@/services/api';
 
 export default function CartPage() {
-  // Hydrate cart synchronously on first client render via lazy initializer.
-  // `typeof window` guard keeps SSR safe (Pitfall 2). Same pattern as AuthProvider —
-  // avoids the react-hooks/set-state-in-effect lint trigger.
-  const [cartItems, setCartItems] = useState<CartItem[]>(() =>
-    typeof window === 'undefined' ? [] : readCart(),
-  );
-  const [hydrated, setHydrated] = useState<boolean>(() => typeof window !== 'undefined');
+  const { showToast } = useToast();
+  const { data: cartItems = [], isLoading } = useCart();
+  const updateMutation = useUpdateCartItem();
+  const removeMutation = useRemoveCartItem();
 
-  useEffect(() => {
-    // Subscribe to cart:change so cross-page updates (remove/update) reflect here.
-    const onChange = () => setCartItems(readCart());
-    window.addEventListener('cart:change', onChange);
-    // Ensure hydrated flag is true once effect runs on the client (defensive for SSR).
-    if (!hydrated) setHydrated(true);
-    return () => window.removeEventListener('cart:change', onChange);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const hydrated = !isLoading;
+
+  const handleQuantityChange = (productId: string, qty: number) => {
+    updateMutation.mutate(
+      { productId, qty },
+      {
+        onError: (err) => {
+          const ctx = parseCartError(err);
+          showToast(ctx.message, 'error');
+        },
+      }
+    );
+  };
+
+  const handleRemove = (productId: string) => {
+    removeMutation.mutate(productId, {
+      onError: (err) => {
+        const ctx = parseCartError(err);
+        showToast(ctx.message, 'error');
+      },
+    });
+  };
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shippingFee = subtotal >= 1000000 ? 0 : 30000;
@@ -93,7 +104,8 @@ export default function CartPage() {
                         </div>
                         <button
                           className={styles.removeBtn}
-                          onClick={() => removeFromCart(item.productId)}
+                          onClick={() => handleRemove(item.productId)}
+                          disabled={removeMutation.isPending}
                           aria-label="Xóa sản phẩm"
                         >
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -107,16 +119,16 @@ export default function CartPage() {
                         <div className={styles.quantitySelector}>
                           <button
                             className={styles.qtyBtn}
-                            onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                            disabled={item.quantity <= 1}
+                            onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
+                            disabled={item.quantity <= 1 || updateMutation.isPending}
                           >
                             −
                           </button>
                           <span className={styles.qtyValue}>{item.quantity}</span>
                           <button
                             className={styles.qtyBtn}
-                            onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                            disabled={atStockLimit}
+                            onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
+                            disabled={atStockLimit || updateMutation.isPending}
                           >
                             +
                           </button>
