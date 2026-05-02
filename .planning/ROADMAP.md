@@ -24,7 +24,7 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 
 | Service | Version | Purpose | Phase |
 |---------|---------|---------|-------|
-| product-svc | V7 | Seed ~100 sản phẩm (Spring profile `dev` only) | Phase 16 |
+| product-svc | V101 | Seed ~100 sản phẩm trong db/seed-dev/ (Spring profile `dev` only) | Phase 16 |
 | order-svc | V3 | Coupons + coupon_redemptions tables | Phase 20 |
 | order-svc | V4 | Carts + cart_items tables | Phase 18 |
 | chat_svc | — | Schema init qua Next.js API route (raw pg driver, không Flyway) | Phase 22 |
@@ -37,16 +37,16 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 | @anthropic-ai/sdk | 0.92.0 | Claude API chatbot (Next.js API route proxy) | Phase 22 |
 
 **Spring profile `dev` isolation:**
-- Seed migration `V7` phải ở `classpath:db/seed/dev/` (KHÔNG phải `classpath:db/migration/`)
-- `application-dev.yml` thêm `spring.flyway.locations` include seed path
+- Seed migration `V101` phải ở `classpath:db/seed-dev/` (KHÔNG phải `classpath:db/migration/`) — tiếp nối V100 đã có
+- `application.yml` profile=dev đã include `classpath:db/seed-dev` trong `spring.flyway.locations` — KHÔNG cần sửa config (verified RESEARCH Finding 1)
 - Production profile KHÔNG chạy seed
 
 ---
 
 ## Phases
 
-- [ ] **Phase 16: Seed Catalog Hiện Thực** — ~100 sản phẩm / 5 tech categories + Unsplash WebP + brand thực tế
 - [x] **Phase 17: Sửa Order Detail Items** — Fix hardcoded placeholder, hiển thị full line items cả user + admin (4/4 plans complete 2026-05-02)
+- [x] **Phase 16: Seed Catalog Hiện Thực** ✅ 2026-05-02 — ~100 sản phẩm / 5 tech categories + Unsplash WebP + brand thực tế (3/3 plans, manual UAT defer cho `/gsd-verify-work`)
 - [ ] **Phase 18: Kiểm Toán Storage + Cart→DB** — Audit localStorage/sessionStorage + migrate cart sang DB per-user
 - [ ] **Phase 19: Hoàn Thiện Admin: Charts + Low-Stock** — 4 analytics charts + low-stock alert dashboard
 - [ ] **Phase 20: Hệ Thống Coupon** — % off + fixed amount, admin CRUD, checkout input, atomic redemption
@@ -66,8 +66,11 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
   1. Người dùng truy cập `/products` thấy ~100 sản phẩm phân phối qua 5 categories: điện thoại, laptop, chuột, bàn phím, tai nghe (categories cũ fashion/household/books/cosmetics đã biến mất)
   2. Mỗi sản phẩm có ảnh WebP hiển thị đúng từ Unsplash CDN (không bị broken image), cùng tên brand thực tế như Apple, Samsung, Dell, Logitech, Sony, Razer, ASUS
   3. FilterSidebar brand multi-select hiển thị brand list đúng domain tech (không còn brand sai domain)
-  4. Developer restart với Spring profile `dev` thì seed chạy; restart với profile `prod` thì seed KHÔNG chạy — Flyway V7 idempotent (`ON CONFLICT DO NOTHING`)
-**Plans:** TBD
+  4. Developer restart với Spring profile `dev` thì seed chạy; restart với profile `prod` thì seed KHÔNG chạy — Flyway V101 idempotent (`ON CONFLICT DO NOTHING`)
+**Plans:** 3 plans
+- [x] 16-01-PLAN.md — Curate IMAGES.csv (≥100 Unsplash photo IDs cho 5 tech categories) ✅ 2026-05-02 (107 IDs, commit 20be054)
+- [x] 16-02-PLAN.md — V101__seed_catalog_realistic.sql + patch ROADMAP V7→V101 ✅ 2026-05-02 (100 SP / 25 brands, commits d46f028 + 3aca025)
+- [x] 16-03-PLAN.md — E2E Playwright spec + manual VERIFICATION.md + human acceptance ✅ 2026-05-02 (seed-catalog.spec.ts 7 tests + 16-VERIFICATION.md 5 sections, commits f842cd2 + 5f8257a; checkpoint auto-approved trong auto mode, manual UAT defer cho /gsd-verify-work)
 **UI hint**: yes
 
 ---
@@ -202,8 +205,8 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 16. Seed Catalog Hiện Thực | 0/? | Not started | - |
 | 17. Sửa Order Detail Items | 4/4 | Complete    | 2026-05-02 |
+| 16. Seed Catalog Hiện Thực | 2/3 | In progress | - |
 | 18. Kiểm Toán Storage + Cart→DB | 0/? | Not started | - |
 | 19. Hoàn Thiện Admin: Charts + Low-Stock | 0/? | Not started | - |
 | 20. Hệ Thống Coupon | 0/? | Not started | - |

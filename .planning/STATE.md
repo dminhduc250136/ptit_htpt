@@ -82,7 +82,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 
 | Service | Version | Purpose | Phase |
 |---------|---------|---------|-------|
-| product-svc | V7 | Seed ~100 sản phẩm (Spring profile `dev` only) | Phase 16 |
+| product-svc | V101 | Seed ~100 sản phẩm trong db/seed-dev/ (Spring profile `dev` only) — APPLIED 2026-05-02 | Phase 16 |
 | order-svc | V3 | Coupons + coupon_redemptions tables | Phase 20 |
 | order-svc | V4 | Carts + cart_items tables | Phase 18 |
 | chat_svc | — | Schema init qua Next.js raw pg driver (không Flyway) | Phase 22 |
@@ -120,8 +120,8 @@ Không có blocker.
 
 ## Next Steps
 
-1. `/gsd-plan-phase 16` — Plan Phase 16: Seed Catalog Hiện Thực (SEED-01..04)
-2. Execute Phase 16 plans
+1. ✅ Phase 16 COMPLETE (3/3 plans, SEED-01..04 satisfied artifacts-side; manual UAT defer)
+2. `/gsd-verify-work` — chạy 16-VERIFICATION.md sections (smoke SQL + prod negative + add-to-cart + Playwright + UI walkthrough)
 3. `/gsd-plan-phase 17` → Execute Phase 17: Sửa Order Detail Items
 4. `/gsd-plan-phase 18` → Execute Phase 18: Kiểm Toán Storage + Cart→DB
 5. `/gsd-plan-phase 19` → Execute Phase 19: Admin Charts + Low-Stock

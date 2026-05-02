@@ -35,10 +35,10 @@
 
 ### SEED — Realistic Catalog
 
-- [ ] **SEED-01** — Reset product categories sang 5 đúng domain: điện thoại / laptop / chuột / bàn phím / tai nghe (xóa categories cũ sai domain: fashion/household/books/cosmetics)
-- [ ] **SEED-02** — Seed ~100 sản phẩm realistic distributed ~20/category với brand thực tế (Apple, Samsung, Xiaomi, Logitech, Razer, Sony, ASUS, Dell, HP, Lenovo, Steelseries, ...). Mỗi SP có `name`, `brand`, `price`, `original_price` (gạch giá), `description`, `stock`
-- [ ] **SEED-03** — Mỗi SP có ảnh từ Unsplash CDN format `?fm=webp&q=80&w=800` (precedent v1.2 P15). KHÔNG hot-link breakage — verify URLs ổn định khi seed.
-- [ ] **SEED-04** — Flyway profile isolation: dev seed `V101+` tách khỏi baseline `V1-V7`. Spring profile `dev` mới chạy seed migration (production profile skip).
+- [x] **SEED-01** — Reset product categories sang 5 đúng domain: điện thoại / laptop / chuột / bàn phím / tai nghe (xóa categories cũ sai domain: fashion/household/books/cosmetics) ✅ 2026-05-02 (Plan 16-02)
+- [x] **SEED-02** — Seed ~100 sản phẩm realistic distributed ~20/category với brand thực tế (Apple, Samsung, Xiaomi, Logitech, Razer, Sony, ASUS, Dell, HP, Lenovo, Steelseries, ...). Mỗi SP có `name`, `brand`, `price`, `original_price` (gạch giá), `description`, `stock` ✅ 2026-05-02 (Plan 16-02 — 100 SP / 25 brands)
+- [x] **SEED-03** — Mỗi SP có ảnh từ Unsplash CDN format `?fm=webp&q=80&w=800` (precedent v1.2 P15). KHÔNG hot-link breakage — verify URLs ổn định khi seed. ✅ 2026-05-02 (Plan 16-02 — 100 unique IDs từ IMAGES.csv; runtime URL stability verify trong Plan 16-03)
+- [x] **SEED-04** — Flyway profile isolation: dev seed `V101+` tách khỏi baseline `V1-V7`. Spring profile `dev` mới chạy seed migration (production profile skip). ✅ 2026-05-02 (Plan 16-02 — V101 tại db/seed-dev/)
 
 ### STORE — Storage Audit + Cart→DB
 
@@ -130,10 +130,10 @@
 
 | REQ-ID | Phase | Plan(s) | Status |
 |--------|-------|---------|--------|
-| SEED-01 | Phase 16 | — | Active |
-| SEED-02 | Phase 16 | — | Active |
-| SEED-03 | Phase 16 | — | Active |
-| SEED-04 | Phase 16 | — | Active |
+| SEED-01 | Phase 16 | 16-02 | Satisfied (2026-05-02) |
+| SEED-02 | Phase 16 | 16-01, 16-02 | Satisfied (2026-05-02) |
+| SEED-03 | Phase 16 | 16-01, 16-02, 16-03 | Satisfied (2026-05-02 — runtime verify defer 16-VERIFICATION.md §4) |
+| SEED-04 | Phase 16 | 16-02, 16-03 | Satisfied (2026-05-02 — prod negative test defer 16-VERIFICATION.md §2) |
 | ORDER-01 | Phase 17 | — | Active |
 | ADMIN-06 | Phase 17 | — | Active |
 | STORE-01 | Phase 18 | — | Active |
