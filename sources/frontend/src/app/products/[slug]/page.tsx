@@ -101,19 +101,20 @@ export default function ProductDetailPage() {
 
   return (
     <div className={styles.page}>
-      {/* Breadcrumb */}
+      {/* Breadcrumb — Phase 15 PUB-03 (D-14): Trang chủ / {Brand} / {Name} với fallback */}
       <div className={styles.breadcrumb}>
         <div className={styles.container}>
           <Link href="/" className={styles.breadcrumbLink}>Trang chủ</Link>
           <span className={styles.breadcrumbSep}>/</span>
-          <Link href="/products" className={styles.breadcrumbLink}>Sản phẩm</Link>
-          {product.category && (
-            <>
-              <span className={styles.breadcrumbSep}>/</span>
-              <Link href={`/products?category=${product.category.slug}`} className={styles.breadcrumbLink}>
-                {product.category.name}
-              </Link>
-            </>
+          {product.brand ? (
+            <Link
+              href={`/products?brand=${encodeURIComponent(product.brand)}`}
+              className={styles.breadcrumbLink}
+            >
+              {product.brand}
+            </Link>
+          ) : (
+            <Link href="/products" className={styles.breadcrumbLink}>Sản phẩm</Link>
           )}
           <span className={styles.breadcrumbSep}>/</span>
           <span className={styles.breadcrumbCurrent}>{product.name}</span>
@@ -161,6 +162,9 @@ export default function ProductDetailPage() {
                   {product.images.map((img, i) => (
                     <button
                       key={i}
+                      type="button"
+                      aria-label={`Xem ảnh ${i + 1}`}
+                      aria-current={i === selectedImage ? 'true' : undefined}
                       className={`${styles.thumbnail} ${i === selectedImage ? styles.thumbnailActive : ''}`}
                       onClick={() => setSelectedImage(i)}
                     >

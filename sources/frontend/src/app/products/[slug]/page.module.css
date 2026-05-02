@@ -122,7 +122,8 @@
 }
 
 .thumbnailActive {
-  border-color: var(--primary-container) !important;
+  border-color: var(--primary) !important;
+  border-width: 2px;
 }
 
 .thumbImg { object-fit: cover; }
