@@ -28,14 +28,42 @@ Dự án thử nghiệm GSD workflow trên codebase e-commerce laptop (Spring Bo
 ✓ **Frontend App** — Existing. Next.js UI with product pages, checkout, admin panels  
 ✓ **CRUD Completeness Baseline** — Completed in Phase 02 across User/Product/Order/Payment/Inventory/Notification services
 
-### Active (v1.1 — Real End-User Experience)
+✓ **Database Foundation** — Postgres + JPA + Flyway + seeded data từ FE mocks (DB-01..06) — v1.1
+✓ **Real auth flow** — Backend `/api/users/auth/{register,login,logout}` + JWT HS256 + FE form gỡ mock + session persist (AUTH-01..05) — v1.1
+✓ **Admin + Search real CRUD** — `/search` keyword + admin/products|orders|users qua gateway (UI-01, UI-03, UI-04) — v1.1
+✓ **Cart → Order persistence** — ProductEntity.stock persist + OrderItemEntity per-row + shippingAddress/paymentMethod + FE order detail full breakdown (PERSIST-01..03) — v1.1
 
-- [ ] **DB-01..06**: Database Foundation — Postgres trong docker-compose + JPA cho 5 services + Flyway baseline + seed từ FE mocks + E2E connectivity verify (audit phát hiện v1.0 chạy in-memory, không có DB layer)
-- [ ] **AUTH-01..06**: Real auth flow (backend `/api/users/auth/{login,register,logout}` + JWT + FE form thật call backend + session persist sau reload)
-- [ ] **UI-01..04**: `/search` rewire + admin/products + admin/orders + admin/users migrate khỏi mock → CRUD thật qua gateway
-- [ ] **PERSIST-01**: ProductEntity.stock persisted (A4 add-to-cart respect stock thật, hết "cart-seed via localStorage")
-- [ ] **PERSIST-02**: OrderEntity persist per-item OrderItem rows + shippingAddress + paymentMethod
-- [ ] **PERSIST-03**: FE order confirmation + order detail render full breakdown thật từ backend payload
+✓ **v1.2 Residual closure** — AUTH-06 middleware 4-route matcher + AUTH-07 password change + UI-02 admin dashboard real KPI + TEST-01 Playwright re-baseline 14 tests — Phase 9
+✓ **Profile editing** — GET/PATCH /api/users/me, form rhf+zod tại /profile/settings (ACCT-03) — Phase 10
+✓ **Address book + checkout integration** — V4 addresses CRUD cap 10/user + ADDRESS_LIMIT_EXCEEDED 422 + AddressPicker JSONB snapshot (ACCT-02/05/06) — Phase 11
+✓ **Reviews & ratings** — V4 reviews + V5 avg_rating cached + verified-buyer cross-service eligibility (REV-01/02/03) — Phase 13
+✓ **Basic search filters** — JPQL cast IS NULL + FilterSidebar component + brand multi-select + price range debounce 400ms (SEARCH-01/02) — Phase 14
+✓ **Public polish** — Hero next/image priority + Featured CSS scroll-snap + 3-tier stock badge + brand-based breadcrumb + 4 Playwright smoke E2E (PUB-01/02/03/04 + TEST-02) — Phase 15
+
+### Active (v1.3 — Catalog Realism & Commerce Intelligence)
+
+7 trục scope (locked 2026-05-02 qua /gsd-new-milestone):
+
+- **SEED catalog realistic** — ~100 SP / 5 categories (điện thoại/laptop/chuột/bàn phím/tai nghe), Unsplash WebP CDN, brand realistic
+- **STORAGE audit + cart→DB** — grep toàn FE localStorage/sessionStorage, classify, migrate user-data sang DB per-user (cart confirmed leak)
+- **ADMIN completion** — 4 charts (revenue/time, top products, order status pie, signups + low-stock) + admin order detail items
+- **REV-04+ Review polish** — author edit/delete + sort by helpful/newest/rating + admin moderation (hide/approve)
+- **AI Chatbot (Claude API MVP)** — customer FAQ+product Q&A+recommendation, admin suggest reply, streaming + chat history persist DB (NO agentic tool-use)
+- **ORDER-DETAIL items fix** — 1 phase debug BE/FE, hiển thị full line items cả /account/orders/[id] + /admin/orders/[id]
+- **COUPON system** — % off + fixed amount, min order + expiry + max usage/user, 1 mã/đơn, admin CRUD /admin/coupons + FE checkout input
+
+### Deferred (v1.3+)
+
+- [ ] **ACCT-01 Wishlist** — Phase 12 SKIPPED v1.2 scope trim, V5 migration reserved
+- [ ] **REV-04 Author edit/delete reviews** — scope trim v1.2
+- [ ] **SEARCH-03 rating filter + SEARCH-04 URL state + in-stock + clear-all** — scope trim v1.2
+- [ ] **PUB-03 lightbox + axe-core a11y gate** — scope trim v1.2 (thumbnail swap đủ)
+- [ ] **TEST-02 full E2E suite (8+ tests)** — scope trim v1.2 (smoke 4 đủ closure)
+- [ ] **ACCT-04 avatar upload** — Deferred D-08 từ Phase 10 (multipart Thumbnailator scope cut)
+- [ ] **Nyquist VALIDATION.md** — carry-over từ v1.1 (Phase 6 + Phase 8 + v1.2 phases)
+- [ ] **Backend hardening carry-over** — D1, D2, D6, D7, D8, D9, D10, D12, D13, D14, D17 (chỉ pick visible)
+- [ ] **Multi-step checkout** — tách Shipping → Payment → Review
+- [ ] **Recently viewed / Related products** — rule-based recommendations
 
 ### Out of Scope
 
@@ -92,38 +120,87 @@ From codebase analysis, areas worth monitoring:
 - Performance optimization (N+1 queries, caching)
 - Comprehensive test coverage (currently minimal)
 
+## Current Milestone: v1.3 — Catalog Realism & Commerce Intelligence
+
+**Goal:** Nâng demo flow lên "real-data, intelligent, persistent" — catalog đầy đủ ảnh thật, dữ liệu user persist DB không leak qua localStorage, admin có insight panel, AI chatbot tư vấn, coupon + review hoàn thiện.
+
+**Target features (7 trục):**
+
+1. SEED catalog realistic (~100 SP / 5 categories + Unsplash WebP)
+2. STORAGE audit + cart→DB migration (audit toàn FE)
+3. ADMIN completion (4 charts + low-stock alert + admin order detail items)
+4. REVIEW polish (REV-04 author edit/delete + sort + admin moderation)
+5. AI Chatbot Claude API MVP (customer FAQ/Q&A/recommendation + admin suggest reply, streaming + history persist)
+6. ORDER-DETAIL items fix (1 phase debug BE/FE, user + admin)
+7. COUPON system (% off + fixed amount + admin CRUD)
+
+**Key locks:**
+- Phase numbering tiếp tục từ **Phase 16** (KHÔNG reset)
+- Research enabled — 4 parallel researchers (Stack/Features/Architecture/Pitfalls)
+- AI provider: **Claude API** (skill `claude-api` có sẵn) — dùng `/gsd-ai-integration-phase` cho phase chatbot
+- Visible-first priority giữ nguyên — backend hardening D1..D17 vẫn defer (trừ phần liên quan storage audit nếu khám phá security leak)
+- Language Vietnamese cho docs/commits
+
+**Status:** Scope locked 2026-05-02. Research → Requirements → Roadmap đang chạy.
+
+**Backlog defer v1.4+:**
+- ACCT-01 wishlist (re-plan với V5 migration)
+- SEARCH-03 rating filter + SEARCH-04 URL state + in-stock + clear-all
+- PUB-03 lightbox + axe-core a11y gate
+- TEST-02 full E2E suite (8+ tests)
+- ACCT-04 avatar upload (multipart Thumbnailator)
+- Multi-step checkout (Shipping → Payment → Review)
+- Recently viewed / Related products
+- Helpful votes trên reviews
+
 ## Current State
 
-**Shipped:** v1.0 — MVP Stabilization (2026-04-25)
+**Last shipped:** v1.2 — UI/UX Completion (2026-05-02, passed: 17/17 active REQs satisfied)
 
-11/11 requirements MET. Shopping flow validated end-to-end via Playwright (12/12 PASS) trên live docker-compose stack: browse → cart → checkout → mock payment → confirmation. Cross-phase audit `ready_to_complete` (xem `.planning/milestones/v1.0-ROADMAP.md` + `.planning/v1.0-MILESTONE-AUDIT.md`).
+6/6 active phases complete + 1 SKIPPED (Phase 12 wishlist scope trim) + 24/24 plans done. Audit re-run 09:30 UTC sau Phase 14 merge → verdict PASSED. Tag `v1.2` annotated local pending user push.
 
-Foundation đã có:
+Cumulative foundation (v1.0 + v1.1 + v1.2):
 - 6 services + gateway emit unified `ApiErrorResponse` envelope với traceId propagation
 - Springdoc Swagger UI + OpenAPI codegen pipeline (FE 6 typed modules)
-- CRUD completeness + soft-delete baseline + admin/public route boundaries
-- Validation & error handling hardened (gateway pass-through + common-code taxonomy)
-- FE typed HTTP tier + ApiError dispatcher (5 failure branches) + middleware route protection
+- **Postgres 16 + JPA + Flyway** trên 5 services (V1 baseline + V2 dev seed + V3 stock + V4 reviews/addresses + V5 avg_rating cached)
+- **Real auth flow**: BCrypt + JWT HS256 24h, AuthProvider hydration, middleware 4-route gate (`/admin|/account|/profile|/checkout`), password change endpoint
+- **Admin CRUD thật**: products + orders + users (PATCH fullName/phone/roles + soft-delete) + admin dashboard 4 real KPI cards
+- **Cart → Order persistence**: ProductEntity.stock + OrderItemEntity per-row + shippingAddress JSONB snapshot + paymentMethod
+- **Account features**: profile editing rhf+zod, address book CRUD cap 10/user + ADDRESS_LIMIT_EXCEEDED, order filter (status + date range + keyword)
+- **Reviews & ratings**: verified-buyer eligibility cross-service, XSS-safe render, avg_rating cached cols
+- **Search filters**: JPQL cast IS NULL pattern, FilterSidebar component (brand multi-select + price range debounce 400ms)
+- **Public polish**: Hero next/image priority WebP, Featured CSS scroll-snap carousel, PDP brand-based breadcrumb, 3-tier stock badge color-coded, thumbnail strip + main image swap
+- **E2E**: Playwright suite (14 v1.1 baseline tests + 4 v1.2 smoke tests covering homepage/checkout/review/profile)
+- **3 git tags**: `v1.0`, `v1.1`, `v1.2`
 
-## Current Milestone: v1.1 Real End-User Experience
+## Next Milestone Goals (v1.4 — TBD)
 
-**Goal:** Biến demo flow từ "stub-verified" thành "real visible end-to-end" — mọi thứ user click trên UI phải hoạt động với real data thay vì mock/seeded.
-
-**Target features (visible-first):**
-- **C0. Database Foundation** ⚠ — Postgres + JPA + Flyway + seed từ FE mocks. Audit phát hiện v1.0 không có DB layer (in-memory only). C0 block C1/C2/C3.
-- **C1. Auth flow thật** — Backend `/api/users/auth/{login,register,logout}` + JWT issuance + FE login/register/logout call backend, session persist sau reload
-- **C2. Admin + Search real data** — `/search` page rewire `listProducts({keyword})` real; `admin/*` pages migrate khỏi mock → CRUD thật qua gateway
-- **C3. Cart → Order persistence visible** — ProductEntity.stock persist (hết "cart-seed via localStorage"); OrderEntity persist per-item rows + shippingAddress + paymentMethod (order detail page show full breakdown đúng)
-
-**Deferred sang v1.2** (invisible to end-user, xem `.planning/v1.0-MILESTONE-AUDIT.md` D1/D2/D6/D7/D8/D9/D10/D12/D13/D14/D17): inventory.reserve real, payment-service vào checkout chain, CSP, server-side price re-fetch, gateway JWT claim verification, observability/tracing (OBS-01), integration test suite (TEST-01), sibling handleFallback rollout, code review WR/IN carry-over, FE legacy types cleanup.
+Pending v1.3 close. Backlog v1.4+ đã liệt kê ở "Current Milestone v1.3" → "Backlog defer v1.4+".
 
 <details>
-<summary>Previous milestone target features (v1.0 — shipped)</summary>
+<summary>Previous milestones (shipped)</summary>
 
+**v1.0 — MVP Stabilization** (2026-04-25)
 - Complete CRUD endpoints across all microservices (consistent patterns)
 - Swagger/OpenAPI documentation for every service and gateway
 - Frontend-backend API contract alignment (DTOs, status codes, error formats)
-- Cross-service validation and consistent error handling
+- 11/11 REQs MET, Playwright 12/12 PASS
+
+**v1.1 — Real End-User Experience** (2026-04-26)
+- C0 Database Foundation — Postgres + JPA + Flyway + seed từ FE mocks
+- C1 Real auth flow — JWT HS256 + FE form gỡ mock
+- C2 Admin + Search real CRUD qua gateway
+- C3 Cart → Order persistence visible — full breakdown
+- 15/19 SATISFIED + 4 PARTIAL (residual defer v1.2 — đều close trong v1.2)
+
+**v1.2 — UI/UX Completion** (2026-05-02)
+- Phase 9 Residual closure (AUTH-06/07, UI-02, TEST-01 close v1.1 partials)
+- Phase 10 User-svc schema + profile editing (ACCT-03)
+- Phase 11 Address book + order history filtering (ACCT-02/05/06)
+- Phase 13 Reviews & ratings verified-buyer (REV-01/02/03)
+- Phase 14 Basic search filters brand+price (SEARCH-01/02)
+- Phase 15 Public polish + smoke E2E (PUB-01/02/03/04, TEST-02)
+- 17/17 active REQs satisfied (Phase 12 wishlist SKIPPED scope trim)
 </details>
 
 ## Evolution
@@ -144,4 +221,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-25 — Milestone v1.1 Real End-User Experience STARTED (visible-first scope: Auth real + Admin/Search real data + Cart→Order persistence visible).*
+*Last updated: 2026-05-02 — Milestone v1.3 Catalog Realism & Commerce Intelligence STARTED (7 trục locked: seed catalog / storage audit / admin charts / review polish / Claude AI chatbot MVP / order detail fix / coupon system). Phase numbering từ Phase 16. Research → Requirements → Roadmap đang chạy.*

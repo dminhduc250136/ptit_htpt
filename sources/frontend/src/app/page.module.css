@@ -323,3 +323,36 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* === Featured Carousel — Phase 15 PUB-01 (D-05) === */
+.featuredScroll {
+  display: flex;
+  gap: var(--space-4);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scroll-padding: var(--space-4);
+  -webkit-overflow-scrolling: touch; /* iOS momentum */
+  scrollbar-width: none; /* Firefox */
+  padding-bottom: var(--space-2); /* breathing room */
+}
+
+.featuredScroll::-webkit-scrollbar {
+  display: none; /* Chrome/Safari/Edge */
+}
+
+.featuredScroll:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-lg);
+}
+
+.featuredCard {
+  flex: 0 0 280px;
+  scroll-snap-align: start;
+}
+
+@media (max-width: 768px) {
+  .featuredCard {
+    flex-basis: 240px;
+  }
+}

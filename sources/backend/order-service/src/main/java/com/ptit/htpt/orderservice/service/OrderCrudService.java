@@ -18,6 +18,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -31,6 +34,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -88,18 +92,31 @@ public class OrderCrudService {
     cartRepository.saveCart(current.softDelete());
   }
 
+  /**
+   * Bug fix (orders-api-500): dùng findAllWithItems() để LEFT JOIN FETCH items.
+   * Trước đây findAll() trả LAZY collection → OrderMapper.toDto() iterate items
+   * ngoài transaction (open-in-view=false) → LazyInitializationException → 500.
+   * @Transactional(readOnly=true) thêm như defense-in-depth: giữ session mở
+   * suốt method nếu sau này có lazy access khác.
+   */
+  @Transactional(readOnly = true)
   public Map<String, Object> listOrders(int page, int size, String sort, boolean includeDeleted) {
     // @SQLRestriction filters deleted=false at JPA layer; includeDeleted=true cần native query.
     // Phase 5: nếu includeDeleted=true vẫn chỉ trả non-deleted (admin endpoints có thể dùng
     // native query Phase 8). Behavior này document trong SUMMARY.
-    List<OrderEntity> all = orderRepository.findAll().stream()
+    List<OrderEntity> all = orderRepository.findAllWithItems().stream()
         .sorted(orderComparator(sort))
         .toList();
     return paginate(all.stream().map(OrderMapper::toDto).toList(), page, size);
   }
 
+  /**
+   * Bug fix (orders-api-500): dùng findByIdWithItems() để fetch-join items —
+   * tránh LazyInitializationException khi map sang DTO ngoài transaction.
+   */
+  @Transactional(readOnly = true)
   public OrderDto getOrder(String id, boolean includeDeleted) {
-    OrderEntity order = orderRepository.findById(id)
+    OrderEntity order = orderRepository.findByIdWithItems(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
     return OrderMapper.toDto(order);
   }
@@ -116,7 +133,13 @@ public class OrderCrudService {
    *
    * <p>Phase 8 Plan 02: persist items (D-06 productName snapshot) + shippingAddress (D-08) + paymentMethod (D-09).
    * D-04 stock validate + D-05 stock deduct wired in Task 4.
+   *
+   * <p>Bug fix (orders-api-500): @Transactional bao toàn bộ persist + map flow.
+   * Trước đây OrderMapper.toDto(saved) chạy ngoài tx → nếu Hibernate detach entity và
+   * mapper iterate items → có thể trigger lazy proxy. items vừa được addItem() trong cùng
+   * scope nên hiện tại an toàn, nhưng @Transactional là defense-in-depth.
    */
+  @Transactional
   public OrderDto createOrderFromCommand(String userId, CreateOrderCommand command) {
     if (userId == null || userId.isBlank()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing X-User-Id session header");
@@ -188,6 +211,43 @@ public class OrderCrudService {
     return orderRepository.findByUserId(userId).stream()
         .map(OrderMapper::toDto)
         .toList();
+  }
+
+  /**
+   * Phase 11 / ACCT-02 (D-12, D-13, D-14, D-15): Filter orders server-side theo userId + optional params.
+   * D-14: Date string "YYYY-MM-DD" → from = start-of-day UTC+7, to = 23:59:59 UTC+7.
+   * D-13: q keyword tìm trên order.id ILIKE — không join order items.
+   */
+  @Transactional(readOnly = true)
+  public Map<String, Object> listMyOrders(ListMyOrdersQuery query) {
+    // Parse status: null hoặc "ALL" → pass null vào repository (bỏ qua filter)
+    String statusFilter = (query.status() == null || "ALL".equalsIgnoreCase(query.status()))
+        ? null : query.status();
+
+    // D-14: parse date string "YYYY-MM-DD" → Instant UTC+7
+    // from → 2026-04-01T00:00:00+07:00 (start of day Saigon)
+    // to   → 2026-04-30T23:59:59+07:00 (end of day Saigon — SC-5: không miss đơn 23:59 GMT+7)
+    ZoneOffset saigon = ZoneOffset.of("+07:00");
+    Instant fromInstant = null;
+    Instant toInstant = null;
+    if (query.from() != null && !query.from().isBlank()) {
+      fromInstant = LocalDate.parse(query.from()).atStartOfDay().toInstant(saigon);
+    }
+    if (query.to() != null && !query.to().isBlank()) {
+      // end of day: 23:59:59 (+07:00)
+      toInstant = LocalDate.parse(query.to()).atTime(23, 59, 59).toInstant(saigon);
+    }
+
+    // D-13: q = null/blank → pass null (bỏ qua filter)
+    String qFilter = (query.q() == null || query.q().isBlank()) ? null : query.q().trim();
+
+    List<OrderEntity> filtered = orderRepository.findByUserIdWithFilters(
+        query.userId(), statusFilter, fromInstant, toInstant, qFilter
+    );
+
+    // Map sang DTO trước khi paginate
+    List<OrderDto> dtos = filtered.stream().map(OrderMapper::toDto).toList();
+    return paginate(dtos, query.page(), query.size());
   }
 
   private Comparator<CartEntity> cartComparator(String sort) {
@@ -273,6 +333,23 @@ public class OrderCrudService {
       @NotBlank String district,
       @NotBlank String city,
       String zipCode
+  ) {}
+
+  /**
+   * Phase 11 / ACCT-02 (D-10, D-11, D-12, D-13, D-14, D-15).
+   * Filter params cho GET /orders từ user đang đăng nhập.
+   * status=null → ALL. from/to = YYYY-MM-DD string → convert sang Instant UTC+7 (D-14).
+   * q = order ID keyword → ILIKE (D-13).
+   */
+  public record ListMyOrdersQuery(
+      String userId,    // required — từ X-User-Id header (Phase 11 giữ nguyên pattern cũ)
+      String status,    // nullable — "PENDING"/"CONFIRMED"/"SHIPPING"/"DELIVERED"/"CANCELLED"
+      String from,      // nullable — "YYYY-MM-DD"
+      String to,        // nullable — "YYYY-MM-DD"
+      String q,         // nullable — keyword search on order.id
+      int page,
+      int size,
+      String sort
   ) {}
 
   /**

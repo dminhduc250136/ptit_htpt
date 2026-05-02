@@ -46,6 +46,7 @@ export interface User {
   fullName: string;    // giữ — có thể dùng bởi profile pages phase khác
   phone?: string;
   avatarUrl?: string;
+  hasAvatar?: boolean; // Phase 10 — luôn false ở Phase 10, true khi avatar wire-up Phase 12+
   role: 'CUSTOMER' | 'ADMIN';
   address?: Address;
   createdAt: string;
@@ -58,6 +59,35 @@ export interface Address {
   district: string;
   city: string;
   zipCode?: string;
+}
+
+// ===== ADDRESS BOOK (Phase 11 / ACCT-05) =====
+/**
+ * SavedAddress: persisted address book entry cho user.
+ * Khác với Address (checkout snapshot) — có id, userId, fullName, phone, isDefault.
+ */
+export interface SavedAddress {
+  id: string;
+  userId: string;
+  fullName: string;
+  phone: string;
+  street: string;
+  ward: string;
+  district: string;
+  city: string;
+  isDefault: boolean;
+  createdAt: string;
+}
+
+/** Body để create / update một saved address. */
+export interface AddressBody {
+  fullName: string;
+  phone: string;
+  street: string;
+  ward: string;
+  district: string;
+  city: string;
+  isDefault?: boolean;
 }
 
 export interface LoginRequest {
@@ -94,7 +124,8 @@ export interface Product {
   category: Category;
   brand?: string;
   specifications?: Specification[];
-  rating: number;
+  rating?: number;           // legacy — deprecated; dùng avgRating từ Phase 13
+  avgRating?: number;        // Phase 13: real avg từ BE (thay hardcode ZERO)
   reviewCount: number;
   stock: number;
   status: 'ACTIVE' | 'INACTIVE' | 'OUT_OF_STOCK';
@@ -198,14 +229,13 @@ export interface CreateOrderRequest {
 
 
 // ===== REVIEW (Part of Product Service) =====
+// Phase 13: align với BE DTO ReviewService.toResponse — D-11 + Pitfall 6
 export interface Review {
   id: string;
-  userId: string;
-  userName: string;
-  userAvatar?: string;
   productId: string;
-  rating: number;
-  comment: string;
-  images?: string[];
-  createdAt: string;
+  userId: string;
+  reviewerName: string;       // snapshot từ JWT 'name' — D-11
+  rating: number;             // 1-5
+  content?: string | null;    // nullable — D-06
+  createdAt: string;          // ISO 8601
 }

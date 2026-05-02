@@ -7,7 +7,8 @@ import ProductCard from '@/components/ui/ProductCard/ProductCard';
 import Button from '@/components/ui/Button/Button';
 import Input from '@/components/ui/Input/Input';
 import RetrySection from '@/components/ui/RetrySection/RetrySection';
-import { listProducts, listCategories } from '@/services/products';
+import FilterSidebar, { type FilterValue } from '@/components/ui/FilterSidebar/FilterSidebar';
+import { listProducts, listCategories, listBrands } from '@/services/products';
 import type { Product, Category } from '@/types';
 
 type SortOption = 'newest' | 'price_asc' | 'price_desc' | 'popular' | 'rating';
@@ -20,7 +21,11 @@ function ProductsPageContent() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('newest');
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 10000000]);
+  const [filterBrands, setFilterBrands] = useState<string[]>([]);
+  const [filterPriceMin, setFilterPriceMin] = useState<number | undefined>(undefined);
+  const [filterPriceMax, setFilterPriceMax] = useState<number | undefined>(undefined);
+  const [availableBrands, setAvailableBrands] = useState<string[]>([]);
+  const [brandsLoading, setBrandsLoading] = useState(true);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -47,6 +52,26 @@ function ProductsPageContent() {
     };
   }, [initialCategorySlug]);
 
+  // Phase 14 / SEARCH-01 — fetch danh sách brand DISTINCT (non-fatal fail).
+  useEffect(() => {
+    let alive = true;
+    setBrandsLoading(true);
+    listBrands()
+      .then((list) => {
+        if (!alive) return;
+        setAvailableBrands(list ?? []);
+      })
+      .catch(() => {
+        // Non-fatal — brand facet shows "Chưa có thương hiệu nào"
+      })
+      .finally(() => {
+        if (alive) setBrandsLoading(false);
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   const load = useCallback(async () => {
     setLoading(true);
     setFailed(false);
@@ -64,10 +89,14 @@ function ProductsPageContent() {
           ? 'reviewCount,desc'
           : undefined;
       const resp = await listProducts({
+        page: 0,
         size: 24,
         sort: sortParam,
         categoryId: selectedCategory ?? undefined,
         keyword: searchQuery.trim() || undefined,
+        brands: filterBrands.length > 0 ? filterBrands : undefined,
+        priceMin: filterPriceMin,
+        priceMax: filterPriceMax,
       });
       setProducts(resp?.content ?? []);
     } catch {
@@ -77,22 +106,25 @@ function ProductsPageContent() {
     } finally {
       setLoading(false);
     }
-  }, [sortBy, selectedCategory, searchQuery]);
+  }, [sortBy, selectedCategory, searchQuery, filterBrands, filterPriceMin, filterPriceMax]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  // Client-side price filter on already-fetched page (backend filter not relied on).
-  const filteredProducts = products.filter(
-    (p) => p.price >= priceRange[0] && p.price <= priceRange[1],
-  );
-
+  // D-10: "Xóa bộ lọc" trong FilterSidebar chỉ reset brand+price; KHÔNG đụng categories/keyword/sort.
   const clearFilters = () => {
+    setFilterBrands([]);
+    setFilterPriceMin(undefined);
+    setFilterPriceMax(undefined);
+  };
+
+  // Header "Xóa tất cả" — reset toàn bộ filter (categories + search + sort + brand + price).
+  const clearAll = () => {
     setSelectedCategory(null);
     setSearchQuery('');
     setSortBy('newest');
-    setPriceRange([0, 10000000]);
+    clearFilters();
   };
 
   return (
@@ -128,7 +160,7 @@ function ProductsPageContent() {
           <aside className={`${styles.sidebar} ${isMobileFilterOpen ? styles.sidebarOpen : ''}`}>
             <div className={styles.sidebarHeader}>
               <h3 className={styles.sidebarTitle}>Bộ lọc</h3>
-              <button className={styles.clearBtn} onClick={clearFilters}>Xóa tất cả</button>
+              <button className={styles.clearBtn} onClick={clearAll}>Xóa tất cả</button>
             </div>
 
             {/* Search */}
@@ -168,38 +200,22 @@ function ProductsPageContent() {
               </div>
             </div>
 
-            {/* Price Range */}
-            <div className={styles.filterGroup}>
-              <h4 className={styles.filterTitle}>Khoảng giá</h4>
-              <div className={styles.priceInputs}>
-                <input
-                  type="number"
-                  className={styles.priceInput}
-                  placeholder="Từ"
-                  value={priceRange[0] || ''}
-                  onChange={(e) => setPriceRange([Number(e.target.value) || 0, priceRange[1]])}
-                />
-                <span className={styles.priceSeparator}>—</span>
-                <input
-                  type="number"
-                  className={styles.priceInput}
-                  placeholder="Đến"
-                  value={priceRange[1] === 10000000 ? '' : priceRange[1]}
-                  onChange={(e) => setPriceRange([priceRange[0], Number(e.target.value) || 10000000])}
-                />
-              </div>
-              <div className={styles.pricePresets}>
-                <button className={styles.presetBtn} onClick={() => setPriceRange([0, 500000])}>Dưới 500k</button>
-                <button className={styles.presetBtn} onClick={() => setPriceRange([500000, 1000000])}>500k - 1tr</button>
-                <button className={styles.presetBtn} onClick={() => setPriceRange([1000000, 5000000])}>1tr - 5tr</button>
-                <button className={styles.presetBtn} onClick={() => setPriceRange([5000000, 10000000])}>Trên 5tr</button>
-              </div>
-            </div>
+            {/* Phase 14 — FilterSidebar (brand + price) */}
+            <FilterSidebar
+              brands={availableBrands}
+              loading={brandsLoading}
+              value={{ brands: filterBrands, priceMin: filterPriceMin, priceMax: filterPriceMax }}
+              onChange={(next: FilterValue) => {
+                setFilterBrands(next.brands);
+                setFilterPriceMin(next.priceMin);
+                setFilterPriceMax(next.priceMax);
+              }}
+            />
 
             {/* Mobile close */}
             <div className={styles.mobileFilterClose}>
               <Button fullWidth onClick={() => setIsMobileFilterOpen(false)}>
-                Xem {filteredProducts.length} sản phẩm
+                Xem {products.length} sản phẩm
               </Button>
             </div>
           </aside>
@@ -209,7 +225,7 @@ function ProductsPageContent() {
             {/* Toolbar */}
             <div className={styles.toolbar}>
               <span className={styles.resultCount}>
-                {filteredProducts.length} sản phẩm
+                {products.length} sản phẩm
               </span>
               <select
                 className={styles.sortSelect}
@@ -233,9 +249,9 @@ function ProductsPageContent() {
               </div>
             ) : failed ? (
               <RetrySection onRetry={() => load()} loading={loading} />
-            ) : filteredProducts.length > 0 ? (
+            ) : products.length > 0 ? (
               <div className={styles.productsGrid}>
-                {filteredProducts.map((product) => (
+                {products.map((product) => (
                   <ProductCard key={product.id} product={product} />
                 ))}
               </div>
@@ -245,8 +261,8 @@ function ProductsPageContent() {
                   <circle cx="11" cy="11" r="8" />
                   <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
-                <h3>Không tìm thấy sản phẩm</h3>
-                <p>Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
+                <h3>Không tìm thấy sản phẩm phù hợp với bộ lọc</h3>
+                <p>Thử bỏ bớt thương hiệu hoặc nới rộng khoảng giá</p>
                 <Button variant="secondary" onClick={clearFilters}>Xóa bộ lọc</Button>
               </div>
             )}

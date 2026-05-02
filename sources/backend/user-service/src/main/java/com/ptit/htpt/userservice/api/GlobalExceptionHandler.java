@@ -1,5 +1,7 @@
 package com.ptit.htpt.userservice.api;
 
+import com.ptit.htpt.userservice.exception.AddressLimitExceededException;
+import com.ptit.htpt.userservice.exception.InvalidPasswordException;
 import com.ptit.htpt.userservice.web.TraceIdFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
@@ -48,6 +50,48 @@ public class GlobalExceptionHandler {
         request.getRequestURI(),
         getTraceId(request),
         items
+    ));
+  }
+
+  /**
+   * Phase 11 / Plan 11-01 (ACCT-05, D-06, T-11-01-03).
+   * Cap 10 addresses/user → 422 với errorCode ADDRESS_LIMIT_EXCEEDED.
+   */
+  @ExceptionHandler(AddressLimitExceededException.class)
+  public org.springframework.http.ResponseEntity<ApiErrorResponse> handleAddressLimit(
+      AddressLimitExceededException ex,
+      HttpServletRequest request
+  ) {
+    HttpStatus status = HttpStatus.UNPROCESSABLE_ENTITY;
+    return org.springframework.http.ResponseEntity.status(status).body(ApiErrorResponse.of(
+        status.value(),
+        status.getReasonPhrase(),
+        "Đã đạt giới hạn 10 địa chỉ. Vui lòng xóa bớt trước khi thêm mới.",
+        "ADDRESS_LIMIT_EXCEEDED",
+        request.getRequestURI(),
+        getTraceId(request),
+        List.of()
+    ));
+  }
+
+  /**
+   * Phase 9 / Plan 09-03 (AUTH-07).
+   * D-11: wrong oldPassword → 422 với errorCode AUTH_INVALID_PASSWORD.
+   */
+  @ExceptionHandler(InvalidPasswordException.class)
+  public org.springframework.http.ResponseEntity<ApiErrorResponse> handleInvalidPassword(
+      InvalidPasswordException ex,
+      HttpServletRequest request
+  ) {
+    HttpStatus status = HttpStatus.UNPROCESSABLE_ENTITY;
+    return org.springframework.http.ResponseEntity.status(status).body(ApiErrorResponse.of(
+        status.value(),
+        status.getReasonPhrase(),
+        "Mật khẩu hiện tại không đúng",
+        "AUTH_INVALID_PASSWORD",
+        request.getRequestURI(),
+        getTraceId(request),
+        List.of()
     ));
   }
 

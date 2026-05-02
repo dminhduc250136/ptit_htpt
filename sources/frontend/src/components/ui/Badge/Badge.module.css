@@ -42,3 +42,22 @@
   background-color: var(--error-container);
   color: var(--on-error-container);
 }
+
+/* Stock badge variants — Phase 15 PUB-04 */
+/* Note: --success / --warning design tokens chưa tồn tại trong globals.css (verified 2026-05-02). */
+/* Dùng fallback hex per UI-SPEC contract — token sẽ migrate khi v1.3 add design tokens. */
+
+.success {
+  background-color: rgba(22, 163, 74, 0.15);
+  color: #15803d;
+}
+
+.warning {
+  background-color: rgba(245, 158, 11, 0.18);
+  color: #b45309;
+}
+
+.danger {
+  background-color: var(--error-container);
+  color: var(--on-error-container);
+}

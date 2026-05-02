@@ -61,6 +61,12 @@ public class ProductEntity {
   @Column(nullable = false)
   private int stock = 0;
 
+  @Column(name = "avg_rating", precision = 3, scale = 1)
+  private BigDecimal avgRating = BigDecimal.ZERO;
+
+  @Column(name = "review_count")
+  private int reviewCount = 0;
+
   @Column(nullable = false)
   private boolean deleted = false;
 
@@ -127,6 +133,12 @@ public class ProductEntity {
     this.updatedAt = Instant.now();
   }
 
+  public void updateRatingStats(BigDecimal avgRating, int reviewCount) {
+    this.avgRating = (avgRating != null) ? avgRating : BigDecimal.ZERO;
+    this.reviewCount = Math.max(0, reviewCount);
+    this.updatedAt = Instant.now();
+  }
+
   public void softDelete() {
     this.deleted = true;
     this.updatedAt = Instant.now();
@@ -143,6 +155,8 @@ public class ProductEntity {
   public String shortDescription() { return shortDescription; }
   public BigDecimal originalPrice() { return originalPrice; }
   public int stock() { return stock; }
+  public BigDecimal avgRating() { return avgRating; }
+  public int reviewCount() { return reviewCount; }
   public boolean deleted() { return deleted; }
   public Instant createdAt() { return createdAt; }
   public Instant updatedAt() { return updatedAt; }

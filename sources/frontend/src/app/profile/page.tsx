@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button/Button';
 import Badge from '@/components/ui/Badge/Badge';
@@ -32,6 +33,7 @@ export default function ProfilePage() {
   const { user } = useAuth();
   const { showToast } = useToast();
 
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [pwForm, setPwForm] = useState({ current: '', newPw: '', confirm: '' });
@@ -99,11 +101,11 @@ export default function ProfilePage() {
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                 Thông tin cá nhân
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'orders' ? styles.navActive : ''}`} onClick={() => setActiveTab('orders')}>
+              <button className={`${styles.navItem} ${activeTab === 'orders' ? styles.navActive : ''}`} onClick={() => router.push('/profile/orders')}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>
                 Đơn hàng ({orders.length})
               </button>
-              <button className={`${styles.navItem} ${activeTab === 'addresses' ? styles.navActive : ''}`} onClick={() => setActiveTab('addresses')}>
+              <button className={`${styles.navItem} ${activeTab === 'addresses' ? styles.navActive : ''}`} onClick={() => router.push('/profile/addresses')}>
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 Địa chỉ
               </button>
@@ -141,8 +143,8 @@ export default function ProfilePage() {
                       <Link key={order.id} href={`/profile/orders/${order.id}`} className={styles.orderCard}>
                         <div className={styles.orderHeader}>
                           <span className={styles.orderCode}>{order.orderCode}</span>
-                          <Badge variant={statusMap[order.orderStatus]?.variant || 'default'}>
-                            {statusMap[order.orderStatus]?.label ?? order.orderStatus}
+                          <Badge variant={statusMap[order.orderStatus ?? '']?.variant || 'default'}>
+                            {statusMap[order.orderStatus ?? '']?.label ?? order.orderStatus}
                           </Badge>
                         </div>
                         <div className={styles.orderItems}>

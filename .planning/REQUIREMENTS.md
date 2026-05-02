@@ -1,117 +1,162 @@
+# Requirements — Milestone v1.3 (Catalog Realism & Commerce Intelligence)
+
+**Milestone:** v1.3
+**Started:** 2026-05-02
+**Status:** Roadmap complete — 27/27 REQs mapped
+**Phase numbering:** tiếp tục từ Phase 16 (KHÔNG reset)
+
 ---
-milestone: v1.1
-name: Real End-User Experience
-status: active
-started: 2026-04-25
-priority: visible-first
+
+## Scope Summary
+
+7 trục bổ sung cho tmdt-use-gsd e-commerce demo (Spring Boot microservices + Next.js):
+
+1. **SEED** — Catalog 100 SP / 5 categories realistic + ảnh Unsplash WebP
+2. **STORE** — Audit toàn FE storage + cart→DB migration
+3. **ADMIN** — 4 charts analytics + low-stock alert + admin order detail items
+4. **REV** — Review polish (REV-04 author edit/delete + sort + admin moderation)
+5. **AI** — Claude API chatbot MVP (customer + admin suggest reply)
+6. **ORDER** — Order detail items fix BE/FE cả user + admin
+7. **COUP** — Coupon system (% off + fixed + admin CRUD)
+
+**Locks (từ research + user answers):**
+- Review delete = **soft-delete** (column `deleted_at` hoặc `hidden`); admin vẫn xem
+- Coupon per-user usage = **1 lần/coupon/user** (unique constraint)
+- Chatbot = **login required** (KHÔNG guest); chat_sessions.user_id NOT NULL
+- Admin charts date range = **default 30 ngày + dropdown 7d/30d/90d/all**
+- Stack mới: `recharts@3.8.1` + `@anthropic-ai/sdk@0.92.0` (Next.js API route proxy, KHÔNG Spring Boot chat-svc)
+- Coupon table = `order-svc` Flyway V3
+- Chat persistence = Next.js API route + Postgres `chat_svc` schema (raw pg driver)
+- Cart→DB = order-svc V4 (carts + cart_items)
+
 ---
 
-# Milestone v1.1 — Real End-User Experience
+## v1.3 Requirements (Active)
 
-## Goal
+### SEED — Realistic Catalog
 
-Biến demo flow từ "stub-verified" thành "real visible end-to-end" — mọi thứ user click trên UI đều phải hoạt động với real data thay vì mock/seeded. Ưu tiên những thay đổi end-user nhìn thấy được; defer backend hardening / security / observability invisible sang v1.2.
+- [x] **SEED-01** — Reset product categories sang 5 đúng domain: điện thoại / laptop / chuột / bàn phím / tai nghe (xóa categories cũ sai domain: fashion/household/books/cosmetics) ✅ 2026-05-02 (Plan 16-02)
+- [x] **SEED-02** — Seed ~100 sản phẩm realistic distributed ~20/category với brand thực tế (Apple, Samsung, Xiaomi, Logitech, Razer, Sony, ASUS, Dell, HP, Lenovo, Steelseries, ...). Mỗi SP có `name`, `brand`, `price`, `original_price` (gạch giá), `description`, `stock` ✅ 2026-05-02 (Plan 16-02 — 100 SP / 25 brands)
+- [x] **SEED-03** — Mỗi SP có ảnh từ Unsplash CDN format `?fm=webp&q=80&w=800` (precedent v1.2 P15). KHÔNG hot-link breakage — verify URLs ổn định khi seed. ✅ 2026-05-02 (Plan 16-02 — 100 unique IDs từ IMAGES.csv; runtime URL stability verify trong Plan 16-03)
+- [x] **SEED-04** — Flyway profile isolation: dev seed `V101+` tách khỏi baseline `V1-V7`. Spring profile `dev` mới chạy seed migration (production profile skip). ✅ 2026-05-02 (Plan 16-02 — V101 tại db/seed-dev/)
 
-## Foundation từ v1.0 (đã có sẵn, KHÔNG re-build)
+### STORE — Storage Audit + Cart→DB
 
-- Unified `ApiErrorResponse` envelope + `traceId` propagation across 6 services + gateway
-- Springdoc Swagger UI + OpenAPI codegen pipeline (FE 6 typed modules)
-- CRUD completeness + soft-delete baseline + admin/public route boundaries (in-memory layer)
-- Validation hardening (gateway pass-through + common-code taxonomy)
-- FE typed HTTP tier + ApiError dispatcher (5 failure branches) + middleware route protection
-- Playwright E2E suite hoạt động (12/12 PASS trên flow stub-verified)
+- [ ] **STORE-01** — Audit toàn FE codebase: grep `localStorage` + `sessionStorage`, classify mọi usage thành 3 nhóm: (a) user-data persist sang DB cần thiết, (b) UI preference giữ localStorage OK, (c) auth-token reviewable security. Output báo cáo trong phase SUMMARY.md.
+- [ ] **STORE-02** — Migrate cart từ `localStorage['cart']` sang DB. Order-svc V4 tạo `carts` + `cart_items` tables (per `user_id`). FE `services/cart.ts` chuyển sang API calls. Idempotent merge endpoint (`ON CONFLICT DO UPDATE`) khi guest login.
+- [ ] **STORE-03** — Migrate các user-data leak khác phát hiện trong STORE-01 (recently viewed / search history / wishlist nếu có / etc.) sang DB hoặc giải thích lý do giữ lại.
 
-## Audit Finding: DB Layer Hiện Trạng
+### ADMIN — Charts + Low-Stock + Order Detail Items
 
-Discovered 2026-04-25 trong khi planning v1.1: **không service nào có `spring-boot-starter-data-jpa` dependency, `docker-compose.yml` không có Postgres container, không có `application.yml` datasource config**. v1.0 "CRUD completeness" thực chất chạy trên in-memory store (ConcurrentHashMap-style), không persist gì. Đây là gap phải đóng trước khi C1/C2/C3 có thể "real" được — không có DB = không có v1.1 goal.
+- [ ] **ADMIN-01** — Revenue chart theo thời gian (line/area chart). Aggregate `orders` DELIVERED status, dropdown 7d/30d/90d/all. Default 30d.
+- [ ] **ADMIN-02** — Top products bán chạy (bar chart). Top-10 by quantity sold trong window đã chọn. Cùng date dropdown.
+- [ ] **ADMIN-03** — Order status distribution (pie/donut chart). Counts theo pending/confirmed/shipped/delivered/cancelled. Cùng date dropdown.
+- [ ] **ADMIN-04** — User signups theo thời gian (line chart). Daily new user count.
+- [ ] **ADMIN-05** — Low-stock alert: list/banner các SP có `stock < 10` (threshold configurable trong code). Hiển thị trên admin dashboard hoặc trang riêng.
+- [x] **ADMIN-06
+** — Admin order detail items fix: `/admin/orders/[id]` hiển thị full line items (image / name / brand / price / qty / subtotal) — hiện đang là hardcoded placeholder string "Chi tiết sản phẩm sẽ khả dụng sau khi Phase 8 hoàn thiện". `AdminOrder` interface cần thêm `items[]`, BE DTO check.
 
-## v1.1 Requirements
+### REV — Review Polish
 
-### C0. Database Foundation (depends-on cho C1/C2/C3)
+- [ ] **REV-04** — Author edit/delete review của mình. Edit chỉ chủ review hoặc 24h sau publish (configurable). Delete = soft-delete (`deleted_at` column), avg_rating recalc loại bỏ deleted. Admin vẫn xem.
+- [ ] **REV-05** — Sort review list by `helpful` (defer — KHÔNG có votes nên dùng `created_at DESC` làm fallback) / `newest` / `rating DESC` / `rating ASC`. Dropdown FE + BE query param.
+- [ ] **REV-06** — Admin moderation: `/admin/reviews` screen list + filter (visible/hidden) + actions hide/unhide/delete. Hide = `hidden BOOLEAN` column → user không thấy nhưng admin vẫn list được.
 
-- [ ] **DB-01**: Postgres service (single instance, multi-schema hoặc multi-db tùy phase plan) thêm vào `docker-compose.yml`; healthcheck đảm bảo DB ready trước khi services start; volume persist data giữa restarts.
-- [ ] **DB-02**: Add `spring-boot-starter-data-jpa` + `org.postgresql:postgresql` + `flywaydb:flyway-core` vào 5 services có entity (user, product, order, payment, inventory). Notification có thể giữ in-memory nếu chỉ dispatch.
-- [ ] **DB-03**: Mỗi service add `application.yml` datasource config (URL, username, password từ env vars), JPA properties (`ddl-auto: validate` — schema do Flyway control, KHÔNG `create-drop`), Flyway baseline migration `V1__init_schema.sql` reflect existing JPA entities.
-- [ ] **DB-04**: Refactor existing repositories từ in-memory → JPA: convert mỗi `XxxRepository` thành `interface XxxRepository extends JpaRepository<XxxEntity, Long>`; existing service methods reuse signatures; tests update accordingly.
-- [ ] **DB-05**: Seed dev data via Flyway `V2__seed_dev_data.sql` (profile `dev` only), extract từ `sources/frontend/src/mock-data/products.ts` + `orders.ts` + thêm 1 admin user (`admin/admin123`, BCrypt hash) + 5 categories. FE thấy đúng data như khi còn dùng mock → zero UX surprise.
-- [x] **DB-06
-**: End-to-end connectivity verify — `docker compose up` → tất cả services start green → gateway round-trip `GET /api/products` qua FE trả seeded products thật từ DB (không phải in-memory). Sau verify: xóa `sources/frontend/src/mock-data/` (đã không cần nữa).
+### AI — Claude API Chatbot MVP
 
-### C1. Auth Flow Thật
+- [ ] **AI-01** — Customer chatbot UI: floating widget button góc dưới phải mọi trang. Click mở modal chat. Streaming response (token-by-token), Markdown render cơ bản. Login required (guest thấy nút "đăng nhập để chat").
+- [ ] **AI-02** — System prompt thiết kế: vai trò "trợ lý mua sắm tmdt-use-gsd", domain electronics, ngôn ngữ Vietnamese, có thể trả lời FAQ + Q&A sản phẩm + recommend từ catalog. **Prompt caching** với `cache_control: { type: 'ephemeral' }` từ ngày 1.
+- [ ] **AI-03** — Context injection: top-N sản phẩm liên quan (semantic match đơn giản qua keyword/category) inject vào user message với XML tag `<product_context>...</product_context>` để chống prompt injection từ user-generated content.
+- [ ] **AI-04** — Chat history persist DB: schema `chat_sessions` (id, user_id, title, created_at, updated_at) + `chat_messages` (id, session_id, role, content, created_at). Sliding window 10 turns gần nhất gửi vào API. User xem được lịch sử sessions cũ.
+- [ ] **AI-05** — Admin "suggest reply" template: trong `/admin/orders/[id]`, button "AI suggest reply" generate gợi ý phản hồi customer dựa trên order context. Admin manual review + send. KHÔNG auto-confirm order.
 
-- [ ] **AUTH-01**: Backend ship `/api/users/auth/register` endpoint thật — nhận `{username, email, password}`, persist `UserEntity` với password hash (BCrypt), trả `201 Created` + user payload (không trả password). Trùng username/email → `409 CONFLICT` qua `ApiErrorResponse`.
-- [ ] **AUTH-02**: Backend ship `/api/users/auth/login` endpoint thật — verify credentials, issue JWT (HS256, claim: `sub=userId`, `username`, `roles`, `exp`), trả `{accessToken, user}`. Sai cred → `401 INVALID_CREDENTIALS`.
-- [ ] **AUTH-03**: Backend ship `/api/users/auth/logout` endpoint — invalidate token (blacklist hoặc client-side discard, chọn approach đơn giản nhất cho MVP).
-- [ ] **AUTH-04**: FE login form thật sự call `/api/users/auth/login` qua gateway (gỡ mock trong `services/auth.ts`); store token + user vào `localStorage` + middleware-readable cookie; redirect về `/` sau khi login thành công.
-- [ ] **AUTH-05**: FE register form thật sự call `/api/users/auth/register`; show field errors từ `ApiErrorResponse.fieldErrors`; auto-login sau register thành công.
-- [ ] **AUTH-06**: Session persist sau page reload — middleware đọc cookie/token, FE init state từ `localStorage` khi mount, protected routes (`/account/*`, `/checkout/*`, `/admin/*`) redirect đúng nếu không có session.
+### ORDER — Order Detail Items Fix
 
-### C2. Admin + Search Real Data
+- [x] **ORDER-01
+** — User order detail `/account/orders/[id]` hiển thị full line items. Verify BE `findByIdWithItems()` đã return đúng (research: BE OK), fix FE render nếu thiếu DTO mapping.
+- [x] **ORDER-02** — Admin order detail items đã cover trong ADMIN-06
+. Cross-reference (KHÔNG duplicate REQ).
 
-- [ ] **UI-01**: FE `/search` page rewire — input keyword call `listProducts({keyword, page, size})` qua gateway, render kết quả thật (gỡ placeholder/mock list); empty state hiển thị "Không tìm thấy sản phẩm cho '{keyword}'"; loading state hiển thị skeleton.
-- [ ] **UI-02**: FE `admin/products` migrate khỏi mock — list call `listProducts(admin scope)`; create/edit form call `createProduct` / `updateProduct`; delete confirm dialog call `deleteProduct`; success toast + refresh list.
-- [ ] **UI-03**: FE `admin/orders` migrate khỏi mock — list call `listOrders(admin scope)` real qua gateway; click vào row mở detail page show full order với line items + status; admin có thể update status (`PENDING → SHIPPED → DELIVERED`).
-- [ ] **UI-04**: FE `admin/users` migrate khỏi mock — list call `listUsers(admin scope)` real qua gateway; admin có thể view + soft-delete user (existing CRUD endpoints).
+*Note: ORDER-02 là pointer, count = 1 unique REQ trong category này.*
 
-### C3. Cart → Order Persistence Visible
+### COUP — Coupon System
 
-- [ ] **PERSIST-01**: Backend `ProductEntity` thêm field `stock: int` persist trong DB; `GET /api/products/{id}` + `GET /api/products/slug/{slug}` trả `stock` trong payload; `addToCart` flow check stock thật (không seed qua localStorage nữa); A4 step "out of stock" trả `409 STOCK_SHORTAGE` qua `ApiErrorResponse` khi stock=0.
-- [ ] **PERSIST-02**: Backend `OrderEntity` persist per-item `OrderItemEntity` rows (productId, productName snapshot, quantity, unitPrice snapshot, lineTotal); `OrderEntity` thêm `shippingAddress` (JSON column hoặc embedded) + `paymentMethod` (string); `POST /api/orders` save full breakdown; `GET /api/orders/{id}` + `GET /api/orders/me` trả full payload với items array.
-- [ ] **PERSIST-03**: FE order confirmation page (`/checkout/success`) + order detail page (`/account/orders/{id}`) render full breakdown thật từ backend payload (line items + shipping address + payment method + totals) — gỡ mock data.
+- [ ] **COUP-01** — Coupon table schema: `coupons` (id, code, type [PERCENT|FIXED], value, min_order_amount, max_total_uses, used_count, expires_at, active, created_at). `coupon_redemptions` (coupon_id, user_id, order_id, redeemed_at, UNIQUE(coupon_id, user_id) cho 1-lần/user). Both ở `order-svc` Flyway V3.
+- [ ] **COUP-02** — Admin CRUD `/admin/coupons` screen: list + create/edit/disable/delete coupon. Form validate type + value + expiry + min_order. Soft-disable = `active=false`.
+- [ ] **COUP-03** — FE checkout input mã giảm giá: text input + nút "Áp dụng". Validate qua `POST /api/orders/coupons/validate` (cart total + user_id + code) → return discount preview. Re-validate tại order create để chống TOCTOU.
+- [ ] **COUP-04** — Atomic redemption: `UPDATE coupons SET used_count = used_count + 1 WHERE id = ? AND active = true AND (max_total_uses IS NULL OR used_count < max_total_uses) AND expires_at > NOW()` + check `rows_affected = 1`. Insert vào `coupon_redemptions` cùng transaction với order create. Race-safe.
+- [ ] **COUP-05** — Order display: `/account/orders/[id]` + `/admin/orders/[id]` hiển thị coupon code + discount amount nếu order có coupon (lookup qua `coupon_redemptions.order_id`).
 
-## Future Requirements (defer sang v1.2)
+---
 
-Audit `.planning/v1.0-MILESTONE-AUDIT.md` đã liệt kê 17 deferred items; v1.1 chỉ pick 6 items có visible impact. Các items dưới đây defer tiếp:
+## Future Requirements (Defer v1.4+)
 
-- **D1** — Order → inventory.reserve real call (stock reservation chain)
-- **D2** — Payment-service vào checkout chain (real PAYMENT_FAILED body)
-- **D6** — Real 5xx HTML route từ gateway/Nginx (B5 stub)
-- **D7** — Code review WR-03/05/06/07 + IN-01..07 carry-over
-- **D8** — TEST-01 (integration suite) + OBS-01 (centralized tracing)
-- **D9** — Sibling-service handleFallback observability rollout (5 services còn lại)
-- **D10** — CategoryEntity.slug persist (đang dùng slugify fallback)
-- **D12** — CSP headers
-- **D13** — Server-side product price re-fetch (security)
-- **D14** — Replace X-User-Id header trust bằng JWT claim verification ở gateway (security)
-- **D17** — FE legacy types/index.ts + services/api.ts cleanup
+- **AI-06** — Agentic chatbot (tool use: browse catalog / add to cart / checkout cho user)
+- **AI-07** — Admin auto-confirm order rule-based (đủ stock + payment OK)
+- **REV-07** — Helpful votes (upvote/downvote review) — cần V_ migration mới
+- **STORE-04** — Auth-token migration localStorage → httpOnly cookie (security hardening — visible-first defer)
+- **COUP-06** — Coupon stacking (1 product-level + 1 cart-level)
+- **COUP-07** — Free shipping coupon (cần shipping fee logic)
+- **ADMIN-07** — Custom date picker (from-to) thay dropdown preset
+- **ACCT-01** — Wishlist (carry-over từ v1.2 Phase 12 SKIPPED)
+- **SEARCH-03/04** — Rating filter + URL state + in-stock + clear-all (carry-over)
+- **PUB-03** — Lightbox + axe-core a11y gate (carry-over)
+- **TEST-02-FULL** — Full E2E suite 8+ tests (carry-over, smoke 4 đã có)
+- **ACCT-04** — Avatar upload (multipart Thumbnailator, carry-over D-08)
+- **ORDER-03+** — Multi-step checkout (Shipping → Payment → Review)
+- **ORDER-04** — Recently viewed / Related products (rule-based recommendations)
 
-## Out of Scope (v1.1)
+---
 
-- Real payment gateway integration — mock acceptable cho dự án thử nghiệm
-- Production-grade auth (refresh tokens, OAuth, password reset email) — chỉ ship register + login + logout đơn giản
-- Mobile responsive polish toàn bộ — chỉ check không bị broken trên flow chính
-- Admin role-based access control phức tạp — đơn giản: kiểm tra `roles` array có chứa `ADMIN` là đủ
-- I18n cho error messages — tiếng Việt hardcoded OK
+## Out of Scope (v1.3 Explicit Exclusions)
 
-## Requirement Quality Self-Check
+- **Real payment gateway integration** — mock đủ cho dự án thử nghiệm GSD (Out of Scope project-wide, locked v1.0)
+- **Production-grade infrastructure** — load balancing, K8s, failover (project-wide lock)
+- **Mobile app** — web-only (project-wide lock)
+- **Real-time WebSockets** — polling/SSE đủ (project-wide lock)
+- **Backend hardening D1..D17 invisible** — visible-first priority giữ nguyên (carry-over từ v1.0/v1.1/v1.2). NGOẠI LỆ: nếu STORE-01 audit phát hiện security leak nghiêm trọng (vd. JWT in localStorage XSS-able), surface để user quyết định ad-hoc.
+- **Helpful votes trên reviews** — defer v1.4 per user answer
+- **Coupon stacking** — 1 mã/đơn lock per user answer
+- **Free shipping coupon** — defer v1.4 (cần shipping logic)
+- **Agentic chatbot tool-use** — MVP scope strictly customer FAQ + Q&A + recommendation per user answer
+- **Auto-confirm order AI** — admin chỉ "suggest reply", manual confirm per user answer
+- **Guest chatbot** — login required per user answer
+- **Admin user detail / admin product detail expansion** — KHÔNG có evidence missing screen quan trọng (admin orders chỉ thiếu items array, đã cover ADMIN-06)
+- **i18n** — Vietnamese only
 
-| Tiêu chí | Kết quả |
-|---|---|
-| Specific & testable | ✓ Mỗi REQ có endpoint/behavior cụ thể, có thể UAT |
-| User-centric | ✓ AUTH/UI viết theo "User can / FE shows"; PERSIST viết theo "user thấy full breakdown"; DB-06 verify qua FE round-trip thật |
-| Atomic | ✓ DB chia 6 sub-req (compose / deps / config / refactor / seed / verify); AUTH 6; UI 4; PERSIST 3 |
-| Independent (trong cluster) | ✓ Trong-cluster độc lập. Cross-cluster: C0 block C1/C2/C3 (xử lý bằng wave-based execution trong roadmap) |
+---
 
 ## Traceability
 
-| REQ | Phase | Plan | Status |
-|---|---|---|---|
-| DB-01 | Phase 5 | TBD | active |
-| DB-02 | Phase 5 | TBD | active |
-| DB-03 | Phase 5 | TBD | active |
-| DB-04 | Phase 5 | TBD | active |
-| DB-05 | Phase 5 | TBD | active |
-| DB-06 | Phase 5 | TBD | active |
-| AUTH-01 | Phase 6 | TBD | active |
-| AUTH-02 | Phase 6 | TBD | active |
-| AUTH-03 | Phase 6 | TBD | active |
-| AUTH-04 | Phase 6 | TBD | active |
-| AUTH-05 | Phase 6 | TBD | active |
-| AUTH-06 | Phase 6 | TBD | active |
-| UI-01 | Phase 7 | TBD | active |
-| UI-02 | Phase 7 | TBD | active |
-| UI-03 | Phase 7 | TBD | active |
-| UI-04 | Phase 7 | TBD | active |
-| PERSIST-01 | Phase 8 | TBD | active |
-| PERSIST-02 | Phase 8 | TBD | active |
-| PERSIST-03 | Phase 8 | TBD | active |
+| REQ-ID | Phase | Plan(s) | Status |
+|--------|-------|---------|--------|
+| SEED-01 | Phase 16 | 16-02 | Satisfied (2026-05-02) |
+| SEED-02 | Phase 16 | 16-01, 16-02 | Satisfied (2026-05-02) |
+| SEED-03 | Phase 16 | 16-01, 16-02, 16-03 | Satisfied (2026-05-02 — runtime verify defer 16-VERIFICATION.md §4) |
+| SEED-04 | Phase 16 | 16-02, 16-03 | Satisfied (2026-05-02 — prod negative test defer 16-VERIFICATION.md §2) |
+| ORDER-01 | Phase 17 | — | Active |
+| ADMIN-06 | Phase 17 | — | Active |
+| STORE-01 | Phase 18 | — | Active |
+| STORE-02 | Phase 18 | — | Active |
+| STORE-03 | Phase 18 | — | Active |
+| ADMIN-01 | Phase 19 | — | Active |
+| ADMIN-02 | Phase 19 | — | Active |
+| ADMIN-03 | Phase 19 | — | Active |
+| ADMIN-04 | Phase 19 | — | Active |
+| ADMIN-05 | Phase 19 | — | Active |
+| COUP-01 | Phase 20 | — | Active |
+| COUP-02 | Phase 20 | — | Active |
+| COUP-03 | Phase 20 | — | Active |
+| COUP-04 | Phase 20 | — | Active |
+| COUP-05 | Phase 20 | — | Active |
+| REV-04 | Phase 21 | — | Active |
+| REV-05 | Phase 21 | — | Active |
+| REV-06 | Phase 21 | — | Active |
+| AI-01 | Phase 22 | — | Active |
+| AI-02 | Phase 22 | — | Active |
+| AI-03 | Phase 22 | — | Active |
+| AI-04 | Phase 22 | — | Active |
+| AI-05 | Phase 22 | — | Active |
+
+**Total active REQs: 27** (SEED 4 + ORDER 1 + ADMIN-06 1 + STORE 3 + ADMIN-01-05 5 + COUP 5 + REV 3 + AI 5)
+**Mapped: 27/27** (100% coverage)

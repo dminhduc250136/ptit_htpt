@@ -1,119 +1,255 @@
-# Roadmap: tmdt-use-gsd E-Commerce Platform
+# ROADMAP — tmdt-use-gsd
 
-## Overview
+**Project:** tmdt-use-gsd (Spring Boot microservices + Next.js e-commerce)
+**Core Value:** Demo end-to-end shopping experience hoạt động với real data ở mọi điểm user nhìn thấy, đồng thời rèn quy trình GSD từ planning → execute → verify → archive.
 
-Stabilize the existing microservices + gateway + Next.js frontend by making the API surface consistent, complete, and well-documented (Swagger/OpenAPI), then evolve through hardening + integration milestones to reach a production-leaning MVP.
+---
 
-## Shipped Milestones
+## Milestones
 
-- ✅ **v1.0 — MVP Stabilization** (shipped 2026-04-25, 4 phases, 14 plans, 57 commits) — see [milestones/v1.0-ROADMAP.md](./milestones/v1.0-ROADMAP.md)
+| Milestone | Goal | Phases | Status |
+|-----------|------|--------|--------|
+| v1.0 — MVP Stabilization | API surface nhất quán + Swagger/OpenAPI + contract alignment | Phase 1-4 | SHIPPED 2026-04-25 |
+| v1.1 — Real End-User Experience | DB foundation + auth thật + admin CRUD + cart→order persistence | Phase 5-8 | SHIPPED 2026-04-26 |
+| v1.2 — UI/UX Completion | Residual closure + profile + address book + reviews + search + public polish | Phase 9-15 | SHIPPED 2026-05-02 |
+| v1.3 — Catalog Realism & Commerce Intelligence | Seed catalog đầy đủ, cart→DB, admin analytics, review polish, AI chatbot, coupon | Phase 16-22 | ACTIVE |
 
-## Current Milestone
+---
 
-**v1.1 — Real End-User Experience** (started 2026-04-25, priority: visible-first)
+## Pre-Phase Setup (v1.3)
 
-Mục tiêu: biến demo flow từ "stub-verified" thành "real visible end-to-end" — mọi thứ user click trên UI hoạt động với real data thay vì mock/seeded. Audit phát hiện v1.0 chạy in-memory (không có DB layer) → v1.1 mở đầu bằng cluster C0 Database Foundation block C1/C2/C3.
+Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — ghi chú cho implementer.
 
-## Phase Numbering
+**Flyway V-number reservations:**
 
-- Integer phases (1, 2, 3): Planned milestone work
-- Decimal phases (5.1, 5.2): Urgent insertions (marked with INSERTED)
-- v1.1 phases tiếp tục từ v1.0 (Phase 5..8), KHÔNG reset
+| Service | Version | Purpose | Phase |
+|---------|---------|---------|-------|
+| product-svc | V101 | Seed ~100 sản phẩm trong db/seed-dev/ (Spring profile `dev` only) | Phase 16 |
+| order-svc | V3 | Coupons + coupon_redemptions tables | Phase 20 |
+| order-svc | V4 | Carts + cart_items tables | Phase 18 |
+| chat_svc | — | Schema init qua Next.js API route (raw pg driver, không Flyway) | Phase 22 |
 
-## Phases (v1.1)
+**New stack packages:**
 
-- [ ] **Phase 5: Database Foundation** — Đưa Postgres + JPA + Flyway vào stack, refactor in-memory repos, seed dev data từ FE mocks (block các phase sau)
-- [x] **Phase 6: Real Auth Flow** — Backend ship `/api/users/auth/{register,login,logout}` thật + FE form gỡ mock, session persist sau reload (completed 2026-04-26)
-- [x] **Phase 7: Search + Admin Real Data** — `/search` rewire + admin/products/orders/users migrate khỏi mock sang CRUD thật qua gateway (completed 2026-04-26)
-- [x] **Phase 8: Cart → Order Persistence Visible** — ProductEntity.stock persist + OrderEntity per-item rows + shippingAddress/paymentMethod, FE order detail render full breakdown thật ✅ 2026-04-26
+| Package | Version | Purpose | Phase |
+|---------|---------|---------|-------|
+| recharts | 3.8.1 | Admin analytics charts (SVG-based, React JSX API) | Phase 19 |
+| @anthropic-ai/sdk | 0.92.0 | Claude API chatbot (Next.js API route proxy) | Phase 22 |
+
+**Spring profile `dev` isolation:**
+- Seed migration `V101` phải ở `classpath:db/seed-dev/` (KHÔNG phải `classpath:db/migration/`) — tiếp nối V100 đã có
+- `application.yml` profile=dev đã include `classpath:db/seed-dev` trong `spring.flyway.locations` — KHÔNG cần sửa config (verified RESEARCH Finding 1)
+- Production profile KHÔNG chạy seed
+
+---
+
+## Phases
+
+- [x] **Phase 17: Sửa Order Detail Items** — Fix hardcoded placeholder, hiển thị full line items cả user + admin (4/4 plans complete 2026-05-02)
+- [x] **Phase 16: Seed Catalog Hiện Thực** ✅ 2026-05-02 — ~100 sản phẩm / 5 tech categories + Unsplash WebP + brand thực tế (3/3 plans, manual UAT defer cho `/gsd-verify-work`)
+- [ ] **Phase 18: Kiểm Toán Storage + Cart→DB** — Audit localStorage/sessionStorage + migrate cart sang DB per-user
+- [ ] **Phase 19: Hoàn Thiện Admin: Charts + Low-Stock** — 4 analytics charts + low-stock alert dashboard
+- [ ] **Phase 20: Hệ Thống Coupon** — % off + fixed amount, admin CRUD, checkout input, atomic redemption
+- [ ] **Phase 21: Hoàn Thiện Reviews** — Author edit/delete + sort controls + admin moderation
+- [ ] **Phase 22: AI Chatbot Claude API MVP** — Customer FAQ + product Q&A + recommendation, streaming, history persist
+
+---
 
 ## Phase Details
 
-### Phase 5: Database Foundation
-**Goal**: Stack có Postgres thật + JPA + Flyway; toàn bộ repos refactor khỏi in-memory; seed dev data từ FE mocks để zero UX surprise; gateway round-trip qua FE trả seeded data thật từ DB.
-**Depends on**: Nothing (đầu milestone v1.1; v1.0 đã shipped)
-**Requirements**: DB-01, DB-02, DB-03, DB-04, DB-05, DB-06
-**Success Criteria** (what must be TRUE):
-  1. `docker compose up` khởi động Postgres container green với healthcheck PASS, volume persist data giữa restarts
-  2. 5 services (user/product/order/payment/inventory) start green với JPA + Flyway baseline migration applied (`V1__init_schema.sql`)
-  3. Flyway dev seed (`V2__seed_dev_data.sql`) populate đúng products/orders từ FE mocks + 1 admin user (`admin/admin123` BCrypt) + 5 categories
-  4. FE `GET /api/products` qua gateway trả seeded products thật từ Postgres (verify bằng cách query trực tiếp DB → match payload)
-  5. Sau verify: `sources/frontend/src/mock-data/` đã được xóa; FE flow visible (browse danh mục, product detail, add-to-cart) vẫn PASS với seeded data thật từ Postgres. Checkout submit + confirmation full breakdown defer Phase 8 (PERSIST-01..03) — Phase 5 chỉ cam kết các trang đó không vỡ build/render.
-**Plans:** 9 plans
-Plans:
-- [ ] 05-01-PLAN.md — Pre-flight: capture OpenAPI baselines (5 services) + verify BCrypt admin123 hash
-- [ ] 05-02-PLAN.md — Infra: Postgres container + db/init/01-schemas.sql + docker-compose wiring (5 services depends_on healthcheck)
-- [ ] 05-03-PLAN.md — product-service refactor (canonical) — JPA + Flyway V1 + V2 (5 cats + 10 products) + DTO/Mapper boundary
-- [ ] 05-04-PLAN.md — user-service refactor — rename UserProfile→UserEntity + V1 + V2 (admin BCrypt + demo_user)
-- [ ] 05-05-PLAN.md — order-service refactor — V1 (preserve `note` field) + V2 (2 demo orders cho demo_user)
-- [ ] 05-06-PLAN.md — payment-service refactor — V1 align entity actual fields (sessionId/reference/message) + KHÔNG V2
-- [ ] 05-07-PLAN.md — inventory-service refactor — rename InventoryItem→InventoryEntity + V1 + V2 (10 rows align prod-001..010)
-- [ ] 05-08-PLAN.md — Integration verify: docker compose stack + Flyway history + gateway round-trip + OpenAPI diff = 0
-- [ ] 05-09-PLAN.md — FE cleanup: xóa mock-data + rewire flow chính + Playwright audit + manual sign-off
+### Phase 16: Seed Catalog Hiện Thực
 
-### Phase 6: Real Auth Flow
-**Goal**: User đăng ký + đăng nhập + đăng xuất thật qua backend; JWT issued; FE form gỡ mock; session persist sau page reload; protected routes redirect đúng khi không có session.
-**Depends on**: Phase 5 (cần `UserEntity` persist trong Postgres để register/login query thật)
-**Requirements**: AUTH-01, AUTH-02, AUTH-03, AUTH-04, AUTH-05, AUTH-06
+**Goal:** Người dùng truy cập trang sản phẩm thấy ~100 sản phẩm thực tế với ảnh WebP chất lượng cao, thuộc đúng 5 danh mục tech, hiển thị brand chính xác và giá realistic
+**Depends on:** Không có (standalone foundation)
+**Requirements:** SEED-01, SEED-02, SEED-03, SEED-04
 **Success Criteria** (what must be TRUE):
-  1. User register qua FE form → backend persist `UserEntity` với BCrypt hash → `201 Created`; trùng username/email trả `409 CONFLICT` qua `ApiErrorResponse` và FE hiện field errors
-  2. User login qua FE form → backend verify cred → trả `{accessToken, user}` (JWT HS256, claim `sub/username/roles/exp`); sai cred → `401 INVALID_CREDENTIALS` và FE hiện thông báo lỗi
-  3. Sau login: token + user lưu localStorage + middleware-readable cookie; user reload page vẫn còn session, không bị kick về `/login`
-  4. Logout endpoint invalidate token (blacklist hoặc client-side discard); sau logout user truy cập `/account/*` bị redirect về `/login` đúng
-  5. Protected routes (`/account/*`, `/checkout/*`, `/admin/*`) middleware redirect khi không có session; admin role check (`roles` array contains `ADMIN`) gate `/admin/*` đúng
+  1. Người dùng truy cập `/products` thấy ~100 sản phẩm phân phối qua 5 categories: điện thoại, laptop, chuột, bàn phím, tai nghe (categories cũ fashion/household/books/cosmetics đã biến mất)
+  2. Mỗi sản phẩm có ảnh WebP hiển thị đúng từ Unsplash CDN (không bị broken image), cùng tên brand thực tế như Apple, Samsung, Dell, Logitech, Sony, Razer, ASUS
+  3. FilterSidebar brand multi-select hiển thị brand list đúng domain tech (không còn brand sai domain)
+  4. Developer restart với Spring profile `dev` thì seed chạy; restart với profile `prod` thì seed KHÔNG chạy — Flyway V101 idempotent (`ON CONFLICT DO NOTHING`)
 **Plans:** 3 plans
-Plans:
-- [x] 06-01-PLAN.md — Backend auth infra: pom.xml + JWT config + PasswordEncoderConfig + JwtUtils + AuthService + AuthController (AUTH-01, AUTH-02, AUTH-03)
-- [x] 06-02-PLAN.md — FE types + token/auth services: RegisterRequest/AuthResponse/User type fixes + setUserRole/clearUserRole + auth.ts wiring (AUTH-04, AUTH-05, AUTH-06)
-- [x] 06-03-PLAN.md — FE pages + middleware + /403: login/register wire real backend, middleware /account/* + admin role check, /403 page (AUTH-03, AUTH-04, AUTH-05, AUTH-06)
+- [x] 16-01-PLAN.md — Curate IMAGES.csv (≥100 Unsplash photo IDs cho 5 tech categories) ✅ 2026-05-02 (107 IDs, commit 20be054)
+- [x] 16-02-PLAN.md — V101__seed_catalog_realistic.sql + patch ROADMAP V7→V101 ✅ 2026-05-02 (100 SP / 25 brands, commits d46f028 + 3aca025)
+- [x] 16-03-PLAN.md — E2E Playwright spec + manual VERIFICATION.md + human acceptance ✅ 2026-05-02 (seed-catalog.spec.ts 7 tests + 16-VERIFICATION.md 5 sections, commits f842cd2 + 5f8257a; checkpoint auto-approved trong auto mode, manual UAT defer cho /gsd-verify-work)
+**UI hint**: yes
 
-### Phase 7: Search + Admin Real Data
-**Goal**: FE `/search` page và toàn bộ `admin/*` pages migrate khỏi mock sang CRUD thật qua gateway; admin có thể quản lý products/orders/users với data thật từ Postgres.
-**Depends on**: Phase 5 (cần DB thật để CRUD), Phase 6 (cần admin role + JWT để gate `/admin/*` pages)
-**Requirements**: UI-01, UI-02, UI-03, UI-04
-**Success Criteria** (what must be TRUE):
-  1. User nhập keyword vào `/search` → FE call `listProducts({keyword, page, size})` qua gateway → render kết quả thật từ DB; empty state hiện "Không tìm thấy sản phẩm cho '{keyword}'", loading state hiện skeleton
-  2. Admin login → vào `admin/products` → list từ backend; create/edit/delete product qua form/dialog → success toast → list refresh; gỡ hoàn toàn mock data
-  3. Admin vào `admin/orders` → list orders thật; click row mở detail page show full order với line items + status; admin update status (`PENDING → SHIPPING → DELIVERED`) persist trong DB
-  4. Admin vào `admin/users` → list users thật; admin edit fullName/phone/roles + soft-delete user (CUSTOMER only), list refresh đúng sau action
-**Plans:** 6 plans
-Plans:
-- [x] 07-01-PLAN.md — Gateway admin routes (D-01, 6 routes mới) + Backend keyword search fix (D-02) (UI-01, UI-02, UI-03, UI-04)
-- [x] 07-02-PLAN.md — Product-service Flyway V2 migration + ProductEntity extension + ProductUpsertRequest (D-03) (UI-02)
-- [x] 07-03-PLAN.md — User-service Flyway V2 migration + UserEntity chain + PATCH /admin/users/{id} (D-04, D-05) (UI-04)
-- [x] 07-04-PLAN.md — FE admin services (products.ts, orders.ts, users.ts new) + ToastProvider in admin layout (UI-01, UI-02, UI-03, UI-04)
-- [x] 07-05-PLAN.md — Admin Products page wire + modal add/edit (D-06, D-07) + Admin Orders list + detail page (D-08) (UI-02, UI-03)
-- [x] 07-06-PLAN.md — Admin Users page wire + column adapt (D-09) + UserEditModal PATCH (D-10) (UI-04)
+---
 
-### Phase 8: Cart → Order Persistence Visible
-**Goal**: ProductEntity.stock persist trong DB (gỡ "cart-seed via localStorage"); OrderEntity persist per-item OrderItem rows + shippingAddress + paymentMethod; FE order confirmation + order detail render full breakdown thật từ backend payload.
-**Depends on**: Phase 5 (cần entity layer thật), Phase 6 (cần user authenticated để place order với userId real từ JWT)
-**Requirements**: PERSIST-01, PERSIST-02, PERSIST-03
+### Phase 17: Sửa Order Detail Items
+
+**Goal:** Người dùng và admin xem chi tiết đơn hàng thấy đầy đủ danh sách sản phẩm đã mua thay vì placeholder text
+**Depends on:** Không có (bug fix độc lập)
+**Requirements:** ORDER-01, ADMIN-06
 **Success Criteria** (what must be TRUE):
-  1. `ProductEntity.stock` persist trong DB; `GET /api/products/{id}` + `GET /api/products/slug/{slug}` trả `stock` trong payload; A4 add-to-cart respect stock thật, hết "cart-seed via localStorage"
-  2. Khi `stock=0` và user thêm vào cart → backend trả `409 STOCK_SHORTAGE` qua `ApiErrorResponse`; FE dispatcher hiện thông báo "Hết hàng" đúng cho user
-  3. `POST /api/orders` persist `OrderEntity` với per-item `OrderItemEntity` rows (productId, productName snapshot, quantity, unitPrice snapshot, lineTotal) + `shippingAddress` (JSON/embedded) + `paymentMethod`
-  4. `GET /api/orders/{id}` + `GET /api/orders/me` trả full payload với items array + shippingAddress + paymentMethod
-  5. FE `/checkout/success` (confirmation) và `/account/orders/{id}` (detail) render full breakdown thật từ backend (line items + địa chỉ + phương thức thanh toán + totals); hết mock data trên 2 trang này
+  1. Người dùng vào `/account/orders/[id]` thấy danh sách line items với ảnh sản phẩm, tên, brand, đơn giá, số lượng, thành tiền — KHÔNG có placeholder text
+  2. Admin vào `/admin/orders/[id]` thấy đúng danh sách sản phẩm chi tiết (KHÔNG còn chuỗi "Chi tiết sản phẩm sẽ khả dụng sau khi Phase 8 hoàn thiện")
+  3. `AdminOrder` TypeScript interface có trường `items: OrderItem[]` và FE parse `ApiResponse<OrderDto>` unwrap đúng
+**Plans:** 4/4 plans complete
+
+Plans:
+- [x] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
+- [x] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
+- [x] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
+- [x] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
+**UI hint**: yes
+
+---
+
+### Phase 18: Kiểm Toán Storage + Cart→DB
+
+**Goal:** Giỏ hàng của người dùng persist trên server (không mất khi clear browser), và toàn bộ data user-sensitive không còn rò rỉ qua localStorage
+**Depends on:** Phase 16 (cần sản phẩm thực tế để test add-to-cart workflow)
+**Requirements:** STORE-01, STORE-02, STORE-03
+**Success Criteria** (what must be TRUE):
+  1. Người dùng add sản phẩm vào giỏ, đóng tab, mở lại → giỏ hàng vẫn còn đủ (persist qua server, không phụ thuộc localStorage)
+  2. Guest add vào giỏ → login → giỏ hàng merge đúng, không bị duplicate item
+  3. Audit report (SUMMARY.md) liệt kê tất cả `localStorage`/`sessionStorage` keys được classify: (a) đã migrate sang DB, (b) UI preference giữ lại hợp lý, (c) auth-token reviewed
+  4. Cart localStorage không chứa dữ liệu user sau khi logout
 **Plans:** 4 plans
+
 Plans:
-- [ ] 08-01-PLAN.md — product-service: Flyway V3 migration (stock column + seed 50) + ProductEntity.stock field + ProductCrudService wire (PERSIST-01 backend)
-- [ ] 08-02-PLAN.md — order-service: Flyway V2 migration (order_items table + shipping_address/payment_method columns) + OrderItemEntity + OrderEntity extend + OrderDto/Mapper + createOrderFromCommand() wire items (PERSIST-02, PERSIST-03 backend)
-- [ ] 08-03-PLAN.md — FE: checkout redirect sang /account/orders/{id} (bỏ modal) + order detail page async fetch + full breakdown UI + CSS table classes (PERSIST-03 FE)
-- [ ] 08-04-PLAN.md — FE: product detail stock display wire thật + disabled bug fix (D-13) + quantity max=stock (D-15) + CSS stock classes (PERSIST-01 FE)
+- [x] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
+- [x] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
+- [x] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
+- [x] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
+**UI hint**: yes
 
-## Progress
+---
 
-| Milestone | Phases Complete | Status | Shipped |
-|-----------|-----------------|--------|---------|
-| v1.0 MVP Stabilization | 4/4 | Shipped | 2026-04-25 |
-| v1.1 Real End-User Experience | 3/4 | Active | — |
+### Phase 19: Hoàn Thiện Admin: Charts + Low-Stock
 
-### v1.1 Phase Progress
+**Goal:** Admin nhìn vào dashboard thấy 4 biểu đồ analytics thực tế và nhận cảnh báo tồn kho thấp để ra quyết định kinh doanh
+**Depends on:** Phase 16 (cần catalog data thật để charts có ý nghĩa), Phase 17 (admin order UX hoàn chỉnh)
+**Requirements:** ADMIN-01, ADMIN-02, ADMIN-03, ADMIN-04, ADMIN-05
+**Success Criteria** (what must be TRUE):
+  1. Admin thấy biểu đồ doanh thu theo thời gian (line/area chart) với dropdown 7d/30d/90d/all — default 30d, giá trị aggregate từ đơn hàng DELIVERED thật
+  2. Admin thấy top-10 sản phẩm bán chạy (bar chart) theo số lượng bán trong window đã chọn
+  3. Admin thấy phân phối trạng thái đơn hàng (pie/donut chart) với counts thật: pending/confirmed/shipped/delivered/cancelled
+  4. Admin thấy biểu đồ user signups mới theo ngày (line chart) với số liệu thật từ user-svc
+  5. Admin thấy danh sách/banner sản phẩm có `stock < 10` trực tiếp trên dashboard — click được để vào trang edit sản phẩm đó
+**Plans:** 4 plans
+
+Plans:
+- [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
+- [ ] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
+- [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
+- [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
+**UI hint**: yes
+
+---
+
+### Phase 20: Hệ Thống Coupon
+
+**Goal:** Khách hàng có thể nhập mã giảm giá hợp lệ tại checkout và nhận giảm giá tương ứng; admin quản lý toàn bộ vòng đời coupon
+**Depends on:** Phase 18 (cart phải persist server-side để coupon validation dùng server-side cart total)
+**Requirements:** COUP-01, COUP-02, COUP-03, COUP-04, COUP-05
+**Success Criteria** (what must be TRUE):
+  1. Người dùng nhập mã coupon hợp lệ tại checkout → thấy preview discount amount trước khi confirm — mã expired/sai/đã dùng → thấy thông báo lỗi rõ ràng
+  2. Admin tại `/admin/coupons` tạo, chỉnh sửa, disable/delete coupon với đầy đủ field: type (% hoặc fixed), value, min_order, expiry, max_total_uses
+  3. Hai user cùng dùng coupon "last slot" đồng thời → chỉ 1 user thành công (race condition safe, KHÔNG double-redemption)
+  4. Đơn hàng tại `/account/orders/[id]` và `/admin/orders/[id]` hiển thị coupon code + discount amount nếu order có áp dụng coupon
+**Plans:** 4 plans
+
+Plans:
+- [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
+- [ ] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
+- [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
+- [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
+**UI hint**: yes
+
+---
+
+### Phase 21: Hoàn Thiện Reviews
+
+**Goal:** Tác giả review có thể sửa/xoá review của mình; người dùng có thể sắp xếp reviews theo ý muốn; admin có thể kiểm duyệt reviews vi phạm
+**Depends on:** Phase 16 (cần catalog thật để test reviews trên sản phẩm thực tế)
+**Requirements:** REV-04, REV-05, REV-06
+**Success Criteria** (what must be TRUE):
+  1. Tác giả review thấy nút "Sửa" và "Xoá" trên review của mình — sửa thành công cập nhật nội dung; xoá thành công ẩn review khỏi danh sách công khai nhưng avg_rating recalculate đúng
+  2. Người dùng chọn sort "Mới nhất" / "Đánh giá cao nhất" / "Đánh giá thấp nhất" → danh sách review thay đổi thứ tự ngay lập tức (query param `?sort=`)
+  3. Admin tại `/admin/reviews` thấy danh sách tất cả reviews, filter được theo visible/hidden, có thể hide hoặc unhide review bất kỳ — review bị hide không hiển thị cho user thường
+**Plans:** 4 plans
+
+Plans:
+- [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
+- [ ] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
+- [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
+- [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
+**UI hint**: yes
+
+---
+
+### Phase 22: AI Chatbot Claude API MVP
+
+**Goal:** Khách hàng đăng nhập có thể hỏi chatbot về sản phẩm và nhận gợi ý mua sắm bằng tiếng Việt; admin nhận gợi ý reply tự động cho đơn hàng
+**Depends on:** Phase 16 (cần catalog đầy đủ để chatbot product Q&A có giá trị thực tế)
+**Requirements:** AI-01, AI-02, AI-03, AI-04, AI-05
+**Success Criteria** (what must be TRUE):
+  1. Người dùng đã đăng nhập thấy floating chat button góc dưới phải mọi trang — click mở modal, nhắn tin và nhận streaming response token-by-token bằng tiếng Việt; guest thấy nút "Đăng nhập để chat"
+  2. Chatbot trả lời về sản phẩm có liên quan từ catalog (tên, giá, brand đúng) khi được hỏi — system prompt đã inject context sản phẩm với XML tag isolation
+  3. Người dùng mở lại chatbot sau khi đóng tab → thấy lịch sử chat sessions cũ, có thể tiếp tục conversation
+  4. Admin tại `/admin/orders/[id]` click "AI suggest reply" → nhận gợi ý phản hồi customer dựa trên context order — admin review và gửi thủ công (KHÔNG auto-confirm)
+  5. API key Anthropic KHÔNG bao giờ xuất hiện trong Network tab của browser (proxy qua Next.js API route)
+**Plans:** 4 plans
+
+Plans:
+- [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
+- [ ] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
+- [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
+- [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
+**UI hint**: yes
+
+---
+
+## Progress Table
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 5. Database Foundation | 9/9 | ✅ Complete | 2026-04-26 |
-| 6. Real Auth Flow | 3/3 | ✅ Complete | 2026-04-26 |
-| 7. Search + Admin Real Data | 6/6 | ✅ Complete | 2026-04-26 |
-| 8. Cart → Order Persistence Visible | 0/4 | Not started | — |
+| 17. Sửa Order Detail Items | 4/4 | Complete    | 2026-05-02 |
+| 16. Seed Catalog Hiện Thực | 2/3 | In progress | - |
+| 18. Kiểm Toán Storage + Cart→DB | 0/? | Not started | - |
+| 19. Hoàn Thiện Admin: Charts + Low-Stock | 0/? | Not started | - |
+| 20. Hệ Thống Coupon | 0/? | Not started | - |
+| 21. Hoàn Thiện Reviews | 0/? | Not started | - |
+| 22. AI Chatbot Claude API MVP | 0/? | Not started | - |
+
+---
+
+## Coverage Map (v1.3)
+
+| REQ-ID | Phase |
+|--------|-------|
+| SEED-01 | Phase 16 |
+| SEED-02 | Phase 16 |
+| SEED-03 | Phase 16 |
+| SEED-04 | Phase 16 |
+| ORDER-01 | Phase 17 |
+| ADMIN-06 | Phase 17 |
+| STORE-01 | Phase 18 |
+| STORE-02 | Phase 18 |
+| STORE-03 | Phase 18 |
+| ADMIN-01 | Phase 19 |
+| ADMIN-02 | Phase 19 |
+| ADMIN-03 | Phase 19 |
+| ADMIN-04 | Phase 19 |
+| ADMIN-05 | Phase 19 |
+| COUP-01 | Phase 20 |
+| COUP-02 | Phase 20 |
+| COUP-03 | Phase 20 |
+| COUP-04 | Phase 20 |
+| COUP-05 | Phase 20 |
+| REV-04 | Phase 21 |
+| REV-05 | Phase 21 |
+| REV-06 | Phase 21 |
+| AI-01 | Phase 22 |
+| AI-02 | Phase 22 |
+| AI-03 | Phase 22 |
+| AI-04 | Phase 22 |
+| AI-05 | Phase 22 |
+
+**Mapped: 27/27 REQs** (SEED 4 + ORDER 1 + ADMIN-06 1 + STORE 3 + ADMIN-01-05 5 + COUP 5 + REV 3 + AI 5)
+
+---
+
+*Roadmap created: 2026-05-02 — Milestone v1.3 Catalog Realism & Commerce Intelligence*
+*Phase numbering tiếp tục từ Phase 16 (v1.2 kết thúc Phase 15)*

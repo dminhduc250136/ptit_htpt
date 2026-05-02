@@ -16,6 +16,10 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -31,25 +35,44 @@ public class ProductCrudService {
   }
 
   public Map<String, Object> listProducts(int page, int size, String sort, boolean includeDeleted) {
-    return listProducts(page, size, sort, includeDeleted, null);
+    return listProducts(page, size, sort, includeDeleted, null, null, null, null);
   }
 
   public Map<String, Object> listProducts(int page, int size, String sort,
                                           boolean includeDeleted, String keyword) {
-    // Note: @SQLRestriction("deleted = false") filters soft-deleted at SQL layer.
-    // includeDeleted=true path không trả về deleted records nữa (acceptable Phase 5 — admin
-    // soft-delete recovery defer Phase 8). Filter giữ lại để keep API contract.
-    List<ProductEntity> all = productRepo.findAll().stream()
-        .filter(product -> includeDeleted || !product.deleted())
-        .filter(product -> keyword == null || keyword.isBlank() ||
-            product.name().toLowerCase().contains(keyword.toLowerCase()))  // D-02: keyword filter
-        .sorted(productComparator(sort))
-        .toList();
-    Map<String, Object> page0 = paginate(all, page, size);
-    @SuppressWarnings("unchecked")
-    List<ProductEntity> content = (List<ProductEntity>) page0.get("content");
-    page0.put("content", content.stream().map(this::toResponse).toList());
-    return page0;
+    return listProducts(page, size, sort, includeDeleted, keyword, null, null, null);
+  }
+
+  /**
+   * Phase 14 / Plan 01 (D-06, D-07, D-08): list products với JPQL filters.
+   *
+   * <p>{@code includeDeleted} giữ trong chữ ký để KHÔNG break callers cũ — không còn ý nghĩa
+   * vì @SQLRestriction filter ở SQL layer (đồng bộ comment cũ Phase 5/8).
+   *
+   * <p>Normalize: empty/blank keyword → null, empty brands list → null để JPQL `IS NULL` clause skip.
+   */
+  public Map<String, Object> listProducts(int page, int size, String sort,
+                                          boolean includeDeleted, String keyword,
+                                          List<String> brands, BigDecimal priceMin,
+                                          BigDecimal priceMax) {
+    String normalizedKeyword = (keyword == null || keyword.isBlank()) ? null : keyword;
+    List<String> normalizedBrands = (brands == null || brands.isEmpty()) ? null : brands;
+
+    Pageable pageable = PageRequest.of(Math.max(page, 0),
+        size <= 0 ? 20 : Math.min(size, 100), parseSort(sort));
+
+    Page<ProductEntity> resultPage = productRepo.findWithFilters(
+        normalizedKeyword, normalizedBrands, priceMin, priceMax, pageable);
+
+    Map<String, Object> response = new LinkedHashMap<>();
+    response.put("content", resultPage.getContent().stream().map(this::toResponse).toList());
+    response.put("totalElements", resultPage.getTotalElements());
+    response.put("totalPages", resultPage.getTotalPages());
+    response.put("currentPage", resultPage.getNumber());
+    response.put("pageSize", resultPage.getSize());
+    response.put("isFirst", resultPage.isFirst());
+    response.put("isLast", resultPage.isLast());
+    return response;
   }
 
   public ProductEntity getProduct(String id, boolean includeDeleted) {
@@ -126,6 +149,14 @@ public class ProductCrudService {
     return page0;
   }
 
+  /**
+   * Phase 14 / Plan 01 (D-03): trả danh sách thương hiệu DISTINCT alphabetical
+   * cho FE FilterSidebar. Delegate trực tiếp sang repository.
+   */
+  public List<String> listBrands() {
+    return productRepo.findDistinctBrands();
+  }
+
   public CategoryEntity getCategory(String id, boolean includeDeleted) {
     CategoryEntity category = categoryRepo.findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found"));
@@ -176,8 +207,8 @@ public class ProductCrudService {
         product.thumbnailUrl() != null ? product.thumbnailUrl() : "",
         categoryRef,
         product.brand(),
-        BigDecimal.ZERO,                               // rating default
-        0,                                             // reviewCount default
+        product.avgRating() != null ? product.avgRating() : BigDecimal.ZERO,
+        product.reviewCount(),
         product.stock(),                               // D-02: đọc từ ProductEntity.stock (Phase 8 PERSIST-01)
         product.status(),
         Collections.emptyList(),                       // tags default
@@ -186,15 +217,19 @@ public class ProductCrudService {
     );
   }
 
-  private Comparator<ProductEntity> productComparator(String sort) {
+  /**
+   * Phase 14 / Plan 01: parse sort param "field,dir" → Spring Sort (dùng cho Pageable).
+   * Default updatedAt DESC nếu sort null/blank.
+   */
+  private static Sort parseSort(String sort) {
     if (sort == null || sort.isBlank()) {
-      return Comparator.comparing(ProductEntity::updatedAt).reversed();
+      return Sort.by(Sort.Direction.DESC, "updatedAt");
     }
-    boolean desc = sort.endsWith(",desc");
-    Comparator<ProductEntity> comparator = sort.startsWith("name")
-        ? Comparator.comparing(ProductEntity::name, String.CASE_INSENSITIVE_ORDER)
-        : Comparator.comparing(ProductEntity::id);
-    return desc ? comparator.reversed() : comparator;
+    String[] parts = sort.split(",");
+    String field = parts[0].trim();
+    Sort.Direction dir = (parts.length > 1 && "desc".equalsIgnoreCase(parts[1].trim()))
+        ? Sort.Direction.DESC : Sort.Direction.ASC;
+    return Sort.by(dir, field);
   }
 
   private Comparator<CategoryEntity> categoryComparator(String sort) {

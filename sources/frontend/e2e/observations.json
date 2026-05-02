@@ -101,5 +101,145 @@
     "pass": "PASS",
     "notes": "Stubbed 502 to verify FE no-auto-retry rule; original UAT step also called for `docker compose stop order-service` — equivalent behavior since http.ts has no retry on POST.",
     "screenshot": "screenshots/B5.png"
+  },
+  {
+    "id": "AUTH-1",
+    "step": "POST /api/users/auth/register → redirect /",
+    "expected": "Register flow: user mới tạo được và redirect về /",
+    "actual": "pending_run — chạy 'npx playwright test' trên fresh docker stack để lấy kết quả thực",
+    "pass": "PENDING",
+    "file": "e2e/auth.spec.ts",
+    "status": "pending_run",
+    "phase": "09-05"
+  },
+  {
+    "id": "AUTH-2",
+    "step": "POST /api/users/auth/login + click logout",
+    "expected": "Login thành công, auth_present cookie set; logout xóa cookie",
+    "actual": "pending_run",
+    "pass": "PENDING",
+    "file": "e2e/auth.spec.ts",
+    "status": "pending_run",
+    "phase": "09-05"
+  },
+  {
+    "id": "AUTH-3",
+    "step": "Chưa login → /profile/orders → redirect /login; USER → /admin → /403",
+    "expected": "Middleware redirect đúng theo D-02 + D-03 (Plan 09-01)",
+    "actual": "pending_run",
+    "pass": "PENDING",
+    "file": "e2e/auth.spec.ts",
+    "status": "pending_run",
+    "phase": "09-05"
+  },
+  {
+    "id": "ADM-PROD-1",
+    "step": "GET /admin/products",
+    "expected": "Heading 'Quản lý sản phẩm' + table visible",
+    "actual": "pending_run",
+    "pass": "PENDING",
+    "file": "e2e/admin-products.spec.ts",
+    "status": "pending_run",
+    "phase": "09-05"
+  },
+  {
+    "id": "ADM-PROD-2",
+    "step": "Click '+ Thêm sản phẩm' → fill form → submit → toast success",
+    "expected": "Product tạo thành công, toast 'Sản phẩm đã được thêm thành công'",
+    "actual": "pending_run",
+    "pass": "PENDING",
+    "file": "e2e/admin-products.spec.ts",
+    "status": "pending_run",
+    "phase": "09-05"
+  },
+  {
+    "id": "ADM-PROD-3",
+    "step": "Submit modal form không có tên sản phẩm → toast error",
+    "expected": "Toast 'Vui lòng nhập tên sản phẩm' visible",
+    "actual": "pending_run",
+    "pass": "PENDING",
+    "file": "e2e/admin-products.spec.ts",
+    "status": "pending_run",
+    "phase": "09-05"
+  },
+  {
+    "id": "ADM-ORD-1",
+    "step": "GET /admin/orders",
+    "expected": "Heading 'Quản lý đơn hàng' + table + column headers Mã đơn + Trạng thái",
+    "actual": "pending_run",
+    "pass": "PENDING",
+    "file": "e2e/admin-orders.spec.ts",
+    "status": "pending_run",
+    "phase": "09-05"
+  },
+  {
+    "id": "ADM-ORD-2",
+    "step": "Click aria-label='Xem chi tiết đơn hàng' → navigate /admin/orders/:id",
+    "expected": "URL matches /admin/orders/:id (nếu có đơn hàng trong DB)",
+    "actual": "pending_run (skip nếu không có orders)",
+    "pass": "PENDING",
+    "file": "e2e/admin-orders.spec.ts",
+    "status": "pending_run",
+    "phase": "09-05"
+  },
+  {
+    "id": "ADM-USR-1",
+    "step": "GET /admin/users",
+    "expected": "Heading 'Quản lý tài khoản' + ít nhất 1 edit button (seed users: admin + demo_user)",
+    "actual": "pending_run",
+    "pass": "PENDING",
+    "file": "e2e/admin-users.spec.ts",
+    "status": "pending_run",
+    "phase": "09-05"
+  },
+  {
+    "id": "ADM-USR-2",
+    "step": "Click 'Chỉnh sửa tài khoản' → fill Họ và tên → 'Lưu thay đổi' → toast success",
+    "expected": "Toast 'Thông tin tài khoản đã được cập nhật'",
+    "actual": "pending_run",
+    "pass": "PENDING",
+    "file": "e2e/admin-users.spec.ts",
+    "status": "pending_run",
+    "phase": "09-05"
+  },
+  {
+    "id": "ORD-DTL-1",
+    "step": "GET /profile (với user storageState)",
+    "expected": "Middleware admit, không redirect /login, page load OK",
+    "actual": "pending_run",
+    "pass": "PENDING",
+    "file": "e2e/order-detail.spec.ts",
+    "status": "pending_run",
+    "phase": "09-05"
+  },
+  {
+    "id": "ORD-DTL-2",
+    "step": "Navigate /profile/orders/:id → verify 4-col table + Địa chỉ giao hàng + Thanh toán",
+    "expected": "Items table 4 cols, shipping card, payment card (nếu có orders)",
+    "actual": "pending_run (skip nếu user demo không có orders)",
+    "pass": "PENDING",
+    "file": "e2e/order-detail.spec.ts",
+    "status": "pending_run",
+    "phase": "09-05"
+  },
+  {
+    "id": "PWD-1",
+    "step": "POST /api/users/me/password với oldPassword sai → 422 AUTH_INVALID_PASSWORD",
+    "expected": "data-testid='oldPasswordError' contains 'Mật khẩu hiện tại không đúng'",
+    "actual": "pending_run",
+    "pass": "PENDING",
+    "file": "e2e/password-change.spec.ts",
+    "status": "pending_run",
+    "phase": "09-05"
+  },
+  {
+    "id": "PWD-2",
+    "step": "POST /api/users/me/password với oldPassword đúng → 200 → success msg → restore",
+    "expected": "data-testid='successMsg' contains 'Đã đổi mật khẩu'; auth_present cookie còn (D-10)",
+    "actual": "pending_run",
+    "pass": "PENDING",
+    "file": "e2e/password-change.spec.ts",
+    "status": "pending_run",
+    "phase": "09-05"
   }
 ]

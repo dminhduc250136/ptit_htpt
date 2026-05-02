@@ -1,0 +1,53 @@
+.page { min-height: 80vh; }
+.pageHeader { background-color: var(--surface-container-low); padding: var(--space-6) 0; }
+.container { max-width: var(--max-width); margin: 0 auto; padding-left: var(--space-4); padding-right: var(--space-4); }
+.pageTitle { font-family: var(--font-family-headline); font-size: var(--text-headline-lg); font-weight: var(--weight-bold); }
+.pageSubtitle { font-size: var(--text-body-md); color: var(--on-surface-variant); margin-top: var(--space-1); }
+.content { padding: var(--space-6) var(--space-4); }
+
+/* Sticky filter bar */
+.stickyFilter {
+  position: sticky;
+  top: 64px;
+  z-index: 10;
+  background: var(--surface);
+  padding: var(--space-3) 0;
+  margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--outline-variant);
+}
+
+/* Order list */
+.orderList { display: flex; flex-direction: column; gap: var(--space-3); }
+.orderCard {
+  display: flex; flex-direction: column; gap: var(--space-3);
+  padding: var(--space-4); background: var(--surface-container-lowest);
+  border-radius: var(--radius-xl); text-decoration: none; color: inherit;
+  border: 1px solid var(--outline-variant);
+  transition: all var(--transition-fast);
+}
+.orderCard:hover { background: var(--surface-container-low); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+.orderHeader { display: flex; justify-content: space-between; align-items: center; }
+.orderCode { font-size: var(--text-title-sm); font-weight: var(--weight-semibold); color: var(--on-surface); }
+.orderItems { display: flex; align-items: center; gap: var(--space-2); }
+.orderItemThumb {
+  position: relative; width: 48px; height: 48px;
+  border-radius: var(--radius-md); overflow: hidden;
+  background: var(--surface-container);
+}
+.orderItemCount { font-size: var(--text-body-sm); color: var(--outline); margin-left: var(--space-2); }
+.orderFooter { display: flex; justify-content: space-between; align-items: center; }
+.orderDate { font-size: var(--text-body-sm); color: var(--outline); }
+.orderTotal { font-size: var(--text-title-sm); font-weight: var(--weight-bold); color: var(--primary); }
+
+/* Empty state */
+.emptyState {
+  display: flex; flex-direction: column; align-items: center;
+  gap: var(--space-2); padding: var(--space-10) var(--space-4);
+  text-align: center; color: var(--on-surface-variant);
+  font-size: var(--text-body-md);
+}
+
+@media (max-width: 768px) {
+  .stickyFilter { top: 56px; }
+  .orderCard { padding: var(--space-3); }
+}

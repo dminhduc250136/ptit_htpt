@@ -15,6 +15,7 @@ import { addToCart } from '@/services/cart';
 import { isApiError } from '@/services/errors';
 import { formatPrice } from '@/services/api';
 import type { Product } from '@/types';
+import ReviewSection from './ReviewSection/ReviewSection';
 
 export default function ProductDetailPage() {
   const params = useParams<{ slug: string }>();
@@ -100,19 +101,20 @@ export default function ProductDetailPage() {
 
   return (
     <div className={styles.page}>
-      {/* Breadcrumb */}
+      {/* Breadcrumb — Phase 15 PUB-03 (D-14): Trang chủ / {Brand} / {Name} với fallback */}
       <div className={styles.breadcrumb}>
         <div className={styles.container}>
           <Link href="/" className={styles.breadcrumbLink}>Trang chủ</Link>
           <span className={styles.breadcrumbSep}>/</span>
-          <Link href="/products" className={styles.breadcrumbLink}>Sản phẩm</Link>
-          {product.category && (
-            <>
-              <span className={styles.breadcrumbSep}>/</span>
-              <Link href={`/products?category=${product.category.slug}`} className={styles.breadcrumbLink}>
-                {product.category.name}
-              </Link>
-            </>
+          {product.brand ? (
+            <Link
+              href={`/products?brand=${encodeURIComponent(product.brand)}`}
+              className={styles.breadcrumbLink}
+            >
+              {product.brand}
+            </Link>
+          ) : (
+            <Link href="/products" className={styles.breadcrumbLink}>Sản phẩm</Link>
           )}
           <span className={styles.breadcrumbSep}>/</span>
           <span className={styles.breadcrumbCurrent}>{product.name}</span>
@@ -160,6 +162,9 @@ export default function ProductDetailPage() {
                   {product.images.map((img, i) => (
                     <button
                       key={i}
+                      type="button"
+                      aria-label={`Xem ảnh ${i + 1}`}
+                      aria-current={i === selectedImage ? 'true' : undefined}
                       className={`${styles.thumbnail} ${i === selectedImage ? styles.thumbnailActive : ''}`}
                       onClick={() => setSelectedImage(i)}
                     >
@@ -181,14 +186,14 @@ export default function ProductDetailPage() {
                 <div className={styles.stars}>
                   {[...Array(5)].map((_, i) => (
                     <svg key={i} width="18" height="18" viewBox="0 0 24 24"
-                      fill={i < Math.floor(product.rating ?? 0) ? 'var(--secondary-container)' : 'none'}
-                      stroke={i < Math.floor(product.rating ?? 0) ? 'var(--secondary-container)' : 'var(--outline-variant)'}
+                      fill={i < Math.floor(product.avgRating ?? 0) ? 'var(--secondary-container)' : 'none'}
+                      stroke={i < Math.floor(product.avgRating ?? 0) ? 'var(--secondary-container)' : 'var(--outline-variant)'}
                       strokeWidth="2">
                       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
                     </svg>
                   ))}
                 </div>
-                <span className={styles.ratingText}>{product.rating ?? 0}</span>
+                <span className={styles.ratingText}>{(product.avgRating ?? 0).toFixed(1)}</span>
                 <span className={styles.reviewCount}>({product.reviewCount ?? 0} đánh giá)</span>
               </div>
 
@@ -205,58 +210,72 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              {/* Stock */}
+              {/* Stock — Phase 15 PUB-04 (D-15): 3-tier badge với icon prefix WCAG 1.4.1 */}
               <div className={styles.stockInfo}>
-                {(product.stock ?? 0) > 0 ? (
-                  <span className={styles.inStock}>✓ Còn hàng ({product.stock} sản phẩm)</span>
-                ) : (
-                  <span className={styles.outOfStock}>✗ Hết hàng</span>
+                {(product.stock ?? 0) >= 10 && (
+                  <Badge variant="success">✓ Còn hàng</Badge>
+                )}
+                {(product.stock ?? 0) > 0 && (product.stock ?? 0) < 10 && (
+                  <Badge variant="warning">⚠ Sắp hết hàng (còn {product.stock})</Badge>
+                )}
+                {(product.stock ?? 0) === 0 && (
+                  <Badge variant="danger">✗ Hết hàng</Badge>
                 )}
               </div>
 
-              {/* Quantity & Add to Cart */}
-              <div className={styles.actions}>
-                <div className={styles.quantitySelector}>
-                  <button
-                    className={styles.qtyBtn}
-                    onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    disabled={quantity <= 1}
-                  >−</button>
-                  <span className={styles.qtyValue}>{quantity}</span>
-                  <button
-                    className={styles.qtyBtn}
-                    onClick={() => setQuantity(Math.min(product.stock || 1, quantity + 1))}
-                    disabled={quantity >= (product.stock || 1)}
-                  >+</button>
+              {/* Quantity & Add to Cart — Phase 15 PUB-04 (D-16): hide hoàn toàn khi stock=0 */}
+              {(product.stock ?? 0) > 0 ? (
+                <div className={styles.actions}>
+                  <div className={styles.quantitySelector}>
+                    <button
+                      type="button"
+                      className={styles.qtyBtn}
+                      onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                      disabled={quantity <= 1}
+                    >−</button>
+                    <span className={styles.qtyValue}>{quantity}</span>
+                    <button
+                      type="button"
+                      className={styles.qtyBtn}
+                      onClick={() => setQuantity((q) => Math.min(product.stock ?? 1, q + 1))}
+                      disabled={quantity >= (product.stock ?? 1)}
+                    >+</button>
+                  </div>
+                  <Button
+                    size="lg"
+                    fullWidth
+                    loading={addingToCart}
+                    onClick={async () => {
+                      setAddingToCart(true);
+                      try {
+                        addToCart(
+                          {
+                            id: product.id,
+                            name: product.name,
+                            thumbnailUrl: product.thumbnailUrl,
+                            price: product.price,
+                            // BUG-FIX (cart-stock-cap): truyền stock để cart.ts lưu snapshot
+                            // và updateQuantity có thể enforce giới hạn trên
+                            stock: product.stock ?? 0,
+                          },
+                          quantity,
+                        );
+                        showToast('Đã thêm vào giỏ hàng', 'success');
+                      } catch {
+                        showToast('Không thể thêm vào giỏ hàng', 'error');
+                      } finally {
+                        setAddingToCart(false);
+                      }
+                    }}
+                  >
+                    Thêm vào giỏ hàng
+                  </Button>
                 </div>
-                <Button
-                  size="lg"
-                  fullWidth
-                  disabled={product.stock === 0}
-                  loading={addingToCart}
-                  onClick={async () => {
-                    setAddingToCart(true);
-                    try {
-                      addToCart(
-                        {
-                          id: product.id,
-                          name: product.name,
-                          thumbnailUrl: product.thumbnailUrl,
-                          price: product.price,
-                        },
-                        quantity,
-                      );
-                      showToast('Đã thêm vào giỏ hàng', 'success');
-                    } catch {
-                      showToast('Không thể thêm vào giỏ hàng', 'error');
-                    } finally {
-                      setAddingToCart(false);
-                    }
-                  }}
-                >
-                  {product.stock === 0 ? 'Hết hàng' : 'Thêm vào giỏ hàng'}
-                </Button>
-              </div>
+              ) : (
+                <p className={styles.outOfStockMessage}>
+                  Sản phẩm tạm hết — vui lòng quay lại sau.
+                </p>
+              )}
 
               <Button variant="secondary" size="lg" fullWidth onClick={() => router.push('/cart')}>
                 ♡ Xem giỏ hàng
@@ -332,12 +351,7 @@ export default function ProductDetailPage() {
               <p style={{ color: 'var(--on-surface-variant)' }}>Chưa có thông số kỹ thuật.</p>
             )}
             {activeTab === 'reviews' && (
-              <div className={styles.reviewsContent}>
-                <div className={styles.reviewPlaceholder}>
-                  <p>Chưa có đánh giá nào. Hãy là người đầu tiên đánh giá sản phẩm này!</p>
-                  <Button variant="secondary">Viết đánh giá</Button>
-                </div>
-              </div>
+              <ReviewSection productId={product.id} slug={slug ?? ''} />
             )}
           </div>
         </div>

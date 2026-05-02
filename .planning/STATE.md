@@ -1,88 +1,109 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Phase Progress
-status: ready_to_execute
-last_updated: "2026-04-26T14:00:00.000Z"
-last_activity: "2026-04-26 — Phase 8 planning complete (4 plans, 2 waves). Verification PASSED after 1 revision. Ready for /gsd-execute-phase 8."
+milestone: v1.0
+milestone_name: milestone
+status: verifying
+last_updated: "2026-05-02T14:54:01.907Z"
+last_activity: 2026-05-02
 progress:
-  total_phases: 4
-  completed_phases: 3
-  total_plans: 18
-  completed_plans: 18
+  total_phases: 7
+  completed_phases: 1
+  total_plans: 4
+  completed_plans: 4
   percent: 100
 ---
 
 ## Current Position
 
-Phase: 7 — Search + Admin Real Data 🔄 VERIFYING (6/6 plans complete)
-Plan: 6/6 — ✅ Wave 1 (07-01, 07-02, 07-03) + ✅ Wave 2 (07-04, 07-05, 07-06)
-Status: All plans executed. Running code review + phase verification.
-Last activity: 2026-04-26 11:30Z — Phase 7 all 6 plans merged. Code review + verifier in progress.
+Phase: 18
+Plan: Not started
+Status: Phase 17 hoàn tất Wave 3 — E2E regression-guard locked-in. Awaiting verifier.
+Last activity: 2026-05-02
 
-## Resume Instructions (Phase 5 Execute)
+```
+Progress: [██████████] 100%
+```
 
-**Last orchestrator commit on develop**: `098cc1b` (post merge of Plan 06 + 4 partial worktrees Plans 03/04/05/07).
+## Project Reference
 
-**Wave 3 status (2026-04-26 04:30Z — RESUMED after 4:20am limit reset):**
+See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Catalog Realism & Commerce Intelligence)
 
-- ✅ Plan 06 payment-service — COMPLETE + MERGED (4 commits + SUMMARY)
-- 🟡 Plan 03 product-service — partial deps merged, RESUMED via agent `a2c438f03a64ac616` (background)
-- 🟡 Plan 04 user-service — partial deps merged, RESUMED via agent `a4f92d7394f404216` (background)
-- 🟡 Plan 05 order-service — deps + entity merged, RESUMED via agent `aa4191a483af4dd1c` (background)
-- 🟡 Plan 07 inventory-service — partial deps merged, RESUMED via agent `a9fe5aacf93a96951` (background)
+**Core value:** Demo end-to-end shopping experience hoạt động với real data ở mọi điểm user nhìn thấy, đồng thời rèn quy trình GSD từ planning → execute → verify → archive.
 
-**Resume steps NEW SESSION nếu cần:**
-
-1. `git worktree list` → check 4 resume worktrees `agent-{a2c438f03a64ac616, a4f92d7394f404216, aa4191a483af4dd1c, a9fe5aacf93a96951}`.
-2. Per worktree: `git -C "$WT" log --oneline 098cc1b..HEAD` để xem commits added; `ls "$WT/.planning/phases/05-database-foundation/05-0X-SUMMARY.md"`.
-3. Pre-merge: `cp .planning/STATE.md /tmp/state.bak && cp .planning/ROADMAP.md /tmp/roadmap.bak`.
-4. Merge: `git merge worktree-agent-<id> --no-ff --no-edit -m "chore: merge resumed Wave 3 worktree (Plan 05-0X)"`.
-5. Restore: `cp /tmp/state.bak .planning/STATE.md && cp /tmp/roadmap.bak .planning/ROADMAP.md`.
-6. Try worktree cleanup: `git worktree remove <path> --force; git branch -D <branch>` (may fail if locked — non-blocking).
-7. Sau khi merge cả 4: post-merge test gate (`mvn test` mỗi service hoặc `docker compose up` smoke).
-8. Continue Wave 4 (Plan 08 integration smoke), Wave 5 (Plan 09 FE), then phase verifier.
-
-**Stale worktrees (locked, non-blocking):** `agent-a8422e9616c369b6c` (W1), `agent-a60a38734b1d51504` (W2), and old Wave 3 batch (`ad7b3d0814aedeeb2`, `aeef4b198f3b5587b`, `a56f0b03c6deb3627`, `a6478588edc9ff3ec`, `a9f0daf00af104c9b`) — đã merge xong, có thể remove sau session khi unlocked.
-
-**Critical context cho Wave 3 → Wave 4 chain:**
-
-- Cross-service IDs: admin user = `00000000-0000-0000-0000-000000000001`, demo_user = `00000000-0000-0000-0000-000000000002`. Order seed (Plan 05) reference demo_user. Inventory seed (Plan 07) reference `prod-001`..`prod-010` (Plan 03 product seed pattern).
-- BCrypt verified hash cho admin: `$2a$10$TMH2spmmPRD90vJz8w5yz.G0o4AR/Hio2RU1yBwjjT1ClTLqF5lFu` (Plan 04 V2 seed). Hash sai trong RESEARCH (`$N9qo8uLOick...`) đã bị Plan 01 caught.
-- OpenAPI baselines pre-refactor lưu tại `.planning/phases/05-database-foundation/baseline/openapi-{user,product,order,payment,inventory}-service.json` — Wave 4 capture post versions và diff = 0.
-
-**v1.1 priority rule (giữ nguyên)**: visible-first. Wave 5 chỉ require browse/detail/add-to-cart PASS — checkout/confirmation chỉ render-without-crash, full breakdown defer Phase 8.
-
-Last activity (history): 2026-04-26 — Phase 5 planning complete (research + patterns + 9 plans + revision iteration). ROADMAP SC#5 tightened theo visible-first (defer checkout/confirmation hardening sang Phase 8).
+**Current focus:** Phase 17 — Sửa Order Detail Items
 
 ## Resume Cheat-Sheet
 
-- Milestone v1.0 archive: `.planning/milestones/v1.0-ROADMAP.md` + `.planning/milestones/v1.0-REQUIREMENTS.md`
-- Cross-phase audit v1.0: `.planning/v1.0-MILESTONE-AUDIT.md` (17 deferred items, 11 → v1.2)
-- Git tag: `v1.0` đã có
-- Milestone v1.1 priority: visible-first — defer backend hardening/security/observability invisible
-- Roadmap v1.1: `.planning/ROADMAP.md` (Phase 5-8) — 19 REQs full coverage
-- Next step: `/gsd-plan-phase 5` (Database Foundation — block toàn bộ v1.1)
+- Roadmap: `.planning/ROADMAP.md` (7 phases — Phase 16-22)
+- Requirements: `.planning/REQUIREMENTS.md` (27 active REQs, tất cả mapped)
+- Research: `.planning/research/SUMMARY.md` (HIGH confidence — codebase inspection trực tiếp)
+- Milestone v1.0 archive: `.planning/milestones/v1.0-ROADMAP.md` + REQUIREMENTS.md
+- Milestone v1.1 archive: `.planning/milestones/v1.1-ROADMAP.md` + REQUIREMENTS.md (audit gaps_found)
+- Milestone v1.2 archive: `.planning/milestones/v1.2-ROADMAP.md` + REQUIREMENTS.md + audit (passed)
+- Git tags: `v1.0`, `v1.1`, `v1.2`
+- Project priority: visible-first (memory `feedback_priority.md`)
+- Language: Vietnamese (memory `feedback_language.md`)
 
-## Phase Map (v1.1)
+## Performance Metrics
 
-| Phase | Goal | REQs | Depends on |
-|---|---|---|---|
-| 5 — Database Foundation | Postgres + JPA + Flyway + seed từ FE mocks; gateway round-trip qua FE trả seeded data thật | DB-01..06 | — |
-| 6 — Real Auth Flow | Backend `/auth/*` thật + JWT + FE form gỡ mock + session persist | AUTH-01..06 | Phase 5 |
-| 7 — Search + Admin Real Data | `/search` rewire + admin/products/orders/users CRUD thật | UI-01..04 | Phase 5, 6 |
-| 8 — Cart → Order Persistence Visible | ProductEntity.stock persist + OrderEntity per-item rows + FE detail full breakdown | PERSIST-01..03 | Phase 5, 6 |
+| Milestone | Phases | Plans | REQs | Result |
+|-----------|--------|-------|------|--------|
+| v1.0 | 4 | 14 | 11/11 | PASSED |
+| v1.1 | 4 | 22 | 15/19 SATISFIED + 4 PARTIAL | PASSED (gaps deferred) |
+| v1.2 | 6 (+1 SKIP) | 24 | 17/17 | PASSED |
+| v1.3 | 7 planned | TBD | 0/27 | In progress |
+| Phase 17-s-a-order-detail-items P01 | 5min | 2 tasks | 2 files |
+| Phase 17-s-a-order-detail-items P02 | 3min | 2 tasks | 1 file |
+| Phase 17-s-a-order-detail-items P03 | 2min | 2 tasks | 2 files |
+| Phase 17-s-a-order-detail-items P04 | 4min | 2 tasks | 2 files |
 
-## Decisions
+## Decisions (active v1.3 locks)
 
-- **2026-04-26 Plan 08:** Gateway two-route-per-service pattern (base + wildcard) — tránh trailing-slash ambiguity trong RewritePath. Fix đồng thời capture group name conflict với $PATH env var (dùng `seg` thay `path`).
-- **2026-04-26 Plan 08:** OpenAPI drift documented (không block): order=0 diff; user/product/payment/inventory có expected drift per Plans 03/04/06/07 SUMMARYs. Wave 5 proceeds.
-- v1.1 scope reshape theo "visible-first" (user feedback): chỉ pick 6/17 deferred items có visible impact (D3 partial, D4, D5, D11 partial, D15, D16). 11/17 còn lại (D1, D2, D6, D7, D8, D9, D10, D12, D13, D14, D17) defer sang v1.2.
-- Phase numbering: continue từ v1.0 (start Phase 5), KHÔNG dùng `--reset-phase-numbers`.
-- Skip research step: stack đã locked, patterns auth/CRUD đã có sẵn từ v1.0 foundation.
-- **2026-04-25 audit finding**: v1.0 không có DB layer thật. → **Thêm cluster C0 Database Foundation (DB-01..06) vào v1.1** đứng trước C1/C2/C3, dùng Postgres + Flyway + seed từ FE mocks.
-- **2026-04-25 roadmap split**: Gộp C1 (Auth backend + FE) vào MỘT phase (Phase 6) thay vì split — 6 REQs là kích thước hợp lý 1 phase, backend/FE cùng feature nên ship cùng. C2/C3 mỗi cluster 1 phase riêng (Phase 7, Phase 8). Tổng 4 phases (vs 5-6 nếu split) giúp giữ granularity standard.
-- Phase 5 Plan 09: FE gateway paths corrected (double-path /api/products/products → /api/products); slug lookup via client-side filter (backend ignores slug param)
+**Carry-over từ v1.2:**
+
+- Phase numbering tiếp tục KHÔNG reset (v1.3 → Phase 16+)
+- Visible-first priority giữ nguyên
+- Backend hardening (D1..D17) defer cho đến khi có triggering event (ngoại lệ: storage audit có thể surface security issue)
+- ApiErrorResponse + traceId envelope; Swagger/OpenAPI codegen; Postgres + JPA + Flyway 5 services; auth thật JWT HS256; admin CRUD qua gateway; FE typed services; rhf+zod pattern; Playwright suite
+
+**v1.3 locks (2026-05-02 — locked từ research + user answers):**
+
+- **Seed catalog**: ~100 SP / 5 categories (điện thoại, laptop, chuột, bàn phím, tai nghe), brand realistic (Apple/Samsung/Logitech/Razer/Sony/...), ảnh Unsplash CDN `?fm=webp&q=80` (precedent v1.2 P15). Flyway V7 product-svc Spring profile `dev`.
+- **Storage audit scope**: TOÀN FE codebase (grep localStorage + sessionStorage), classify (user-data / UI-pref / auth-token), migrate user-data → DB per user_id. Cart confirmed localStorage-only (dead code `InMemoryCartRepository` unused).
+- **Admin charts**: 4 loại — revenue/time (area), top products (bar), order status pie (donut), signups (line) + low-stock alert `stock < 10`. Stack: `recharts@3.8.1`.
+- **Review polish**: REV-04 (author edit/delete = soft-delete `deleted_at`) + sort by newest/rating DESC/ASC + admin moderation (hide/unhide = `hidden BOOLEAN` column). KHÔNG helpful votes (defer v1.4).
+- **Coupon**: 2 loại (% off + fixed amount), min order + expiry + max usage, 1 lần/coupon/user (`UNIQUE CONSTRAINT coupon_redemptions(coupon_id, user_id)`), 1 mã/đơn (KHÔNG stack). Admin CRUD `/admin/coupons` + FE checkout input. Race-safe atomic UPDATE. Flyway V3 order-svc.
+- **Chatbot AI**: Claude API MVP, model `claude-haiku-4-5`. Customer FAQ + product Q&A + recommendation. Streaming UI (native ReadableStream, không Vercel AI SDK). Chat history persist Postgres `chat_svc` schema (raw pg driver). Prompt caching bắt buộc từ ngày 1. Login required (NOT guest). Sliding window 10 turns. Admin "suggest reply" — manual confirm. KHÔNG agentic tool-use. Stack: `@anthropic-ai/sdk@0.92.0`. Phase này dùng `/gsd-ai-integration-phase`.
+- **Order detail bug**: Root cause xác định — admin page có hardcoded string "Chi tiết sản phẩm..."; `AdminOrder` interface thiếu `items[]`. FE fix chính, BE verify DTO đã đúng.
+- **Cart→DB placement**: order-svc Flyway V4 (`carts` + `cart_items`). FE `services/cart.ts` refactor API-first. Guest merge idempotent `ON CONFLICT DO UPDATE`.
+- **Chat persistence placement**: Next.js API route + raw pg driver trực tiếp `chat_svc` schema. KHÔNG tạo Spring Boot microservice mới.
+
+## Flyway V-number Reservations (confirmed từ research)
+
+| Service | Version | Purpose | Phase |
+|---------|---------|---------|-------|
+| product-svc | V101 | Seed ~100 sản phẩm trong db/seed-dev/ (Spring profile `dev` only) — APPLIED 2026-05-02 | Phase 16 |
+| order-svc | V3 | Coupons + coupon_redemptions tables | Phase 20 |
+| order-svc | V4 | Carts + cart_items tables | Phase 18 |
+| chat_svc | — | Schema init qua Next.js raw pg driver (không Flyway) | Phase 22 |
+
+*Note: user-svc V5 reserved cho ACCT-01 wishlist (v1.4). product-svc V8 optional review sorts index nếu cần.*
+
+## Deferred Items (carry-over từ v1.2 + v1.3 scope locks)
+
+| Category | Item | Status |
+|----------|------|--------|
+| debug | products-list-500 | root_cause_found — carry-over |
+| uat_gap | Phase 06/07/09/10/11 *-HUMAN-UAT.md | partial / pending manual UAT |
+| verification_gap | Phase 06/07/09/10/11 *-VERIFICATION.md | human_needed |
+| v1.4+ | ACCT-01 wishlist | SKIPPED v1.2 Phase 12, V5 migration reserved |
+| v1.4+ | SEARCH-03/04 rating filter + URL state | scope trim v1.2 |
+| v1.4+ | ACCT-04 avatar upload | Deferred D-08 từ Phase 10 |
+| v1.4+ | TEST-02-FULL 8+ E2E tests | scope trim v1.2 |
+| v1.4+ | COUP-06 coupon stacking | scope lock v1.3 |
+| v1.4+ | AI-06 agentic chatbot tool-use | scope lock v1.3 |
+| v1.4+ | REV-07 helpful votes | scope lock v1.3 |
+| v1.4+ | STORE-04 auth-token httpOnly cookie | visible-first defer |
 
 ## Blockers
 
@@ -90,8 +111,20 @@ Không có blocker.
 
 ## Accumulated Context
 
-- Project: tmdt-use-gsd — dự án thử nghiệm GSD workflow (Spring Boot microservices + Next.js + API gateway + Docker Compose). Codebase là vehicle, không phải production product.
-- Foundation v1.0 reuse được: ApiErrorResponse envelope unified, Springdoc + OpenAPI codegen pipeline, CRUD completeness 6 services, validation hardened, FE typed HTTP tier + ApiError dispatcher, middleware route protection, Playwright E2E suite hoạt động.
-- v1.1 priority rule: nếu feature invisible to end-user → defer; nếu visible → ship.
-- Phase 5 critical path: tất cả phases sau đều depend on Phase 5. Nếu Phase 5 lệch schedule, toàn bộ v1.1 lệch.
-- Phase 7/8 có thể parallel sau khi Phase 6 xong (UI-01..04 độc lập với PERSIST-01..03 về codepath, chỉ chung DB).
+- Project: tmdt-use-gsd — dự án thử nghiệm GSD workflow (Spring Boot microservices + Next.js + API gateway + Docker Compose).
+- Foundation v1.0 + v1.1 + v1.2 reuse được: ApiErrorResponse + traceId envelope; Swagger/OpenAPI codegen; Postgres + JPA + Flyway 5 services; auth thật JWT HS256; admin CRUD qua gateway; FE typed services; rhf+zod pattern; Playwright E2E suite (14 baseline + 4 smoke); reviews verified-buyer cross-service; FilterSidebar pattern; M3 design tokens.
+- Visible-first priority applied: feature invisible → defer; visible → ship.
+- v1.2 closed 2026-05-02 với verdict PASSED (17/17 active REQs). Tag `v1.2` annotated local.
+- Memory: Vietnamese chat/docs/commits; visible-first priority; dự án thử nghiệm GSD KHÔNG phải PTIT/HTPT assignment.
+- Pitfall quan trọng v1.3: coupon double-redemption (atomic UPDATE + UNIQUE constraint); chatbot context window blowup (sliding 10 turns + prompt cache); Flyway seed prod isolation (V7 vào seed/dev path); cart merge race condition (idempotent upsert + FE useRef flag); prompt injection từ reviews (XML tag isolation).
+
+## Next Steps
+
+1. ✅ Phase 16 COMPLETE (3/3 plans, SEED-01..04 satisfied artifacts-side; manual UAT defer)
+2. `/gsd-verify-work` — chạy 16-VERIFICATION.md sections (smoke SQL + prod negative + add-to-cart + Playwright + UI walkthrough)
+3. `/gsd-plan-phase 17` → Execute Phase 17: Sửa Order Detail Items
+4. `/gsd-plan-phase 18` → Execute Phase 18: Kiểm Toán Storage + Cart→DB
+5. `/gsd-plan-phase 19` → Execute Phase 19: Admin Charts + Low-Stock
+6. `/gsd-plan-phase 20` → Execute Phase 20: Hệ Thống Coupon
+7. `/gsd-plan-phase 21` → Execute Phase 21: Hoàn Thiện Reviews
+8. `/gsd-ai-integration-phase 22` → Execute Phase 22: AI Chatbot Claude API MVP (dùng AI integration workflow thay plan-phase chuẩn)

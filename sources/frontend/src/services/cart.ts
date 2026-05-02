@@ -11,6 +11,10 @@
  * Product) because localStorage persistence does not benefit from embedding full
  * Product snapshots that may go stale. The UI-layer CartItem type in @/types
  * (with nested Product) is a different concern and remains unchanged.
+ *
+ * BUG-FIX (cart-stock-cap): CartItem now carries `stock` so the cart page and
+ * updateQuantity can enforce the same upper-bound already present on the product
+ * detail page. addToCart also clamps the final quantity to stock.
  */
 
 // ===== CART (CLIENT-ONLY) =====
@@ -25,6 +29,8 @@ export interface CartItem {
   thumbnailUrl: string;
   price: number;
   quantity: number;
+  /** Snapshot of stock at the time the item was added. Used to cap quantity in cart UI. */
+  stock: number;
 }
 
 export function readCart(): CartItem[] {
@@ -45,20 +51,24 @@ export function writeCart(items: CartItem[]): void {
 }
 
 export function addToCart(
-  product: Pick<Product, 'id' | 'name' | 'thumbnailUrl' | 'price'>,
+  product: Pick<Product, 'id' | 'name' | 'thumbnailUrl' | 'price' | 'stock'>,
   qty: number = 1,
 ): void {
   const items = readCart();
   const existing = items.find(i => i.productId === product.id);
+  const stockLimit = product.stock ?? 0;
   if (existing) {
-    existing.quantity += qty;
+    // Clamp combined quantity to stock so repeated "Add to cart" cannot exceed stock
+    existing.quantity = Math.min(existing.quantity + qty, stockLimit);
+    existing.stock = stockLimit; // refresh snapshot in case stock changed
   } else {
     items.push({
       productId: product.id,
       name: product.name,
       thumbnailUrl: product.thumbnailUrl,
       price: product.price,
-      quantity: qty,
+      quantity: Math.min(qty, stockLimit),
+      stock: stockLimit,
     });
   }
   writeCart(items);
@@ -73,7 +83,12 @@ export function updateQuantity(productId: string, qty: number): void {
     removeFromCart(productId);
     return;
   }
-  const items = readCart().map(i => (i.productId === productId ? { ...i, quantity: qty } : i));
+  const items = readCart().map(i => {
+    if (i.productId !== productId) return i;
+    // Enforce stock upper-bound (stock=0 means unknown/legacy item — allow update without cap)
+    const capped = i.stock > 0 ? Math.min(qty, i.stock) : qty;
+    return { ...i, quantity: capped };
+  });
   writeCart(items);
 }
 

@@ -63,64 +63,75 @@ export default function CartPage() {
           <div className={styles.layout}>
             {/* Cart Items */}
             <div className={styles.cartItems}>
-              {cartItems.map((item) => (
-                <div key={item.productId} className={styles.cartItem}>
-                  <Link href={`/products/${item.productId}`} className={styles.itemImage}>
-                    <Image
-                      src={item.thumbnailUrl?.trim() ? item.thumbnailUrl : '/placeholder.png'}
-                      alt={item.name}
-                      fill
-                      sizes="120px"
-                      className={styles.itemImg}
-                    />
-                  </Link>
+              {cartItems.map((item) => {
+                // stock=0 on legacy items (added before this fix) — treat as uncapped
+                const atStockLimit = item.stock > 0 && item.quantity >= item.stock;
+                return (
+                  <div key={item.productId} className={styles.cartItem}>
+                    <Link href={`/products/${item.productId}`} className={styles.itemImage}>
+                      <Image
+                        src={item.thumbnailUrl?.trim() ? item.thumbnailUrl : '/placeholder.png'}
+                        alt={item.name}
+                        fill
+                        sizes="120px"
+                        className={styles.itemImg}
+                      />
+                    </Link>
 
-                  <div className={styles.itemInfo}>
-                    <div className={styles.itemTop}>
-                      <div>
-                        <Link href={`/products/${item.productId}`} className={styles.itemName}>
-                          {item.name}
-                        </Link>
-                      </div>
-                      <button
-                        className={styles.removeBtn}
-                        onClick={() => removeFromCart(item.productId)}
-                        aria-label="Xóa sản phẩm"
-                      >
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <line x1="18" y1="6" x2="6" y2="18" />
-                          <line x1="6" y1="6" x2="18" y2="18" />
-                        </svg>
-                      </button>
-                    </div>
-
-                    <div className={styles.itemBottom}>
-                      <div className={styles.quantitySelector}>
+                    <div className={styles.itemInfo}>
+                      <div className={styles.itemTop}>
+                        <div>
+                          <Link href={`/products/${item.productId}`} className={styles.itemName}>
+                            {item.name}
+                          </Link>
+                          {/* Stock warning shown when quantity is capped */}
+                          {atStockLimit && (
+                            <p style={{ fontSize: '0.75rem', color: 'var(--error)', marginTop: 2 }}>
+                              Đã đạt giới hạn tồn kho ({item.stock} sản phẩm)
+                            </p>
+                          )}
+                        </div>
                         <button
-                          className={styles.qtyBtn}
-                          onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                          disabled={item.quantity <= 1}
+                          className={styles.removeBtn}
+                          onClick={() => removeFromCart(item.productId)}
+                          aria-label="Xóa sản phẩm"
                         >
-                          −
-                        </button>
-                        <span className={styles.qtyValue}>{item.quantity}</span>
-                        <button
-                          className={styles.qtyBtn}
-                          onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                        >
-                          +
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <line x1="18" y1="6" x2="6" y2="18" />
+                            <line x1="6" y1="6" x2="18" y2="18" />
+                          </svg>
                         </button>
                       </div>
-                      <div className={styles.itemPrice}>
-                        <span className={styles.priceTotal}>{formatPrice(item.price * item.quantity)}</span>
-                        {item.quantity > 1 && (
-                          <span className={styles.priceUnit}>{formatPrice(item.price)} / sản phẩm</span>
-                        )}
+
+                      <div className={styles.itemBottom}>
+                        <div className={styles.quantitySelector}>
+                          <button
+                            className={styles.qtyBtn}
+                            onClick={() => updateQuantity(item.productId, item.quantity - 1)}
+                            disabled={item.quantity <= 1}
+                          >
+                            −
+                          </button>
+                          <span className={styles.qtyValue}>{item.quantity}</span>
+                          <button
+                            className={styles.qtyBtn}
+                            onClick={() => updateQuantity(item.productId, item.quantity + 1)}
+                            disabled={atStockLimit}
+                          >
+                            +
+                          </button>
+                        </div>
+                        <div className={styles.itemPrice}>
+                          <span className={styles.priceTotal}>{formatPrice(item.price * item.quantity)}</span>
+                          {item.quantity > 1 && (
+                            <span className={styles.priceUnit}>{formatPrice(item.price)} / sản phẩm</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Order Summary */}

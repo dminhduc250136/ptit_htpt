@@ -6,6 +6,8 @@ import com.ptit.htpt.productservice.service.ProductCrudService.CategoryUpsertReq
 import com.ptit.htpt.productservice.service.ProductCrudService.ProductResponse;
 import com.ptit.htpt.productservice.service.ProductCrudService.ProductUpsertRequest;
 import jakarta.validation.Valid;
+import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -33,10 +35,13 @@ public class ProductController {
       @RequestParam(defaultValue = "0") int page,
       @RequestParam(defaultValue = "20") int size,
       @RequestParam(defaultValue = "updatedAt,desc") String sort,
-      @RequestParam(required = false) String keyword    // D-02: optional keyword filter
+      @RequestParam(required = false) String keyword,                  // D-02
+      @RequestParam(required = false) List<String> brands,              // Phase 14 D-07/D-08: repeatable param
+      @RequestParam(required = false) BigDecimal priceMin,              // Phase 14 D-08
+      @RequestParam(required = false) BigDecimal priceMax               // Phase 14 D-08
   ) {
     return ApiResponse.of(200, "Products listed",
-        productCrudService.listProducts(page, size, sort, false, keyword));
+        productCrudService.listProducts(page, size, sort, false, keyword, brands, priceMin, priceMax));
   }
 
   @GetMapping("/{id}")
@@ -75,6 +80,12 @@ public class ProductController {
       @RequestParam(defaultValue = "updatedAt,desc") String sort
   ) {
     return ApiResponse.of(200, "Categories listed", productCrudService.listCategories(page, size, sort, false));
+  }
+
+  /** Phase 14 / Plan 01 (D-03): danh sách thương hiệu DISTINCT cho FE FilterSidebar. */
+  @GetMapping("/brands")
+  public ApiResponse<List<String>> listBrands() {
+    return ApiResponse.of(200, "Brands listed", productCrudService.listBrands());
   }
 
   @GetMapping("/categories/{id}")
