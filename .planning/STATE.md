@@ -3,22 +3,22 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-02T18:00:00.000Z"
-last_activity: 2026-05-02 -- Phase 22 Plan 02 complete (POST /api/chat/stream route)
+last_updated: "2026-05-02T19:00:00.000Z"
+last_activity: 2026-05-02 -- Phase 22 Plan 03 complete (GET sessions + messages history routes)
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 14
-  completed_plans: 9
-  percent: 64
+  completed_plans: 10
+  percent: 71
 ---
 
 ## Current Position
 
 Phase: 22 (AI Chatbot Claude API MVP) — EXECUTING
-Plan: 3 of 7 (Plan 01 ✅, Plan 02 ✅)
-Status: Executing Phase 22 — Wave 2 stream route complete; next is 22-03 sessions/messages routes
-Last activity: 2026-05-02 -- Phase 22 Plan 02 complete (POST /api/chat/stream route)
+Plan: 4 of 7 (Plan 01 ✅, Plan 02 ✅, Plan 03 ✅)
+Status: Executing Phase 22 — Wave 2 read routes complete; next is 22-04 admin suggest-reply route
+Last activity: 2026-05-02 -- Phase 22 Plan 03 complete (GET sessions + messages history routes)
 
 ```
 Progress: [██████████] 100%
@@ -58,6 +58,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 17-s-a-order-detail-items P04 | 4min | 2 tasks | 2 files |
 | Phase 22-ai-chatbot P01 | ~25min | 3 tasks | 12 files (9 lib/chat + 3 env) |
 | Phase 22-ai-chatbot P02 | ~10min | 1 task | 1 file (route.ts 185 lines) |
+| Phase 22-ai-chatbot P03 | ~8min | 2 tasks | 2 files (sessions list + messages history) |
 
 ## Decisions (active v1.3 locks)
 
