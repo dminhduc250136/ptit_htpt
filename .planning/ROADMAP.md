@@ -47,7 +47,7 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 
 - [ ] **Phase 16: Seed Catalog Hiện Thực** — ~100 sản phẩm / 5 tech categories + Unsplash WebP + brand thực tế
 - [ ] **Phase 17: Sửa Order Detail Items** — Fix hardcoded placeholder, hiển thị full line items cả user + admin
-- [ ] **Phase 18: Kiểm Toán Storage + Cart→DB** — Audit localStorage/sessionStorage + migrate cart sang DB per-user
+- [x] **Phase 18: Kiểm Toán Storage + Cart→DB** — Audit localStorage/sessionStorage + migrate cart sang DB per-user — **COMPLETED 2026-05-02**
 - [ ] **Phase 19: Hoàn Thiện Admin: Charts + Low-Stock** — 4 analytics charts + low-stock alert dashboard
 - [ ] **Phase 20: Hệ Thống Coupon** — % off + fixed amount, admin CRUD, checkout input, atomic redemption
 - [ ] **Phase 21: Hoàn Thiện Reviews** — Author edit/delete + sort controls + admin moderation
@@ -97,12 +97,12 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
   3. Audit report (SUMMARY.md) liệt kê tất cả `localStorage`/`sessionStorage` keys được classify: (a) đã migrate sang DB, (b) UI preference giữ lại hợp lý, (c) auth-token reviewed
   4. Cart localStorage không chứa dữ liệu user sau khi logout
 **Plans:** 6 plans
-- [ ] 18-01-PLAN.md — BE foundation: Flyway V4 carts+cart_items, JPA entities, repos, cleanup InMemoryCartRepository
-- [ ] 18-02-PLAN.md — BE service+controller: CartCrudService với native upsert + CartController 6 endpoints
-- [ ] 18-03-PLAN.md — FE service+hooks: services/cart.ts dual-backend wrapper + useCart React Query hooks
-- [ ] 18-04-PLAN.md — FE consumers: cart page + checkout page + Header badge refactor sang React Query
-- [ ] 18-05-PLAN.md — Auth integration: AuthProvider login merge cart + logout clear cart
-- [ ] 18-06-PLAN.md — Storage audit + UAT checkpoint: classify mọi localStorage key + 4 phase truths verify
+- [x] 18-01-PLAN.md — BE foundation: Flyway V4 carts+cart_items, JPA entities, repos, cleanup InMemoryCartRepository
+- [x] 18-02-PLAN.md — BE service+controller: CartCrudService với native upsert + CartController 6 endpoints
+- [x] 18-03-PLAN.md — FE service+hooks: services/cart.ts dual-backend wrapper + useCart React Query hooks
+- [x] 18-04-PLAN.md — FE consumers: cart page + checkout page + Header badge refactor sang React Query
+- [x] 18-05-PLAN.md — Auth integration: AuthProvider login merge cart + logout clear cart
+- [x] 18-06-PLAN.md — Storage audit + UAT checkpoint: classify mọi localStorage key + 4 phase truths verify
 **UI hint**: yes
 
 ---
@@ -174,7 +174,7 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 |-------|----------------|--------|-----------|
 | 16. Seed Catalog Hiện Thực | 0/? | Not started | - |
 | 17. Sửa Order Detail Items | 0/? | Not started | - |
-| 18. Kiểm Toán Storage + Cart→DB | 0/? | Not started | - |
+| 18. Kiểm Toán Storage + Cart→DB | 6/6 | COMPLETED | 2026-05-02 |
 | 19. Hoàn Thiện Admin: Charts + Low-Stock | 0/? | Not started | - |
 | 20. Hệ Thống Coupon | 0/? | Not started | - |
 | 21. Hoàn Thiện Reviews | 0/? | Not started | - |
