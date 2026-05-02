@@ -13,6 +13,11 @@ import java.util.Map;
  * đã consume `totalAmount`).
  *
  * <p>Phase 8 Plan 02: thêm items (per-item breakdown), shippingAddress (JSONB object), paymentMethod.
+ *
+ * <p>Phase 20 Plan 03 (D-23, D-24): thêm 2 field snapshot {@code discountAmount} +
+ * {@code couponCode} cho FE display ở /profile/orders/[id] và /admin/orders/[id].
+ * {@code discountAmount} mặc định BigDecimal.ZERO (DB column NOT NULL DEFAULT 0).
+ * {@code couponCode} nullable cho order chưa áp coupon (backward compat).
  */
 public record OrderDto(
     String id,
@@ -23,6 +28,8 @@ public record OrderDto(
     List<OrderItemDto> items,
     Map<String, Object> shippingAddress,
     String paymentMethod,
+    BigDecimal discountAmount,
+    String couponCode,
     Instant createdAt,
     Instant updatedAt
 ) {
