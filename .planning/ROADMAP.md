@@ -190,13 +190,16 @@ Plans:
   3. Người dùng mở lại chatbot sau khi đóng tab → thấy lịch sử chat sessions cũ, có thể tiếp tục conversation
   4. Admin tại `/admin/orders/[id]` click "AI suggest reply" → nhận gợi ý phản hồi customer dựa trên context order — admin review và gửi thủ công (KHÔNG auto-confirm)
   5. API key Anthropic KHÔNG bao giờ xuất hiện trong Network tab của browser (proxy qua Next.js API route)
-**Plans:** 4 plans
+**Plans:** 7 plans
 
 Plans:
-- [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
-- [ ] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
-- [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
-- [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
+- [ ] 22-01-PLAN.md — Foundations: deps + env + lib/chat helpers (pg, schema-init, auth, rate-limit, vn-text, anthropic, product-context, messages-repo)
+- [ ] 22-02-PLAN.md — POST /api/chat/stream route (Anthropic streaming + persist + abort + caching)
+- [ ] 22-03-PLAN.md — GET /api/chat/sessions + GET /api/chat/sessions/[id]/messages (owner-only)
+- [ ] 22-04-PLAN.md — POST /api/admin/orders/[id]/suggest-reply (admin role gate, 1-shot)
+- [ ] 22-05-PLAN.md — Customer chat UI: FloatingChatButton + ChatPanel + useChat hook + sessions sidebar + mount layout
+- [ ] 22-06-PLAN.md — Admin order detail "AI gợi ý phản hồi" button + SuggestReplyModal
+- [ ] 22-07-PLAN.md — Playwright E2E (chatbot-customer / chatbot-admin / chatbot-edge) + 22-VERIFICATION.md
 **UI hint**: yes
 
 ---

@@ -2,7 +2,7 @@
 phase: 22
 slug: ai-chatbot-claude-api-mvp
 status: draft
-nyquist_compliant: false
+nyquist_compliant: true
 wave_0_complete: false
 created: 2026-05-02
 ---
@@ -21,7 +21,7 @@ created: 2026-05-02
 | **Framework** | Playwright `^1.59.1` (E2E, already installed). No jest/vitest in project. |
 | **Config file** | `sources/frontend/playwright.config.ts` |
 | **Quick run command** | `cd sources/frontend && npx tsc --noEmit && npm run lint` |
-| **Full suite command** | `cd sources/frontend && npx playwright test --project=chromium tests/chatbot-*.spec.ts` |
+| **Full suite command** | `cd sources/frontend && npx playwright test --project=chromium e2e/chatbot-*.spec.ts` |
 | **Estimated runtime** | ~10s (quick) / ~2-5min (full chatbot suite) |
 
 **Decision (from research §Test Framework):** Skip jest/vitest install. Use Playwright + `tsc --noEmit` as validation surface. Pure helpers (rate-limit, vn-text, buildContextXml) tested via Playwright in-process or deferred to manual unit if planner sees fit.
@@ -31,7 +31,7 @@ created: 2026-05-02
 ## Sampling Rate
 
 - **After every task commit:** Run `cd sources/frontend && npx tsc --noEmit && npm run lint`
-- **After every plan wave:** Run `cd sources/frontend && npx playwright test tests/chatbot-*.spec.ts`
+- **After every plan wave:** Run `cd sources/frontend && npx playwright test e2e/chatbot-*.spec.ts`
 - **Before `/gsd-verify-work`:** Full Playwright suite green + 3 manual UAT items below
 - **Max feedback latency:** 10s (per task) / 5min (per wave)
 
@@ -39,30 +39,30 @@ created: 2026-05-02
 
 ## Per-Task Verification Map
 
+> Re-anchored 2026-05-02 to actual plans 22-01..22-07 (no plans 08-10 in this phase). Task IDs follow `22-NN-MM` where NN = plan number, MM = task index within plan.
+
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 22-01-* | 01 | 1 | AI-04 (schema) | T-22-01 (XSS via stored content) | Content stored as plain text, sanitized only at render | tsc | `npx tsc --noEmit` | ✅ | ⬜ pending |
-| 22-02-* | 02 | 1 | AI-02 (lib helpers) | T-22-02 (prompt injection) | XML-escape user content in `<product_context>` | unit-via-playwright | `npx playwright test -g "xml escape"` | ❌ W0 | ⬜ pending |
-| 22-03-* | 03 | 1 | AI-03 (product search) | — | ILIKE param-bound (no SQL injection via REST) | tsc + manual | `npx tsc --noEmit` | ✅ | ⬜ pending |
-| 22-04-* | 04 | 2 | AI-01, AI-02 (stream route) | T-22-03 (key leak) | API key server-only env, JWT verify per request | Playwright E2E | `... -g "happy path"` & `-g "no key leak"` | ❌ W0 | ⬜ pending |
-| 22-05-* | 05 | 2 | AI-04 (sessions/messages REST) | T-22-04 (IDOR) | Owner check on session_id before list | Playwright E2E | `... -g "history persist"` & `-g "idor"` | ❌ W0 | ⬜ pending |
-| 22-06-* | 06 | 2 | AI-05 (admin suggest-reply) | T-22-05 (admin role bypass) | Reuse existing admin guard middleware | Playwright E2E | `... -g "admin suggest reply"` | ❌ W0 | ⬜ pending |
-| 22-07-* | 07 | 3 | AI-01 (FloatingChatButton + ChatPanel) | — | No `dangerouslySetInnerHTML` raw, only via react-markdown sanitized | Playwright E2E | `... -g "happy path"` & `-g "markdown render"` | ❌ W0 | ⬜ pending |
-| 22-08-* | 08 | 3 | AI-01 guest fallback + AI-04 history UI | — | Guest button has `href=/login?next=…`, no chat state leak | Playwright E2E | `... -g "guest sees login cta"` | ❌ W0 | ⬜ pending |
-| 22-09-* | 09 | 4 | AI-05 admin button wiring | — | Button hidden for non-admin (server-side guard primary) | Playwright E2E | `... -g "admin suggest reply"` | ❌ W0 | ⬜ pending |
-| 22-10-* | 10 | 4 | Cross — rate limit + key leak + Vietnamese | T-22-03/04/05 | All cross-cutting guards | Playwright E2E | `... -g "rate limit"` & `-g "no key leak"` & `-g "vietnamese response"` | ❌ W0 | ⬜ pending |
+| 22-01-01 | 01 | 1 | AI-04 (schema, chat_svc DB) | T-22-04 (IDOR) | user_id NOT NULL, owner-bound rows | tsc + manual psql | `npx tsc --noEmit` + `psql -c "\dt chat_svc.*"` | ✅ | ⬜ pending |
+| 22-02-01 | 02 | 1 | AI-02 (lib helpers: anthropic, auth, rate-limit, vn-text) | T-22-02 (prompt injection), T-22-03 (key leak) | escapeXml on user content; API key server-only | unit-via-playwright | `npx playwright test -g "xml escape"` | ❌ W0 | ⬜ pending |
+| 22-03-01 | 03 | 1 | AI-03 (product search lib) | — | ILIKE param-bound (no SQL injection via REST) | tsc + manual | `npx tsc --noEmit` | ✅ | ⬜ pending |
+| 22-04-01 | 04 | 2 | AI-05 (admin suggest-reply route) | T-22-05 (admin role bypass), T-22-02 | requireAdmin(claims) server-side; escapeXml order data | Playwright E2E | `npx playwright test -g "admin suggest reply"` | ❌ W0 | ⬜ pending |
+| 22-05-01 | 05 | 3 | AI-01 (chat stream route), AI-04 (sessions/messages REST + customer service) | T-22-03 (key leak), T-22-04 (IDOR) | API key server-only env, JWT verify per request, owner check on session_id | Playwright E2E | `npx playwright test -g "happy path"` & `-g "history persist"` & `-g "idor"` & `-g "no key leak"` | ❌ W0 | ⬜ pending |
+| 22-06-01 | 06 | 3 | AI-05 (admin UI: SuggestReplyModal + admin-chat service) | T-22-05 | Server-side admin guard primary; UI defense-in-depth | Playwright E2E | `npx playwright test -g "admin suggest reply ui"` | ❌ W0 | ⬜ pending |
+| 22-06-02 | 06 | 3 | AI-05 (wire button + modal into admin order page) | T-22-05 | Manual confirm disclaimer present (D-07) | Playwright E2E | `npx playwright test -g "admin manual confirm"` | ❌ W0 | ⬜ pending |
+| 22-07-01 | 07 | 4 | AI-01 (FloatingChatButton + ChatPanel customer UI) | — | No `dangerouslySetInnerHTML` raw, only via react-markdown sanitized | Playwright E2E | `npx playwright test -g "happy path"` & `-g "markdown render"` & `-g "guest sees login cta"` & `-g "rate limit"` & `-g "vietnamese response"` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
-*Note: Plan IDs 01-10 above are seed estimates from RESEARCH §14 — actual plan numbering set by gsd-planner. Map will be re-anchored to real task IDs once plans are created.*
+*Coverage check: AI-01 → 22-05, 22-07 · AI-02 → 22-02 · AI-03 → 22-03 · AI-04 → 22-01, 22-05 · AI-05 → 22-04, 22-06. All requirements covered.*
 
 ---
 
 ## Wave 0 Requirements
 
-- [ ] `sources/frontend/tests/chatbot-customer.spec.ts` — stubs for AI-01, AI-03 happy path, AI-04 history persist, sliding window, auto-title
-- [ ] `sources/frontend/tests/chatbot-admin.spec.ts` — stubs for AI-05 (admin suggest-reply happy + manual-confirm assertion)
-- [ ] `sources/frontend/tests/chatbot-edge.spec.ts` — stubs for guest CTA, rate limit (21st msg → 429), key-leak grep, prompt injection (XML escape), markdown render
+- [ ] `sources/frontend/e2e/chatbot-customer.spec.ts` — stubs for AI-01, AI-03 happy path, AI-04 history persist, sliding window, auto-title
+- [ ] `sources/frontend/e2e/chatbot-admin.spec.ts` — stubs for AI-05 (admin suggest-reply happy + manual-confirm assertion)
+- [ ] `sources/frontend/e2e/chatbot-edge.spec.ts` — stubs for guest CTA, rate limit (21st msg → 429), key-leak grep, prompt injection (XML escape), markdown render
 - [ ] **Test fixture:** Helper `mockChatStream(page, deltaSequence)` using Playwright `route.fulfill()` with `text/event-stream` body — enables deterministic tests without live Anthropic API in CI.
 - [ ] **Test fixture:** Seeded user account + valid JWT (reuse existing v1.2 smoke E2E login flow). Add `seedAdminUser()` if not present.
 - [ ] **DB cleanup helper:** `truncate chat_svc.chat_messages, chat_svc.chat_sessions` between specs (or use per-spec random user_id).
@@ -82,11 +82,13 @@ created: 2026-05-02
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references (3 spec files + 2 fixtures + DB cleanup helper)
-- [ ] No watch-mode flags (Playwright runs once per CI job)
-- [ ] Feedback latency < 10s per task / < 5min per wave
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references (3 spec files in `e2e/` + 2 fixtures + DB cleanup helper)
+- [x] No watch-mode flags (Playwright runs once per CI job)
+- [x] Feedback latency < 10s per task / < 5min per wave
+- [x] `nyquist_compliant: true` set in frontmatter
+- [x] Per-Task Verification Map re-anchored to actual plans 22-01..22-07 (plans 08-10 do not exist)
+- [x] testDir paths corrected to `e2e/` (Playwright config) — no `tests/` references remain
 
-**Approval:** pending
+**Approval:** signed 2026-05-02

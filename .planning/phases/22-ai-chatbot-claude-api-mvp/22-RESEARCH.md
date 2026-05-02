@@ -911,27 +911,27 @@ Phase 22 is greenfield (new schema, new routes, new UI components). No rename/re
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **`user_id` column type — BIGINT vs VARCHAR(36)?**
    - What we know: D-19 specifies BIGINT, but `user_svc.users.id` is VARCHAR(36) UUID.
    - What's unclear: Was D-19 BIGINT a careless default, or genuine intent to use sequence-based local IDs?
-   - **Recommendation: VARCHAR(36) NOT NULL.** Logical FK to `user_svc.users.id`. JWT `sub` claim is the UUID string. This is the cheapest path. **Planner MUST surface this as a decision deviation if user wants strict BIGINT.**
+   - **RESOLVED: VARCHAR(36) NOT NULL.** Logical FK to `user_svc.users.id`. JWT `sub` claim is the UUID string. This is the cheapest path. **Planner MUST surface this as a decision deviation if user wants strict BIGINT.**
 
 2. **API gateway URL from Next.js inside Docker network?**
    - What we know: Spring services use service-name DNS (`postgres`, `api-gateway`).
    - What's unclear: Whether Next.js container is on the same Docker network as `api-gateway`. Compose file shows `frontend` depends_on `api-gateway` — implies same default network.
-   - Recommendation: Use `http://api-gateway:8080` from container; document `API_GATEWAY_URL` env override for local dev.
+   - **RESOLVED:** Use `http://api-gateway:8080` from container; document `API_GATEWAY_URL` env override for local dev.
 
 3. **Test approach for SSE streaming under Playwright?**
    - Options: (a) live API with real key (fragile, costs); (b) Playwright `route.fulfill()` with custom text/event-stream body; (c) MSW (not yet in project).
-   - Recommendation: (b) — write `mockChatStream(page, chunks[])` helper. Live key tests gated behind `CHATBOT_E2E_LIVE=1` env.
+   - **RESOLVED:** (b) — write `mockChatStream(page, chunks[])` helper. Live key tests gated behind `CHATBOT_E2E_LIVE=1` env.
 
 4. **Should `/api/chat/stream` reuse existing JWT or need a session token?**
-   - Recommended: existing JWT in Authorization header. No new session concept.
+   - **RESOLVED:** existing JWT in Authorization header. No new session concept.
 
 5. **Admin "suggest reply" model: same haiku-4-5 or different?**
-   - Locked D-01 covers all chat. Reuse haiku-4-5. 1-shot, no streaming.
+   - **RESOLVED:** Locked D-01 covers all chat. Reuse haiku-4-5. 1-shot, no streaming.
 
 ---
 
