@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import styles from './page.module.css';
 import ProductCard from '@/components/ui/ProductCard/ProductCard';
@@ -72,25 +73,28 @@ export default function Home() {
           </p>
           <div className={styles.heroActions}>
             <Button href="/products" size="lg">Khám phá ngay</Button>
-            <Button href="/collections" variant="secondary" size="lg">
-              Xem bộ sưu tập
+            <Button href="/products" variant="secondary" size="lg">
+              Xem tất cả sản phẩm
             </Button>
           </div>
         </div>
         <div className={styles.heroVisual}>
           <div className={styles.heroImagePrimary}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600"
+            <Image
+              src="/hero/hero-primary.webp"
               alt="Sản phẩm nổi bật"
+              fill
+              sizes="(max-width: 1024px) 80vw, 45vw"
+              priority
               className={styles.heroImg}
             />
           </div>
           <div className={styles.heroImageSecondary}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400"
+            <Image
+              src="/hero/hero-secondary.webp"
               alt="Phụ kiện cao cấp"
+              fill
+              sizes="(max-width: 1024px) 50vw, 25vw"
               className={styles.heroImg}
             />
           </div>
