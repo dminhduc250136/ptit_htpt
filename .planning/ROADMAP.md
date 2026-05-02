@@ -58,7 +58,7 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
 - [~~] **Phase 12: Wishlist** — ~~SKIPPED~~ (deferred v1.3 — không unblock core shopping flow; V5 wishlists migration number reserved)
 - [ ] **Phase 13: Reviews & Ratings** — V4 reviews + V5 avg_rating cached cols, verified-buyer eligibility, PDP review section. *(REV-04 author edit/delete deferred v1.3)*
 - [ ] **Phase 14: Basic Search Filters** — Brand + Price filter với JPQL optional params, FilterSidebar component. *(SEARCH-03 rating + SEARCH-04 URL state deferred v1.3)*
-- [ ] **Phase 15: Public Polish + Milestone Audit** — Homepage hero+featured+categories, PDP thumbnail gallery+specs+breadcrumb+stock badge, smoke E2E, milestone audit + tag v1.2.
+- [x] **Phase 15: Public Polish + Milestone Audit** — Homepage hero+featured+categories, PDP thumbnail gallery+specs+breadcrumb+stock badge, smoke E2E, milestone audit + tag v1.2. *(Complete 2026-05-02 — 5/5 plans done; v1.2 SHIPPED gaps_found 15/17 active REQs; tag v1.2 LOCAL pending user push)*
 
 ---
 
@@ -146,7 +146,7 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
 - [x] 15-01-PLAN.md — Wave 1 homepage: hero next/image + Featured carousel scroll-snap + New Arrivals dedupe *(Complete 2026-05-02 — 2 tasks, 2 files; SUMMARY: 15-01-SUMMARY.md)*
 - [x] 15-02-PLAN.md — Wave 1 PDP: breadcrumb brand refactor + 3-tier stock badge + hide add-to-cart + thumbnail a11y *(Complete 2026-05-02 — 2 tasks, 2 files; SUMMARY: 15-02-SUMMARY.md)*
 - [x] 15-03-PLAN.md — Wave 2 smoke E2E: 4 Playwright tests (homepage/checkout/review/profile) + skip-if-no-data degradation *(Complete 2026-05-02 — 2 tasks, 1 file 251 LOC; auto-approved checkpoint; SUMMARY: 15-03-SUMMARY.md)*
-- [ ] 15-04-PLAN.md — Wave 3 milestone closure: /gsd-audit-milestone v1.2 + MILESTONES update + git tag v1.2 annotated local
+- [x] 15-04-PLAN.md — Wave 3 milestone closure: self-generated audit doc + MILESTONES + PROJECT update + tag v1.2 annotated LOCAL *(Complete 2026-05-02 — 1 task + 2 auto-approved checkpoints, 2 files created + 2 modified, commit f267bad, tag v1.2; SUMMARY: 15-04-SUMMARY.md)*
 **UI hint:** yes
 
 ---
@@ -161,7 +161,7 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
 | 12. Wishlist | — | ~~SKIPPED~~ (defer v1.3) | — |
 | 13. Reviews & Ratings | 0/4 | Not started | — |
 | 14. Basic Search Filters | 0/3 | Not started | — |
-| 15. Public Polish + Milestone Audit | 4/5 | Wave 2 complete (15-03 smoke E2E ✓) | — |
+| 15. Public Polish + Milestone Audit | 5/5 | ✓ Complete (Wave 3 closure ✓ — tag v1.2 LOCAL) | 2026-05-02 |
 
 ---
 
