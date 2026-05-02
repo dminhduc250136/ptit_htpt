@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import styles from './page.module.css';
 import ProductCard from '@/components/ui/ProductCard/ProductCard';
@@ -22,19 +23,16 @@ export default function Home() {
     setLoading(true);
     setFailed(false);
     try {
-      // Featured: best-seller-ish sort proxy via reviewCount desc.
-      // Latest: createdAt desc. Backend sort param may or may not honour these —
-      // fall back to default order if not supported (we still get a page of products).
-      const [featuredResp, latestResp] = await Promise.all([
-        listProducts({ size: 8, sort: 'reviewCount,desc' }).catch(() =>
-          listProducts({ size: 8 }),
-        ),
-        listProducts({ size: 8, sort: 'createdAt,desc' }).catch(() =>
-          listProducts({ size: 8 }),
-        ),
-      ]);
-      setFeatured(featuredResp?.content ?? []);
-      setLatest(latestResp?.content ?? []);
+      // Phase 15 D-04 + D-09: single-fetch sort=createdAt,desc size=16 →
+      // Featured = slice(0,8), New Arrivals = slice(8,16) cùng dataset →
+      // dedupe deterministic, race-free (Pitfall 2). Backend sort param
+      // có thể KHÔNG honor → fallback bằng default order.
+      const resp = await listProducts({ size: 16, sort: 'createdAt,desc' }).catch(() =>
+        listProducts({ size: 16 }),
+      );
+      const all = resp?.content ?? [];
+      setFeatured(all.slice(0, 8));
+      setLatest(all.slice(8, 16));
     } catch {
       // 5xx / network → RetrySection per D-10 (no auto-retry).
       setFailed(true);
@@ -72,25 +70,28 @@ export default function Home() {
           </p>
           <div className={styles.heroActions}>
             <Button href="/products" size="lg">Khám phá ngay</Button>
-            <Button href="/collections" variant="secondary" size="lg">
-              Xem bộ sưu tập
+            <Button href="/products" variant="secondary" size="lg">
+              Xem tất cả sản phẩm
             </Button>
           </div>
         </div>
         <div className={styles.heroVisual}>
           <div className={styles.heroImagePrimary}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600"
+            <Image
+              src="/hero/hero-primary.webp"
               alt="Sản phẩm nổi bật"
+              fill
+              sizes="(max-width: 1024px) 80vw, 45vw"
+              priority
               className={styles.heroImg}
             />
           </div>
           <div className={styles.heroImageSecondary}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="https://images.unsplash.com/photo-1553062407-98eeb64c6a62?w=400"
+            <Image
+              src="/hero/hero-secondary.webp"
               alt="Phụ kiện cao cấp"
+              fill
+              sizes="(max-width: 1024px) 50vw, 25vw"
               className={styles.heroImg}
             />
           </div>
@@ -158,9 +159,16 @@ export default function Home() {
           ) : failed ? (
             <RetrySection onRetry={() => load()} loading={loading} />
           ) : featured.length > 0 ? (
-            <div className={styles.productsGrid}>
+            <div
+              className={styles.featuredScroll}
+              role="region"
+              aria-label="Sản phẩm nổi bật — vuốt ngang để xem thêm"
+              tabIndex={0}
+            >
               {featured.map((product) => (
-                <ProductCard key={product.id} product={product} />
+                <div key={product.id} className={styles.featuredCard}>
+                  <ProductCard product={product} />
+                </div>
               ))}
             </div>
           ) : (

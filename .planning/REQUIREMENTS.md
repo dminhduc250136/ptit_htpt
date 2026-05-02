@@ -61,10 +61,10 @@
 
 ### PUB (Public polish — Phase 15)
 
-- [ ] **PUB-01**: Homepage hero + featured products — hero banner (CTA + WebP image, `next/image` priority cho LCP), Featured products carousel (top-8 by `createdAt DESC`, CSS scroll-snap).
-- [ ] **PUB-02**: Homepage categories spotlight + new arrivals — Categories grid (link → brand-filtered `/products?brand=X`) + New arrivals strip (top-8 newest, KHÔNG duplicate featured).
-- [ ] **PUB-03** *(trimmed)*: PDP thumbnail gallery + specs table + breadcrumb — thumbnail strip với main image swap (click thumbnail → swap main, CSS + React state; KHÔNG dùng lightbox lib) + specs table render từ `product.specs` JSONB + breadcrumb `Home > {brand} > {product.name}` (clickable). *(Lightbox + axe-core a11y defer v1.3)*
-- [ ] **PUB-04**: PDP stock badge — green "Còn hàng" (stock ≥10), yellow "Sắp hết hàng" (1≤stock<10), red "Hết hàng" (stock=0). Hide add-to-cart khi stock=0.
+- [x] **PUB-01**: Homepage hero + featured products — hero banner (CTA + WebP image, `next/image` priority cho LCP), Featured products carousel (top-8 by `createdAt DESC`, CSS scroll-snap).
+- [x] **PUB-02**: Homepage categories spotlight + new arrivals — Categories grid (link → brand-filtered `/products?brand=X`) + New arrivals strip (top-8 newest, KHÔNG duplicate featured).
+- [x] **PUB-03** *(trimmed)*: PDP thumbnail gallery + specs table + breadcrumb — thumbnail strip với main image swap (click thumbnail → swap main, CSS + React state; KHÔNG dùng lightbox lib) + specs table render từ `product.specs` JSONB + breadcrumb `Home > {brand} > {product.name}` (clickable). *(Lightbox + axe-core a11y defer v1.3)* *(Complete 15-02 — breadcrumb brand-based + thumbnail a11y)*
+- [x] **PUB-04**: PDP stock badge — green "Còn hàng" (stock ≥10), yellow "Sắp hết hàng" (1≤stock<10), red "Hết hàng" (stock=0). Hide add-to-cart khi stock=0. *(Complete 15-02 — 3-tier Badge + hide add-to-cart conditional)*
 
 ---
 
@@ -127,10 +127,10 @@ _Revised 2026-04-27 — scope trim. 17 active REQs, 6 deferred v1.3._
 | SEARCH-02 | Phase 14 | Pending | — |
 | SEARCH-03 | Deferred | Deferred v1.3 | Rating filter — cần avg_rating + JPA Spec |
 | SEARCH-04 | Deferred | Deferred v1.3 | URL state + in-stock + clear-all |
-| PUB-01 | Phase 15 | Pending | — |
-| PUB-02 | Phase 15 | Pending | — |
-| PUB-03 | Phase 15 | Pending | Thumbnail swap only, no lightbox |
-| PUB-04 | Phase 15 | Pending | — |
+| PUB-01 | Phase 15 | Complete | 15-01 — hero next/image priority + Featured CSS scroll-snap carousel |
+| PUB-02 | Phase 15 | Complete | 15-01 — categories grid giữ `?category=` (D-07) + New Arrivals slice(8,16) dedupe |
+| PUB-03 | Phase 15 | Complete (15-02) | Breadcrumb brand-based + thumbnail a11y; lightbox defer v1.3 |
+| PUB-04 | Phase 15 | Complete (15-02) | 3-tier Badge + hide add-to-cart khi stock=0 |
 | TEST-02 | Phase 15 | Pending | Smoke 3-4 tests only |
 
 **Coverage check:** 17/17 active REQs mapped ✓ · 6 deferred v1.3 documented ✓

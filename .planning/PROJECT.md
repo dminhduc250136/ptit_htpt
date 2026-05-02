@@ -118,22 +118,23 @@ From codebase analysis, areas worth monitoring:
 - Performance optimization (N+1 queries, caching)
 - Comprehensive test coverage (currently minimal)
 
-## Current Milestone: v1.2 UI/UX Completion
+## Current Milestone: v1.3 — TBD (planning pending)
 
-**Goal:** Hoàn thiện trải nghiệm UI/UX end-user — close residual gaps từ v1.1 + thêm 8 visible feature mới (account / discovery / checkout address book / public polish), nâng demo flow từ "real data ở mọi điểm visible" lên "trải nghiệm UX gần production-ready".
+**Status:** v1.2 SHIPPED 2026-05-02 (gaps_found — 15/17 active REQs satisfied + 2 pending). Tag `v1.2` annotated local. v1.3 scope chưa define — chạy `/gsd-new-milestone` hoặc `/gsd-roadmap` để bootstrap.
 
-**Target features (11 items, 5 nhóm):**
-- *Residual gaps:* AUTH-06 middleware mở rộng, UI-02 admin landing dashboard, Playwright E2E re-baseline
-- *Account:* Wishlist, Order history filtering, User profile editing
-- *Discovery:* Product reviews & ratings, Advanced search filters
-- *Checkout:* Address book
-- *Public polish:* Homepage redesign, Product detail enhancements
+**v1.3 carry-over (high-priority backlog):**
+- SEARCH-01 + SEARCH-02 (Phase 14 brand+price filter — plans ready, execute đầu phase)
+- ACCT-01 wishlist (Phase 12 plans cần re-plan với V5 migration)
+- REV-04 author edit/delete + SEARCH-03 rating filter + SEARCH-04 URL state + clear-all
+- PUB-03 lightbox + axe-core a11y gate
+- TEST-02 full E2E suite (8+ tests)
+- ACCT-04 avatar upload (deferred D-08 backlog)
 
-**Phase numbering:** tiếp tục từ Phase 9 (KHÔNG reset).
+**Phase numbering:** tiếp tục từ Phase 16 (KHÔNG reset).
 
 ## Current State
 
-**Last shipped:** v1.1 — Real End-User Experience (2026-04-26)
+**Last shipped:** v1.2 — UI/UX Completion (2026-05-02, gaps_found: 15/17 active satisfied + 2 pending v1.3)
 
 15/19 requirements SATISFIED + 4/19 PARTIAL (DB-05 và PERSIST-01 closed cuối milestone qua commit `346092b`; AUTH-06 middleware narrow + UI-02 admin landing dashboard defer v1.2). 4 phases / 22 plans / 289 commits trong 2 days. Audit ghi nhận `gaps_found` proceeded với residual partial làm tech debt.
 
@@ -193,4 +194,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-04-26 — Milestone v1.2 UI/UX Completion STARTED (11 target features, 5 nhóm; visible-first priority; phase numbering tiếp tục từ Phase 9).*
+*Last updated: 2026-05-02 — Milestone v1.2 UI/UX Completion SHIPPED (gaps_found: 15/17 active REQs satisfied; tag v1.2 annotated local pending user push). Next: v1.3 scope planning.*

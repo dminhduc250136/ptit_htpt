@@ -58,7 +58,7 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
 - [~~] **Phase 12: Wishlist** — ~~SKIPPED~~ (deferred v1.3 — không unblock core shopping flow; V5 wishlists migration number reserved)
 - [x] **Phase 13: Reviews & Ratings** — V4 reviews + V5 avg_rating cached cols, verified-buyer eligibility, PDP review section. *(Complete 2026-05-02 — 4 plans, V6 rating type fix + JWT secret externalization; 13-04 6-scenario UAT deferred; REV-04 author edit/delete deferred v1.3)*
 - [ ] **Phase 14: Basic Search Filters** — Brand + Price filter với JPQL optional params, FilterSidebar component. *(SEARCH-03 rating + SEARCH-04 URL state deferred v1.3)*
-- [ ] **Phase 15: Public Polish + Milestone Audit** — Homepage hero+featured+categories, PDP thumbnail gallery+specs+breadcrumb+stock badge, smoke E2E, milestone audit + tag v1.2.
+- [x] **Phase 15: Public Polish + Milestone Audit** — Homepage hero+featured+categories, PDP thumbnail gallery+specs+breadcrumb+stock badge, smoke E2E, milestone audit + tag v1.2. *(Complete 2026-05-02 — 5/5 plans done; v1.2 SHIPPED gaps_found 15/17 active REQs; tag v1.2 LOCAL pending user push)*
 
 ---
 
@@ -141,7 +141,12 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
   3. PDP stock badge color-coded: green "Còn hàng" (stock ≥10), yellow "Sắp hết hàng" (1≤stock<10), red "Hết hàng" (stock=0); add-to-cart button hidden khi stock=0.
   4. Playwright smoke E2E: 3-4 critical path tests (address-at-checkout, review submission, profile editing, homepage navigation) PASS trên fresh docker stack; toàn bộ v1.1 baseline vẫn PASS.
   5. Milestone audit completed (audit doc + verifier scan + tag `v1.2`); 17/17 active REQs satisfied hoặc gaps documented.
-**Plans:** TBD
+**Plans:** 5 plans (4 waves)
+- [x] 15-00-PLAN.md — Wave 0 prep: hero WebP assets + Badge variants extend + selector audit + manual checklist *(Complete 2026-05-02 — 3 tasks, 6 files; SUMMARY: 15-00-SUMMARY.md)*
+- [x] 15-01-PLAN.md — Wave 1 homepage: hero next/image + Featured carousel scroll-snap + New Arrivals dedupe *(Complete 2026-05-02 — 2 tasks, 2 files; SUMMARY: 15-01-SUMMARY.md)*
+- [x] 15-02-PLAN.md — Wave 1 PDP: breadcrumb brand refactor + 3-tier stock badge + hide add-to-cart + thumbnail a11y *(Complete 2026-05-02 — 2 tasks, 2 files; SUMMARY: 15-02-SUMMARY.md)*
+- [x] 15-03-PLAN.md — Wave 2 smoke E2E: 4 Playwright tests (homepage/checkout/review/profile) + skip-if-no-data degradation *(Complete 2026-05-02 — 2 tasks, 1 file 251 LOC; auto-approved checkpoint; SUMMARY: 15-03-SUMMARY.md)*
+- [x] 15-04-PLAN.md — Wave 3 milestone closure: self-generated audit doc + MILESTONES + PROJECT update + tag v1.2 annotated LOCAL *(Complete 2026-05-02 — 1 task + 2 auto-approved checkpoints, 2 files created + 2 modified, commit f267bad, tag v1.2; SUMMARY: 15-04-SUMMARY.md)*
 **UI hint:** yes
 
 ---
@@ -156,7 +161,7 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
 | 12. Wishlist | — | ~~SKIPPED~~ (defer v1.3) | — |
 | 13. Reviews & Ratings | 0/4 | Not started | — |
 | 14. Basic Search Filters | 0/3 | Not started | — |
-| 15. Public Polish + Milestone Audit | 0/? | Not started | — |
+| 15. Public Polish + Milestone Audit | 5/5 | ✓ Complete (Wave 3 closure ✓ — tag v1.2 LOCAL) | 2026-05-02 |
 
 ---
 
@@ -186,10 +191,10 @@ Reserve **explicit V-numbers per service** trong file này — plan-phase agents
 | SEARCH-02 | Phase 14 | SEARCH (price) | Pending |
 | SEARCH-03 | Phase 14 TRIMMED | SEARCH (rating) | Deferred v1.3 |
 | SEARCH-04 | Phase 14 TRIMMED | SEARCH (inStock + URL state) | Deferred v1.3 |
-| PUB-01 | Phase 15 | PUB (hero + featured) | Pending |
-| PUB-02 | Phase 15 | PUB (categories + new arrivals) | Pending |
-| PUB-03 | Phase 15 | PUB (thumbnail gallery + specs + breadcrumb) | Pending |
-| PUB-04 | Phase 15 | PUB (stock badge) | Pending |
+| PUB-01 | Phase 15 | PUB (hero + featured) | Complete (15-01) |
+| PUB-02 | Phase 15 | PUB (categories + new arrivals) | Complete (15-01) |
+| PUB-03 | Phase 15 | PUB (thumbnail gallery + specs + breadcrumb) | Complete (15-02) |
+| PUB-04 | Phase 15 | PUB (stock badge) | Complete (15-02) |
 | TEST-02 | Phase 15 | TEST (smoke E2E 3-4 tests) | Pending |
 
 ---
