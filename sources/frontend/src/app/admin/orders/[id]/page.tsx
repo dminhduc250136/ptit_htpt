@@ -1,41 +1,18 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
-import styles from '../../products/page.module.css';
 import Button from '@/components/ui/Button/Button';
 import Badge from '@/components/ui/Badge/Badge';
 import RetrySection from '@/components/ui/RetrySection/RetrySection';
 import { useToast } from '@/components/ui/Toast/Toast';
 import { getAdminOrderById, updateOrderState } from '@/services/orders';
-
-// Backend AdminOrderDto shape
-interface AdminOrder {
-  id: string;
-  userId: string;
-  total?: number;
-  totalAmount?: number;
-  status: string;
-  note?: string;
-  createdAt: string;
-  updatedAt?: string;
-}
+import type { Order } from '@/types';
+import { paymentMethodMap, statusMap } from '@/lib/orderLabels';
+import { useEnrichedItems } from '@/lib/useEnrichedItems';
 
 const STATUS_OPTIONS = ['PENDING', 'CONFIRMED', 'SHIPPING', 'DELIVERED', 'CANCELLED'];
-const STATUS_LABELS: Record<string, string> = {
-  PENDING: 'Chờ xác nhận',
-  CONFIRMED: 'Đã xác nhận',
-  SHIPPING: 'Đang giao',
-  DELIVERED: 'Đã giao',
-  CANCELLED: 'Đã hủy',
-};
-const STATUS_VARIANTS: Record<string, 'default' | 'new' | 'hot' | 'sale' | 'out-of-stock'> = {
-  PENDING: 'default',
-  CONFIRMED: 'new',
-  SHIPPING: 'hot',
-  DELIVERED: 'sale',
-  CANCELLED: 'out-of-stock',
-};
 
 export default function AdminOrderDetailPage() {
   const params = useParams<{ id: string }>();
@@ -43,7 +20,7 @@ export default function AdminOrderDetailPage() {
   const router = useRouter();
   const { showToast } = useToast();
 
-  const [order, setOrder] = useState<AdminOrder | null>(null);
+  const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [newStatus, setNewStatus] = useState('');
@@ -54,10 +31,9 @@ export default function AdminOrderDetailPage() {
     setLoading(true);
     setFailed(false);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const data = await getAdminOrderById(id) as any;
+      const data = await getAdminOrderById(id);
       setOrder(data);
-      setNewStatus(data.status);
+      setNewStatus(data.status ?? data.orderStatus ?? 'PENDING');
     } catch {
       setFailed(true);
     } finally {
@@ -67,8 +43,10 @@ export default function AdminOrderDetailPage() {
 
   useEffect(() => { load(); }, [load]);
 
+  const currentStatus = order?.status ?? order?.orderStatus ?? 'PENDING';
+
   const handleUpdateStatus = async () => {
-    if (!order || newStatus === order.status) return;
+    if (!order || newStatus === currentStatus) return;
     setSaving(true);
     try {
       await updateOrderState(order.id, newStatus);
@@ -80,6 +58,8 @@ export default function AdminOrderDetailPage() {
       setSaving(false);
     }
   };
+
+  const enriched = useEnrichedItems(order?.items);
 
   if (loading) return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
@@ -127,14 +107,26 @@ export default function AdminOrderDetailPage() {
           <p style={labelStyle}>Mã đơn: <strong>{order.id.slice(0, 8)}</strong></p>
           <p style={labelStyle}>Khách hàng: <strong>{order.userId.slice(0, 8)}</strong></p>
           <p style={labelStyle}>Ngày đặt: <strong>{new Date(order.createdAt).toLocaleDateString('vi-VN')}</strong></p>
-          <p style={labelStyle}>Trạng thái: <Badge variant={STATUS_VARIANTS[order.status] ?? 'default'}>{STATUS_LABELS[order.status] ?? order.status}</Badge></p>
+          <p style={labelStyle}>Trạng thái: <Badge variant={statusMap[currentStatus]?.variant ?? 'default'}>{statusMap[currentStatus]?.label ?? currentStatus}</Badge></p>
         </div>
 
         {/* Right: Shipping info */}
         <div style={cardStyle}>
           <h3 style={{ fontSize: 'var(--text-title-lg)', fontWeight: 700, marginBottom: 'var(--space-3)' }}>Thông tin giao hàng</h3>
-          <p style={labelStyle}>Địa chỉ: <strong>—</strong></p>
-          <p style={labelStyle}>Thanh toán: <strong>—</strong></p>
+          <p style={labelStyle}>
+            Địa chỉ:{' '}
+            <strong>
+              {order.shippingAddress
+                ? [order.shippingAddress.street, order.shippingAddress.ward,
+                   order.shippingAddress.district, order.shippingAddress.city]
+                    .filter(Boolean).join(', ')
+                : '—'}
+            </strong>
+          </p>
+          <p style={labelStyle}>
+            Thanh toán:{' '}
+            <strong>{paymentMethodMap[order.paymentMethod] ?? order.paymentMethod ?? '—'}</strong>
+          </p>
           {order.note && <p style={labelStyle}>Ghi chú: <strong>{order.note}</strong></p>}
         </div>
       </div>
@@ -142,11 +134,69 @@ export default function AdminOrderDetailPage() {
       {/* Line items card */}
       <div style={cardStyle}>
         <h3 style={{ fontSize: 'var(--text-title-lg)', fontWeight: 700, marginBottom: 'var(--space-3)' }}>Sản phẩm</h3>
-        <p style={{ color: 'var(--on-surface-variant)' }}>Chi tiết sản phẩm sẽ khả dụng sau khi Phase 8 hoàn thiện</p>
-        <div style={{ borderTop: '1px solid rgba(195,198,214,0.15)', marginTop: 'var(--space-3)', paddingTop: 'var(--space-3)' }}>
+        {enriched.length === 0 ? (
+          <p style={{ color: 'var(--on-surface-variant)' }}>Đơn hàng không có sản phẩm</p>
+        ) : (
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                <th style={{ textAlign: 'left',   padding: 'var(--space-2)' }}>Sản phẩm</th>
+                <th style={{ textAlign: 'center', padding: 'var(--space-2)' }}>Số lượng</th>
+                <th style={{ textAlign: 'right',  padding: 'var(--space-2)' }}>Đơn giá</th>
+                <th style={{ textAlign: 'right',  padding: 'var(--space-2)' }}>Thành tiền</th>
+              </tr>
+            </thead>
+            <tbody>
+              {enriched.map((it) => {
+                const unitPrice = it.unitPrice ?? it.price ?? 0;
+                const lineTotal = it.lineTotal ?? it.subtotal ?? 0;
+                return (
+                  <tr key={it.id} style={{ borderTop: '1px solid rgba(195,198,214,0.15)' }}>
+                    <td style={{ padding: 'var(--space-2)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+                        {it.thumbnailUrl ? (
+                          <Image
+                            src={it.thumbnailUrl}
+                            width={64}
+                            height={64}
+                            alt={it.productName}
+                            style={{ borderRadius: 'var(--radius-md)', objectFit: 'cover', flexShrink: 0 }}
+                          />
+                        ) : (
+                          <div
+                            style={{
+                              width: 64, height: 64,
+                              borderRadius: 'var(--radius-md)',
+                              background: 'var(--surface-container-high)',
+                              display: 'flex', alignItems: 'center', justifyContent: 'center',
+                              color: 'var(--on-surface-variant)',
+                              flexShrink: 0,
+                            }}
+                          >
+                            📦
+                          </div>
+                        )}
+                        <div>
+                          <div style={{ fontWeight: 500 }}>{it.productName}</div>
+                          <div style={{ fontSize: 'var(--text-body-sm)', color: 'var(--on-surface-variant)' }}>
+                            {it.brand ?? '—'}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ textAlign: 'center', padding: 'var(--space-2)' }}>{it.quantity}</td>
+                    <td style={{ textAlign: 'right',  padding: 'var(--space-2)' }}>{unitPrice.toLocaleString('vi-VN')}₫</td>
+                    <td style={{ textAlign: 'right',  padding: 'var(--space-2)', fontWeight: 600 }}>{lineTotal.toLocaleString('vi-VN')}₫</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+        <div style={{ borderTop: '1px solid rgba(195,198,214,0.15)', marginTop: 'var(--space-3)', paddingTop: 'var(--space-3)', textAlign: 'right' }}>
           <span style={{ fontWeight: 700, fontSize: 'var(--text-title-sm)' }}>Tổng cộng: </span>
           <span style={{ color: 'var(--primary)', fontWeight: 700 }}>
-            {(order.totalAmount ?? order.total)?.toLocaleString('vi-VN')}₫
+            {(order.totalAmount ?? order.total ?? 0).toLocaleString('vi-VN')}₫
           </span>
         </div>
       </div>
@@ -159,11 +209,11 @@ export default function AdminOrderDetailPage() {
           onChange={e => setNewStatus(e.target.value)}
           style={{ width: '100%', padding: 'var(--space-3)', borderRadius: 'var(--radius-lg)', border: '1.5px solid rgba(195,198,214,0.2)', fontSize: 'var(--text-body-md)', fontFamily: 'var(--font-family-body)', background: 'var(--surface-container-lowest)', cursor: 'pointer', marginBottom: 'var(--space-3)' }}
         >
-          {STATUS_OPTIONS.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}
+          {STATUS_OPTIONS.map(s => <option key={s} value={s}>{statusMap[s]?.label ?? s}</option>)}
         </select>
         <Button
           onClick={handleUpdateStatus}
-          disabled={newStatus === order.status}
+          disabled={newStatus === currentStatus}
           loading={saving}
         >
           Cập nhật trạng thái
