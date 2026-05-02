@@ -43,7 +43,8 @@
 ### STORE — Storage Audit + Cart→DB
 
 - [ ] **STORE-01** — Audit toàn FE codebase: grep `localStorage` + `sessionStorage`, classify mọi usage thành 3 nhóm: (a) user-data persist sang DB cần thiết, (b) UI preference giữ localStorage OK, (c) auth-token reviewable security. Output báo cáo trong phase SUMMARY.md.
-- [ ] **STORE-02** — Migrate cart từ `localStorage['cart']` sang DB. Order-svc V4 tạo `carts` + `cart_items` tables (per `user_id`). FE `services/cart.ts` chuyển sang API calls. Idempotent merge endpoint (`ON CONFLICT DO UPDATE`) khi guest login.
+- [x] **STORE-02
+** — Migrate cart từ `localStorage['cart']` sang DB. Order-svc V4 tạo `carts` + `cart_items` tables (per `user_id`). FE `services/cart.ts` chuyển sang API calls. Idempotent merge endpoint (`ON CONFLICT DO UPDATE`) khi guest login.
 - [ ] **STORE-03** — Migrate các user-data leak khác phát hiện trong STORE-01 (recently viewed / search history / wishlist nếu có / etc.) sang DB hoặc giải thích lý do giữ lại.
 
 ### ADMIN — Charts + Low-Stock + Order Detail Items

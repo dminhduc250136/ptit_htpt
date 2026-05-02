@@ -1,27 +1,27 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
-milestone_name: Catalog Realism & Commerce Intelligence
-status: active
-last_updated: "2026-05-02T14:30:00.000Z"
-last_activity: 2026-05-02
+milestone: v1.0
+milestone_name: milestone
+status: executing
+last_updated: "2026-05-02T15:16:49.987Z"
+last_activity: 2026-05-02 -- Phase 18 Plan 01 complete (18-01-SUMMARY.md)
 progress:
   total_phases: 7
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  total_plans: 6
+  completed_plans: 1
+  percent: 17
 ---
 
 ## Current Position
 
-Phase: Phase 16 — Seed Catalog Hiện Thực (Not started)
-Plan: —
-Status: Roadmap complete — sẵn sàng plan Phase 16
-Last activity: 2026-05-02 — ROADMAP.md tạo xong, 27/27 REQs mapped
+Phase: 18-storage-audit-cart-db (18) — EXECUTING
+Plan: 2 of 6 (18-01 complete)
+Status: Executing Phase 18
+Last activity: 2026-05-02 -- Phase 18 Plan 01 complete (18-01-SUMMARY.md)
 
 ```
-Progress: [░░░░░░░░░░░░░░░░░░░░] 0% (0/7 phases)
+Progress: [░░░░░░░░░░░░░░░░░░░░] 17% (1/6 plans)
 ```
 
 ## Project Reference
@@ -30,7 +30,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 
 **Core value:** Demo end-to-end shopping experience hoạt động với real data ở mọi điểm user nhìn thấy, đồng thời rèn quy trình GSD từ planning → execute → verify → archive.
 
-**Current focus:** Phase 16 — Seed Catalog Hiện Thực. ~100 sản phẩm / 5 tech categories, Unsplash WebP CDN, brand thực tế, Flyway V7 product-svc với Spring profile `dev` isolation.
+**Current focus:** Phase 18-storage-audit-cart-db — Plan 02 next (CartCrudService + CartController)
 
 ## Resume Cheat-Sheet
 
@@ -52,6 +52,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | v1.1 | 4 | 22 | 15/19 SATISFIED + 4 PARTIAL | PASSED (gaps deferred) |
 | v1.2 | 6 (+1 SKIP) | 24 | 17/17 | PASSED |
 | v1.3 | 7 planned | TBD | 0/27 | In progress |
+| Phase 18-storage-audit-cart-db P01 | 25 | 3 tasks | 10 files |
 
 ## Decisions (active v1.3 locks)
 
@@ -61,6 +62,13 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 - Visible-first priority giữ nguyên
 - Backend hardening (D1..D17) defer cho đến khi có triggering event (ngoại lệ: storage audit có thể surface security issue)
 - ApiErrorResponse + traceId envelope; Swagger/OpenAPI codegen; Postgres + JPA + Flyway 5 services; auth thật JWT HS256; admin CRUD qua gateway; FE typed services; rhf+zod pattern; Playwright suite
+
+**Phase 18 Plan 01 decisions (2026-05-02):**
+
+- CartController.java reset thành stub (Plan 02 replace hoàn toàn) — file cũ reference CartUpsertRequest đã bị xóa cùng với InMemoryCartRepository
+- CartItemEntity.equals/hashCode dựa trên id only (không traverse lazy collection) — tranh LazyInitializationException
+- KHÔNG có unit_price_at_add trong cart_items — cart hiển thị live price, chỉ snapshot khi tạo order
+- upsertAddQuantity native SQL ON CONFLICT DO UPDATE — idempotent ADD semantics (D-05)
 
 **v1.3 locks (2026-05-02 — locked từ research + user answers):**
 
