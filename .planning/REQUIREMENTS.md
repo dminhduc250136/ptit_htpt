@@ -2,7 +2,7 @@
 
 **Milestone:** v1.3
 **Started:** 2026-05-02
-**Status:** Defining (chưa map vào phases)
+**Status:** Roadmap complete — 27/27 REQs mapped
 **Phase numbering:** tiếp tục từ Phase 16 (KHÔNG reset)
 
 ---
@@ -123,36 +123,37 @@
 
 ---
 
-## Traceability (filled by roadmap)
+## Traceability
 
 | REQ-ID | Phase | Plan(s) | Status |
 |--------|-------|---------|--------|
-| SEED-01 | TBD | — | Active |
-| SEED-02 | TBD | — | Active |
-| SEED-03 | TBD | — | Active |
-| SEED-04 | TBD | — | Active |
-| STORE-01 | TBD | — | Active |
-| STORE-02 | TBD | — | Active |
-| STORE-03 | TBD | — | Active |
-| ADMIN-01 | TBD | — | Active |
-| ADMIN-02 | TBD | — | Active |
-| ADMIN-03 | TBD | — | Active |
-| ADMIN-04 | TBD | — | Active |
-| ADMIN-05 | TBD | — | Active |
-| ADMIN-06 | TBD | — | Active |
-| REV-04 | TBD | — | Active |
-| REV-05 | TBD | — | Active |
-| REV-06 | TBD | — | Active |
-| AI-01 | TBD | — | Active |
-| AI-02 | TBD | — | Active |
-| AI-03 | TBD | — | Active |
-| AI-04 | TBD | — | Active |
-| AI-05 | TBD | — | Active |
-| ORDER-01 | TBD | — | Active |
-| COUP-01 | TBD | — | Active |
-| COUP-02 | TBD | — | Active |
-| COUP-03 | TBD | — | Active |
-| COUP-04 | TBD | — | Active |
-| COUP-05 | TBD | — | Active |
+| SEED-01 | Phase 16 | — | Active |
+| SEED-02 | Phase 16 | — | Active |
+| SEED-03 | Phase 16 | — | Active |
+| SEED-04 | Phase 16 | — | Active |
+| ORDER-01 | Phase 17 | — | Active |
+| ADMIN-06 | Phase 17 | — | Active |
+| STORE-01 | Phase 18 | — | Active |
+| STORE-02 | Phase 18 | — | Active |
+| STORE-03 | Phase 18 | — | Active |
+| ADMIN-01 | Phase 19 | — | Active |
+| ADMIN-02 | Phase 19 | — | Active |
+| ADMIN-03 | Phase 19 | — | Active |
+| ADMIN-04 | Phase 19 | — | Active |
+| ADMIN-05 | Phase 19 | — | Active |
+| COUP-01 | Phase 20 | — | Active |
+| COUP-02 | Phase 20 | — | Active |
+| COUP-03 | Phase 20 | — | Active |
+| COUP-04 | Phase 20 | — | Active |
+| COUP-05 | Phase 20 | — | Active |
+| REV-04 | Phase 21 | — | Active |
+| REV-05 | Phase 21 | — | Active |
+| REV-06 | Phase 21 | — | Active |
+| AI-01 | Phase 22 | — | Active |
+| AI-02 | Phase 22 | — | Active |
+| AI-03 | Phase 22 | — | Active |
+| AI-04 | Phase 22 | — | Active |
+| AI-05 | Phase 22 | — | Active |
 
-**Total active REQs: 27** (SEED 4 + STORE 3 + ADMIN 6 + REV 3 + AI 5 + ORDER 1 + COUP 5)
+**Total active REQs: 27** (SEED 4 + ORDER 1 + ADMIN-06 1 + STORE 3 + ADMIN-01-05 5 + COUP 5 + REV 3 + AI 5)
+**Mapped: 27/27** (100% coverage)
