@@ -3,22 +3,22 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-02T19:30:00.000Z"
-last_activity: 2026-05-02 -- Phase 22 Plan 04 complete (admin suggest-reply 1-shot route)
+last_updated: "2026-05-02T17:42:00.000Z"
+last_activity: 2026-05-02 -- Phase 22 Plan 05 complete (customer chat UI: FloatingChatButton + ChatPanel + useChat SSE consumer)
 progress:
   total_phases: 7
   completed_phases: 2
   total_plans: 14
-  completed_plans: 11
-  percent: 79
+  completed_plans: 12
+  percent: 86
 ---
 
 ## Current Position
 
 Phase: 22 (AI Chatbot Claude API MVP) — EXECUTING
-Plan: 5 of 7 (Plan 01 ✅, Plan 02 ✅, Plan 03 ✅, Plan 04 ✅)
-Status: Executing Phase 22 — Wave 2 complete (customer + admin routes); next is Wave 3 UI plans (22-05/06/07)
-Last activity: 2026-05-02 -- Phase 22 Plan 04 complete (admin suggest-reply 1-shot route)
+Plan: 6 of 7 (Plan 01 ✅, Plan 02 ✅, Plan 03 ✅, Plan 04 ✅, Plan 05 ✅)
+Status: Executing Phase 22 — Wave 3 in progress (22-05 customer UI ✅); next 22-06 admin suggest-reply UI + 22-07 E2E
+Last activity: 2026-05-02 -- Phase 22 Plan 05 complete (customer chat UI: FloatingChatButton + ChatPanel + useChat SSE consumer)
 
 ```
 Progress: [██████████] 100%
@@ -60,6 +60,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 22-ai-chatbot P02 | ~10min | 1 task | 1 file (route.ts 185 lines) |
 | Phase 22-ai-chatbot P03 | ~8min | 2 tasks | 2 files (sessions list + messages history) |
 | Phase 22-ai-chatbot P04 | ~3min | 1 task | 1 file (admin suggest-reply route 117 lines) |
+| Phase 22-ai-chatbot P05 | ~6min | 2 tasks | 15 files (chat UI: FAB + ChatPanel + useChat hook + 4 child components + services/chat.ts + layout mount) |
 
 ## Decisions (active v1.3 locks)
 
