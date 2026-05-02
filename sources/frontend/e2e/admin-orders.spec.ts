@@ -58,3 +58,25 @@ test('ADM-ORD-2: click "Xem chi tiết" trên row đầu tiên → navigate /adm
   await page.waitForURL(/\/admin\/orders\/[^/]+$/, { timeout: 10000 });
   expect(page.url()).toMatch(/\/admin\/orders\/.+/);
 });
+
+test('ADM-ORD-3: detail page render items + KHÔNG còn placeholder Phase 8', async ({ page }) => {
+  await page.goto('/admin/orders');
+  await expect(page.getByRole('heading', { name: 'Quản lý đơn hàng' })).toBeVisible({ timeout: 10000 });
+  await page.waitForTimeout(2000);
+
+  const detailBtn = page.locator('[aria-label="Xem chi tiết đơn hàng"]').first();
+  const btnVisible = await detailBtn.isVisible({ timeout: 5000 }).catch(() => false);
+  if (!btnVisible) {
+    test.skip(true, 'Chưa có đơn hàng — cần seed trước');
+    return;
+  }
+  await detailBtn.click();
+  await page.waitForURL(/\/admin\/orders\/[^/]+$/, { timeout: 10000 });
+
+  // ADMIN-06 SC1: placeholder cũ KHÔNG còn xuất hiện
+  await expect(page.getByText('khả dụng sau khi Phase 8')).toHaveCount(0);
+
+  // ADMIN-06 SC2: shipping + items section render
+  await expect(page.getByText('Thông tin giao hàng')).toBeVisible({ timeout: 5000 });
+  await expect(page.getByRole('heading', { name: 'Sản phẩm' })).toBeVisible();
+});
