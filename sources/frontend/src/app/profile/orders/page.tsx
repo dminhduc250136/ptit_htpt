@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -25,7 +25,7 @@ const statusMap: Record<
   RETURNED: { label: 'Đã trả', variant: 'out-of-stock' },
 };
 
-export default function OrdersPage() {
+function OrdersPageInner() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -164,5 +164,13 @@ export default function OrdersPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function OrdersPage() {
+  return (
+    <Suspense fallback={<div className="skeleton" style={{ height: 120, borderRadius: 'var(--radius-lg)' }} />}>
+      <OrdersPageInner />
+    </Suspense>
   );
 }
