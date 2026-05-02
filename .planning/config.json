@@ -12,7 +12,8 @@
     "verifier": true,
     "nyquist_validation": true,
     "auto_advance": true,
-    "_auto_chain_active": false
+    "_auto_chain_active": false,
+    "use_worktrees": false
   },
   "sub_repos": [],
   "created_at": "2026-04-22T00:00:00Z"
