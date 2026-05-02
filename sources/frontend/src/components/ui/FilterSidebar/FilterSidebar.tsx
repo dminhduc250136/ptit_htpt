@@ -183,14 +183,12 @@ export default function FilterSidebar({
             className={`${styles.priceInput} ${priceError ? styles.invalid : ''}`}
             type="text"
             inputMode="numeric"
-            size={1}
-            placeholder="Từ"
+            placeholder="Giá tối thiểu (₫)"
             value={priceMinDraft}
             onChange={(e) => setPriceMinDraft(e.target.value)}
             onBlur={handlePriceBlur}
             onFocus={() => handlePriceFocus(setPriceMinDraft, priceMinDraft)}
           />
-          <span className={styles.priceSeparator}>—</span>
           <label htmlFor="price-max" className="sr-only">
             Giá đến
           </label>
@@ -199,8 +197,7 @@ export default function FilterSidebar({
             className={`${styles.priceInput} ${priceError ? styles.invalid : ''}`}
             type="text"
             inputMode="numeric"
-            size={1}
-            placeholder="Đến"
+            placeholder="Giá tối đa (₫)"
             value={priceMaxDraft}
             onChange={(e) => setPriceMaxDraft(e.target.value)}
             onBlur={handlePriceBlur}
