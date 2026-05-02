@@ -3,23 +3,23 @@ gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: milestone
 status: executing
-last_updated: "2026-04-27T21:00:00.000Z"
-last_activity: 2026-04-27 -- Phase 13 Wave 2 complete — 13-03 product-service review backend (V4+V5+ReviewService+Controller)
+last_updated: "2026-05-02T00:00:00.000Z"
+last_activity: 2026-05-02 -- Phase 15 Wave 0 complete (15-00) — hero WebP assets + Badge variants + selector audit + manual checklist
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 24
-  completed_plans: 17
-  percent: 89
+  completed_plans: 18
+  percent: 92
 ---
 
 ## Current Position
 
-Phase: Phase 13 — Reviews & Ratings
-Plan: Wave 2 complete (13-03 ✓) — next: Wave 3 (13-04 checkpoint)
-Status: Executing — Wave 3
-Last activity: 2026-04-27 -- Wave 2 complete: product-service review backend shipped
-Resume file: .planning/phases/13-reviews-ratings/
+Phase: Phase 15 — Public Polish + Milestone Audit
+Plan: Wave 0 complete (15-00 ✓) — next: Wave 1 (15-01 homepage + 15-02 PDP parallel)
+Status: Executing — Wave 1
+Last activity: 2026-05-02 -- Wave 0 complete: hero WebP assets + Badge variants + selector audit
+Resume file: .planning/phases/15-public-polish-milestone-audit/
 
 ## Project Reference
 
@@ -47,6 +47,13 @@ See: `.planning/PROJECT.md` (updated 2026-04-27 — Current Milestone: v1.2)
 - Phase numbering tiếp tục KHÔNG reset (v1.2 → Phase 9..15)
 - Visible-first priority giữ nguyên
 - Backend hardening (D1..D17) defer cho đến khi có triggering event
+
+**Phase 15 locks (2026-05-02 — Wave 0):**
+
+- Hero WebP source: **Unsplash CDN `?fm=webp&q=80`** download (KHÔNG cần cwebp local) — 125KB primary + 65KB secondary
+- Badge `.danger` reuse `var(--error-container)` M3 token; `.success/.warning` hard-code hex `#15803d` / `#b45309` (tokens chưa tồn tại)
+- DELIVERED order test strategy: **Strategy A (skip-if-no-data)** per D-18 — precedent `order-detail.spec.ts:50-53`
+- ReviewSection selectors locked Wave 0: rating `getByRole('button', name: /5 sao/)`, textarea `#review-content`, submit `getByRole('button', name: /gửi đánh giá/i)`
 
 **v1.2 locks (2026-04-26):**
 
