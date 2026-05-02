@@ -17,12 +17,15 @@ import {
   useClearCart,
 } from '@/hooks/useCart';
 import { createOrder } from '@/services/orders';
+import { validateCoupon } from '@/services/coupons';
 import { listAddresses } from '@/services/users';
 import { isApiError } from '@/services/errors';
 import { formatPrice } from '@/services/api';
 import { useAuth } from '@/providers/AuthProvider';
 import AddressPicker from '@/components/ui/AddressPicker/AddressPicker';
-import type { SavedAddress } from '@/types';
+import { useApplyCoupon } from '@/hooks/useApplyCoupon';
+import { formatCouponError, isCouponError } from '@/lib/couponErrorMessages';
+import type { SavedAddress, CouponPreview } from '@/types';
 
 interface StockConflictItem {
   productId: string;
@@ -108,6 +111,58 @@ export default function CheckoutPage() {
   const shippingFee = subtotal >= 1000000 ? 0 : 30000;
   const total = subtotal + shippingFee;
 
+  // === COUPON STATE (D-17, D-18) ===
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponPreview | null>(null);
+  const applyCouponMutation = useApplyCoupon(user?.id);
+
+  const handleApplyCoupon = async () => {
+    const code = couponInput.trim().toUpperCase();
+    if (!code) {
+      showToast('Vui lòng nhập mã giảm giá', 'error');
+      return;
+    }
+    try {
+      const preview = await applyCouponMutation.mutateAsync({ code, cartTotal: subtotal });
+      setAppliedCoupon(preview);
+      setCouponInput('');
+      showToast('Áp dụng mã thành công', 'success');
+    } catch (err) {
+      if (isApiError(err) && isCouponError(err.code)) {
+        const msg = formatCouponError(err.code, err.details) ?? 'Không thể áp dụng mã giảm giá';
+        showToast(msg, 'error');
+      } else {
+        showToast('Không thể áp dụng mã giảm giá, vui lòng thử lại', 'error');
+      }
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput('');
+  };
+
+  // D-18: Auto re-validate khi cart đổi (subtotal thay đổi) sau khi đã apply coupon.
+  // Nếu fail (ví dụ subtotal mới < minOrder) → clear coupon + toast.
+  useEffect(() => {
+    if (!appliedCoupon || cartItems.length === 0) return;
+    let alive = true;
+    validateCoupon({ code: appliedCoupon.code, cartTotal: subtotal }, user?.id)
+      .then((preview) => {
+        if (!alive) return;
+        setAppliedCoupon(preview);
+      })
+      .catch((err) => {
+        if (!alive) return;
+        setAppliedCoupon(null);
+        if (isApiError(err) && isCouponError(err.code)) {
+          showToast('Mã giảm giá không còn áp dụng được', 'error');
+        }
+      });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal]);
+
   async function submitOrder() {
     setLoading(true);
     setBannerVisible(false);
@@ -128,6 +183,7 @@ export default function CheckoutPage() {
         },
         paymentMethod: form.paymentMethod,
         note: form.note || undefined,
+        couponCode: appliedCoupon?.code,   // D-19: undefined nếu chưa apply coupon
       }, user?.id);                     // Phase 4-06: userId → X-User-Id header (Phase 5: JWT-claim derivation)
 
       // Phase 18: clear cart qua mutation (cả guest localStorage + user DB)
@@ -174,8 +230,18 @@ export default function CheckoutPage() {
         case 'NOT_FOUND':
           showToast(err.message || 'Không tìm thấy', 'error');
           break;
-        default:
-          showToast('Đã có lỗi, vui lòng thử lại', 'error');
+        default: {
+          if (isCouponError(err.code)) {
+            // D-19: BE atomic redeem fail (coupon vừa bị disable / race-lose / expired between preview & submit)
+            const msg = formatCouponError(err.code, err.details) ?? 'Mã giảm giá không khả dụng';
+            showToast(msg, 'error');
+            // KHÔNG clear cart — user có thể bỏ mã + retry
+            setAppliedCoupon(null);
+          } else {
+            showToast('Đã có lỗi, vui lòng thử lại', 'error');
+          }
+          break;
+        }
       }
     } finally {
       setLoading(false);
@@ -289,6 +355,45 @@ export default function CheckoutPage() {
                   </div>
                 ))}
               </div>
+              {/* === COUPON SECTION (D-17) === */}
+              <div className={styles.couponSection}>
+                <h4 className={styles.couponTitle}>Mã giảm giá</h4>
+                {!appliedCoupon ? (
+                  <div className={styles.couponRow}>
+                    <Input
+                      placeholder="Nhập mã giảm giá"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      fullWidth
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleApplyCoupon}
+                      loading={applyCouponMutation.isPending}
+                    >
+                      Áp dụng
+                    </Button>
+                  </div>
+                ) : (
+                  <div className={styles.couponChip}>
+                    <span className={styles.couponChipCode}>{appliedCoupon.code}</span>
+                    <span className={styles.couponChipDiscount}>
+                      -{formatPrice(appliedCoupon.discountAmount)}
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.couponChipRemove}
+                      onClick={handleRemoveCoupon}
+                      aria-label="Bỏ mã giảm giá"
+                    >
+                      Bỏ
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* === SUMMARY ROWS (D-20: 3 dòng — Tạm tính / Phí vận chuyển / Giảm giá khi có coupon) === */}
               <div className={styles.summaryRows}>
                 <div className={styles.summaryRow}>
                   <span>Tạm tính</span>
@@ -298,10 +403,18 @@ export default function CheckoutPage() {
                   <span>Phí vận chuyển</span>
                   <span className={shippingFee === 0 ? styles.free : ''}>{shippingFee === 0 ? 'Miễn phí' : formatPrice(shippingFee)}</span>
                 </div>
+                {appliedCoupon && (
+                  <div className={`${styles.summaryRow} ${styles.discountRow}`}>
+                    <span>Giảm giá ({appliedCoupon.code})</span>
+                    <span>-{formatPrice(appliedCoupon.discountAmount)}</span>
+                  </div>
+                )}
               </div>
               <div className={styles.totalRow}>
                 <span>Tổng cộng</span>
-                <span className={styles.totalPrice}>{formatPrice(total)}</span>
+                <span className={styles.totalPrice}>
+                  {formatPrice(Math.max(0, total - (appliedCoupon?.discountAmount ?? 0)))}
+                </span>
               </div>
               <Button type="submit" size="lg" fullWidth loading={loading} disabled={cartItems.length === 0}>
                 Đặt hàng
