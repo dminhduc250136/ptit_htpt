@@ -193,7 +193,7 @@ Plans:
 **Plans:** 7 plans
 
 Plans:
-- [ ] 22-01-PLAN.md — Foundations: deps + env + lib/chat helpers (pg, schema-init, auth, rate-limit, vn-text, anthropic, product-context, messages-repo)
+- [x] 22-01-PLAN.md — Foundations: deps + env + lib/chat helpers (pg, schema-init, auth, rate-limit, vn-text, anthropic, product-context, messages-repo) ✅ 2026-05-02
 - [ ] 22-02-PLAN.md — POST /api/chat/stream route (Anthropic streaming + persist + abort + caching)
 - [ ] 22-03-PLAN.md — GET /api/chat/sessions + GET /api/chat/sessions/[id]/messages (owner-only)
 - [ ] 22-04-PLAN.md — POST /api/admin/orders/[id]/suggest-reply (admin role gate, 1-shot)
