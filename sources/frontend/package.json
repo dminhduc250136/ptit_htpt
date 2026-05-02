@@ -10,16 +10,21 @@
     "gen:api": "node scripts/gen-api.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.92.0",
     "@hookform/resolvers": "^5.2.2",
+    "jose": "^5.10.0",
     "next": "16.2.3",
+    "pg": "^8.20.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.74.0",
+    "react-markdown": "^10.1.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@playwright/test": "^1.59.1",
     "@types/node": "^20",
+    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9",

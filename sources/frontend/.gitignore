@@ -33,6 +33,7 @@ yarn-error.log*
 # env files — commit .env.example as the documented default; ignore local overrides
 .env*
 !.env.example
+!.env.local.example
 .env.local
 
 # vercel
