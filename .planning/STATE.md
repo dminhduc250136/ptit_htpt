@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Catalog Realism & Commerce Intelligence
 status: executing
-last_updated: "2026-05-02T17:50:00Z"
-last_activity: 2026-05-02
+last_updated: "2026-05-03T12:00:00Z"
+last_activity: 2026-05-03
 progress:
   total_phases: 7
   completed_phases: 4
@@ -66,8 +66,19 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 19-ho-n-thi-n-admin-charts-low-stock P02 | 15min | 2 tasks | 7 files |
 | Phase 19-ho-n-thi-n-admin-charts-low-stock P03 | 12min | 2 tasks | 10 files |
 | Phase 19-ho-n-thi-n-admin-charts-low-stock P04 | 18min | 3 tasks | 15 files |
+| Phase 20-coupons P03 | 12min | 2 tasks | 7 files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 20 Plan 03 decisions (2026-05-03):**
+
+- COUP-04 BE order integration hoàn tất: OrderCrudService.createOrderFromCommand inject CouponRedemptionService, gọi atomicRedeem trong cùng @Transactional cha (D-08, D-12). Server compute discountAmount từ subtotal qua CouponPreviewService.computeDiscount (D-10, KHÔNG tin client). Snapshot 2 field discountAmount + couponCode lên OrderEntity → cuối cùng saved
+- COUP-03 BE preview endpoint: CouponPreviewController POST /orders/coupons/validate (D-13) + CouponPreviewControllerIT 5 cases (happy, already-redeemed 409, anonymous skip-check, missing code 400, unknown code 404)
+- CreateOrderCommand record extend với field couponCode nullable (D-12) — backward compat khi null/blank
+- OrderDto + 2 field discountAmount + couponCode (D-23, D-24) — FE Plan 20-06 sẽ render
+- OrderEntity.setTotal helper mới (Rule 3 fix): plan đề xuất dùng update() reset 4 field — không phù hợp; setTotal scope hẹp + bumps updatedAt
+- D-25 race condition IT: 6 cases gồm R1 (2 thread khác user, maxTotalUses=1 → 1 success + 1 CONFLICT) + R2 (2 thread cùng user → 1 success + 1 ALREADY_REDEEMED qua UNIQUE violation, usedCount=1 sau rollback) + 4 bonus (no coupon, happy, atomic rollback unknown, server-compute discount D-10) — chứng minh SC #3 race-safe
+- Maven CLI vẫn chưa khả dụng trên Windows env, defer verify cho CI/local mvn — pattern đồng nhất với Plans 20-01, 20-02
 
 **Phase 19 Plan 04 decisions (2026-05-02):**
 
