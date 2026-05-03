@@ -198,6 +198,19 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
                   <span>-{formatPrice(order.discount!)}</span>
                 </div>
               )}
+              {/* Phase 20 / COUP-05 (D-23): coupon snapshot block — chỉ render khi có coupon */}
+              {order.couponCode && (
+                <>
+                  <div className={styles.priceRow}>
+                    <span>Mã giảm giá</span>
+                    <span><strong>{order.couponCode}</strong></span>
+                  </div>
+                  <div className={styles.priceRow} style={{ color: 'var(--success, #10b981)' }}>
+                    <span>Giảm giá</span>
+                    <span>-{formatPrice(order.discountAmount ?? 0)}</span>
+                  </div>
+                </>
+              )}
               <div className={styles.totalRow}>
                 <span>Tổng cộng</span>
                 <span className={styles.totalPrice}>{formatPrice(totalAmount)}</span>

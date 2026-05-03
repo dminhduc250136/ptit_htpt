@@ -38,6 +38,10 @@ export interface ListOrdersParams {
  * server-side from the X-User-Id header (Phase 5 will move to JWT-claim
  * verification at the gateway). Each item carries its unitPrice snapshot
  * from the cart so the backend can compute totalAmount.
+ *
+ * Phase 20 / COUP-03: body có thể có optional couponCode — BE atomic redeem
+ * trong cùng transaction (Plan 20-03). Nếu BE atomic fail → throw ApiError
+ * với code = COUPON_* (xem couponErrorMessages.ts).
  */
 export function createOrder(body: CreateOrderRequest, userId?: string): Promise<Order> {
   const headers: Record<string, string> = {};
