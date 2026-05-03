@@ -50,7 +50,7 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 - [x] **Phase 18: Kiểm Toán Storage + Cart→DB** — Audit localStorage/sessionStorage + migrate cart sang DB per-user — **COMPLETED 2026-05-02**
 - [x] **Phase 19: Hoàn Thiện Admin: Charts + Low-Stock** — 4 analytics charts + low-stock alert dashboard ✅ 2026-05-02
 - [ ] **Phase 20: Hệ Thống Coupon** — % off + fixed amount, admin CRUD, checkout input, atomic redemption
-- [ ] **Phase 21: Hoàn Thiện Reviews** — Author edit/delete + sort controls + admin moderation
+- [x] **Phase 21: Hoàn Thiện Reviews** ✅ 2026-05-02 — Author edit/delete + sort controls + admin moderation (4/4 plans complete)
 - [ ] **Phase 22: AI Chatbot Claude API MVP** — Customer FAQ + product Q&A + recommendation, streaming, history persist
 
 ---
@@ -170,10 +170,13 @@ Plans:
   1. Tác giả review thấy nút "Sửa" và "Xoá" trên review của mình — sửa thành công cập nhật nội dung; xoá thành công ẩn review khỏi danh sách công khai nhưng avg_rating recalculate đúng
   2. Người dùng chọn sort "Mới nhất" / "Đánh giá cao nhất" / "Đánh giá thấp nhất" → danh sách review thay đổi thứ tự ngay lập tức (query param `?sort=`)
   3. Admin tại `/admin/reviews` thấy danh sách tất cả reviews, filter được theo visible/hidden, có thể hide hoặc unhide review bất kỳ — review bị hide không hiển thị cho user thường
-**Plans:** TBD (sẽ chốt khi `/gsd-plan-phase 21` chạy)
+**Plans:** 4/4 plans complete
 
 Plans:
-- [ ] (TBD) — Plans sẽ được chốt khi planner chạy cho Phase 21
+- [x] 21-01-PLAN.md — V7 migration + ReviewEntity mutators + Repository visibility finders + AdminReviewSpecifications + edit-window config ✅ 2026-05-02
+- [x] 21-02-PLAN.md — ReviewService 5 mutation methods + recompute helper + ReviewController PATCH/DELETE + AdminReviewController + tests ✅ 2026-05-02
+- [x] 21-03-PLAN.md — FE author UX: services/reviews.ts extend + types SortKey/AdminReview + ReviewSection sort/edit/delete + ReviewList dropdown/actions + ReviewForm edit mode ✅ 2026-05-02
+- [x] 21-04-PLAN.md — FE admin moderation /admin/reviews page + sidebar nav + Playwright E2E specs (author edit + admin moderation) ✅ 2026-05-02
 **UI hint**: yes
 
 ---
@@ -206,7 +209,7 @@ Plans:
 | 18. Kiểm Toán Storage + Cart→DB | 6/6 | COMPLETED | 2026-05-02 |
 | 19. Hoàn Thiện Admin: Charts + Low-Stock | 0/? | Not started | - |
 | 20. Hệ Thống Coupon | 0/? | Not started | - |
-| 21. Hoàn Thiện Reviews | 0/? | Not started | - |
+| 21. Hoàn Thiện Reviews | 4/4 | Complete    | 2026-05-02 |
 | 22. AI Chatbot Claude API MVP | 0/? | Not started | - |
 
 ---

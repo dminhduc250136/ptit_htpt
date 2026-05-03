@@ -95,9 +95,58 @@
 .listHeading {
   font-size: var(--text-title-sm);
   font-weight: var(--weight-semibold);
-  border-bottom: 1px solid var(--surface-container);
+  margin: 0;
+}
+
+/* Phase 21 REV-05: sort dropdown header — D-13 */
+.listHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
   padding-bottom: var(--space-3);
   margin-bottom: var(--space-4);
+  border-bottom: 1px solid var(--surface-container);
+}
+.sortDropdown {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--outline-variant);
+  background: var(--surface-container-lowest);
+  font-family: var(--font-family-body);
+  font-size: var(--text-body-sm);
+  cursor: pointer;
+}
+.sortDropdown:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+/* Phase 21 REV-04: per-item edit/delete actions */
+.actionsRow {
+  display: flex;
+  gap: var(--space-3);
+  margin-top: var(--space-2);
+}
+.actionLink {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: var(--text-body-sm);
+  color: var(--primary);
+  cursor: pointer;
+  text-decoration: underline;
+}
+.actionLink:hover:not(:disabled) {
+  opacity: 0.8;
+}
+.actionLink:disabled {
+  color: var(--on-surface-variant);
+  cursor: not-allowed;
+  text-decoration: none;
+}
+.actionDanger {
+  color: var(--error);
 }
 .reviewList {
   list-style: none;

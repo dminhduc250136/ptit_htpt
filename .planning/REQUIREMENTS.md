@@ -58,9 +58,12 @@
 
 ### REV — Review Polish
 
-- [ ] **REV-04** — Author edit/delete review của mình. Edit chỉ chủ review hoặc 24h sau publish (configurable). Delete = soft-delete (`deleted_at` column), avg_rating recalc loại bỏ deleted. Admin vẫn xem.
-- [ ] **REV-05** — Sort review list by `helpful` (defer — KHÔNG có votes nên dùng `created_at DESC` làm fallback) / `newest` / `rating DESC` / `rating ASC`. Dropdown FE + BE query param.
-- [ ] **REV-06** — Admin moderation: `/admin/reviews` screen list + filter (visible/hidden) + actions hide/unhide/delete. Hide = `hidden BOOLEAN` column → user không thấy nhưng admin vẫn list được.
+- [x] **REV-04
+** — Author edit/delete review của mình. Edit chỉ chủ review hoặc 24h sau publish (configurable). Delete = soft-delete (`deleted_at` column), avg_rating recalc loại bỏ deleted. Admin vẫn xem.
+- [x] **REV-05
+** — Sort review list by `helpful` (defer — KHÔNG có votes nên dùng `created_at DESC` làm fallback) / `newest` / `rating DESC` / `rating ASC`. Dropdown FE + BE query param.
+- [x] **REV-06
+** — Admin moderation: `/admin/reviews` screen list + filter (visible/hidden) + actions hide/unhide/delete. Hide = `hidden BOOLEAN` column → user không thấy nhưng admin vẫn list được.
 
 ### AI — Claude API Chatbot MVP
 

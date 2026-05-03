@@ -272,6 +272,7 @@ export interface AdminCoupon {
 
 // ===== REVIEW (Part of Product Service) =====
 // Phase 13: align với BE DTO ReviewService.toResponse — D-11 + Pitfall 6
+// Phase 21: thêm hidden + deletedAt cho admin moderation context
 export interface Review {
   id: string;
   productId: string;
@@ -280,4 +281,15 @@ export interface Review {
   rating: number;             // 1-5
   content?: string | null;    // nullable — D-06
   createdAt: string;          // ISO 8601
+  hidden?: boolean;            // NEW Phase 21 (admin context)
+  deletedAt?: string | null;   // NEW Phase 21 (ISO string from BE Instant)
+}
+
+/** Phase 21 REV-05: 3 chiều sort cho danh sách review (helpful defer). */
+export type SortKey = 'newest' | 'rating_desc' | 'rating_asc';
+
+/** Phase 21 REV-06: admin list bổ sung productSlug + productName để render link & label. */
+export interface AdminReview extends Review {
+  productSlug: string | null;     // null khi product đã soft-delete (Finding 9 gotcha)
+  productName?: string;
 }
