@@ -38,6 +38,8 @@ springdoc:
     path: /swagger-ui.html
 
 app:
+  reviews:
+    edit-window-hours: 24
   jwt:
     secret: ${JWT_SECRET:dev-jwt-secret-key-minimum-32-characters-for-hs256-ok}
     expiration-ms: ${JWT_EXPIRATION_MS:86400000}

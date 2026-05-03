@@ -43,4 +43,13 @@ public interface ProductRepository extends JpaRepository<ProductEntity, String> 
   @Query("SELECT DISTINCT p.brand FROM ProductEntity p "
       + "WHERE p.brand IS NOT NULL AND p.brand <> '' ORDER BY p.brand ASC")
   List<String> findDistinctBrands();
+
+  /**
+   * Phase 19 / Plan 03 (ADMIN-05, D-08, D-09): trả về danh sách SP có stock < threshold,
+   * sắp xếp theo stock ASC, cap rows qua Pageable (D-09 = 50 ở LowStockService).
+   *
+   * <p>@SQLRestriction("deleted=false") trên ProductEntity tự loại deleted records.
+   */
+  @Query("SELECT p FROM ProductEntity p WHERE p.stock < :threshold ORDER BY p.stock ASC")
+  List<ProductEntity> findLowStock(@Param("threshold") int threshold, Pageable cap);
 }

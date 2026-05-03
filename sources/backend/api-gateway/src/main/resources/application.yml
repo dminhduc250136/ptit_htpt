@@ -109,6 +109,34 @@ spring:
           filters:
             - RewritePath=/api/products/(?<seg>.*), /products/${seg}
 
+        # order-service coupons admin: /api/orders/admin/coupons → /admin/coupons (D-15)
+        - id: order-service-admin-coupons-base
+          uri: http://order-service:8080
+          predicates:
+            - Path=/api/orders/admin/coupons
+          filters:
+            - RewritePath=/api/orders/admin/coupons, /admin/coupons
+        - id: order-service-admin-coupons
+          uri: http://order-service:8080
+          predicates:
+            - Path=/api/orders/admin/coupons/**
+          filters:
+            - RewritePath=/api/orders/admin/coupons/(?<seg>.*), /admin/coupons/${seg}
+
+        # order-service coupons user preview: /api/orders/coupons → /orders/coupons (D-15)
+        - id: order-service-coupons-user-base
+          uri: http://order-service:8080
+          predicates:
+            - Path=/api/orders/coupons
+          filters:
+            - RewritePath=/api/orders/coupons, /orders/coupons
+        - id: order-service-coupons-user
+          uri: http://order-service:8080
+          predicates:
+            - Path=/api/orders/coupons/**
+          filters:
+            - RewritePath=/api/orders/coupons/(?<seg>.*), /orders/coupons/${seg}
+
         # order-service admin: /api/orders/admin → /admin/orders
         - id: order-service-admin-base
           uri: http://order-service:8080

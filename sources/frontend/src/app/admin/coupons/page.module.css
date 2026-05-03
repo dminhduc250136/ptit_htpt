@@ -1,0 +1,231 @@
+/* Admin Coupons page styles — mirror admin/products/page.module.css */
+
+.page {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.title {
+  font-size: var(--text-headline-md);
+  font-weight: 700;
+  color: var(--on-surface);
+}
+
+.toolbar {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+.toolbar > :first-child {
+  flex: 1;
+}
+
+.select {
+  padding: var(--space-3);
+  border-radius: var(--radius-lg);
+  border: 1.5px solid rgba(195, 198, 214, 0.2);
+  background: var(--surface-container-lowest);
+  font-size: var(--text-body-md);
+  font-family: var(--font-family-body);
+  cursor: pointer;
+  min-width: 160px;
+}
+
+.count {
+  color: var(--on-surface-variant);
+  font-size: var(--text-body-md);
+  white-space: nowrap;
+}
+
+.tableWrapper {
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-xl);
+  padding: var(--space-3);
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: var(--space-3);
+  text-align: left;
+  border-bottom: 1px solid rgba(195, 198, 214, 0.15);
+}
+
+.table th {
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  font-size: var(--text-body-sm);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.actionBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  transition: background 0.15s;
+}
+
+.actionBtn:hover {
+  background: rgba(195, 198, 214, 0.1);
+}
+
+.deleteBtn {
+  color: var(--error);
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  max-width: 600px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-4);
+}
+
+.modalHeader h3 {
+  font-size: var(--text-title-lg);
+  font-weight: 700;
+}
+
+.closeBtn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--on-surface-variant);
+  padding: var(--space-1);
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.radioGroup {
+  display: flex;
+  flex-direction: column;
+  font-size: var(--text-body-md);
+}
+
+.radioGroup > span {
+  margin-bottom: var(--space-2);
+  color: var(--on-surface-variant);
+}
+
+.radioInline {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  padding-top: var(--space-2);
+}
+
+.radioInline label {
+  display: flex;
+  gap: var(--space-1);
+  align-items: center;
+  cursor: pointer;
+}
+
+.checkboxLine {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-body-md);
+  color: var(--on-surface);
+  cursor: pointer;
+}
+
+.fieldError {
+  color: var(--error);
+  font-size: var(--text-body-sm);
+  margin-top: var(--space-1);
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+}
+
+.confirmModal {
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  max-width: 420px;
+  width: 90%;
+}
+
+.confirmModal h3 {
+  font-size: var(--text-title-lg);
+  font-weight: 700;
+  margin-bottom: var(--space-3);
+}
+
+.confirmActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.errorText {
+  color: var(--error);
+  margin-top: var(--space-2);
+  font-size: var(--text-body-md);
+}
+
+.emptyState {
+  text-align: center;
+  padding: var(--space-7) 0;
+  color: var(--on-surface-variant);
+}

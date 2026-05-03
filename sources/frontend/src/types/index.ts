@@ -201,6 +201,11 @@ export interface Order {
   totalAmount?: number;    // FE legacy alias cho total
   total?: number;          // D-10: backend field name
   note?: string;
+  // ===== Phase 20 / COUP-05 (Plan 20-03 OrderDto extension) =====
+  /** Số tiền đã giảm theo coupon. 0 nếu không áp dụng coupon. */
+  discountAmount?: number;
+  /** Mã coupon đã áp dụng (snapshot). null/undefined nếu không có coupon. */
+  couponCode?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -225,11 +230,49 @@ export interface CreateOrderRequest {
   shippingAddress: Address;
   paymentMethod: 'COD' | 'BANK_TRANSFER' | 'E_WALLET';
   note?: string;
+  // Phase 20 / COUP-03 (D-19): optional coupon code applied at checkout.
+  // BE atomic redeem step (Plan 20-03) trong cùng order transaction.
+  couponCode?: string;
+}
+
+// ===== COUPON (Phase 20) =====
+/**
+ * CouponPreview: response từ POST /api/orders/coupons/validate (D-13).
+ * Read-only — atomic redemption diễn ra trong POST /api/orders.
+ */
+export interface CouponPreview {
+  code: string;
+  type: 'PERCENT' | 'FIXED';
+  value: number;
+  discountAmount: number;
+  finalTotal: number;
+  message: string;
+}
+
+/**
+ * AdminCoupon: response từ /api/orders/admin/coupons endpoints (Plan 20-02 D-14).
+ * Shape mirror BE CouponDto record.
+ */
+export interface AdminCoupon {
+  id: string;
+  code: string;
+  type: 'PERCENT' | 'FIXED';
+  value: number;
+  minOrderAmount: number;
+  /** null = không giới hạn lượt dùng. */
+  maxTotalUses: number | null;
+  usedCount: number;
+  /** ISO8601. null = không hết hạn. */
+  expiresAt: string | null;
+  active: boolean;
+  createdAt: string;
+  updatedAt: string;
 }
 
 
 // ===== REVIEW (Part of Product Service) =====
 // Phase 13: align với BE DTO ReviewService.toResponse — D-11 + Pitfall 6
+// Phase 21: thêm hidden + deletedAt cho admin moderation context
 export interface Review {
   id: string;
   productId: string;
@@ -238,4 +281,15 @@ export interface Review {
   rating: number;             // 1-5
   content?: string | null;    // nullable — D-06
   createdAt: string;          // ISO 8601
+  hidden?: boolean;            // NEW Phase 21 (admin context)
+  deletedAt?: string | null;   // NEW Phase 21 (ISO string from BE Instant)
+}
+
+/** Phase 21 REV-05: 3 chiều sort cho danh sách review (helpful defer). */
+export type SortKey = 'newest' | 'rating_desc' | 'rating_asc';
+
+/** Phase 21 REV-06: admin list bổ sung productSlug + productName để render link & label. */
+export interface AdminReview extends Review {
+  productSlug: string | null;     // null khi product đã soft-delete (Finding 9 gotcha)
+  productName?: string;
 }

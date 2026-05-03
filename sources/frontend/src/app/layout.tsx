@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Be_Vietnam_Pro } from "next/font/google";
 import "./globals.css";
+import { ReactQueryProvider } from "@/providers/ReactQueryProvider";
 import { AuthProvider } from "@/providers/AuthProvider";
 import { ToastProvider } from "@/components/ui/Toast/Toast";
 import { ConditionalShell } from "@/components/layout/ConditionalShell";
@@ -28,12 +29,14 @@ export default function RootLayout({
   return (
     <html lang="vi" className={beVietnamPro.variable}>
       <body>
-        <AuthProvider>
-          <ToastProvider>
-            <ConditionalShell>{children}</ConditionalShell>
-          <FloatingChatButton />
-          </ToastProvider>
-        </AuthProvider>
+        <ReactQueryProvider>
+          <AuthProvider>
+            <ToastProvider>
+              <ConditionalShell>{children}</ConditionalShell>
+              <FloatingChatButton />
+            </ToastProvider>
+          </AuthProvider>
+        </ReactQueryProvider>
       </body>
     </html>
   );
