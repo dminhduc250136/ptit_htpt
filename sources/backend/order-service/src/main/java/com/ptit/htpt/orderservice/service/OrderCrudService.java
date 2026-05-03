@@ -332,12 +332,13 @@ public class OrderCrudService {
       try {
         String url = "http://api-gateway:8080/api/products/" + item.productId();
         @SuppressWarnings("unchecked")
-        Map<String, Object> product = restTemplate.getForObject(url, Map.class);
+        Map<String, Object> raw = restTemplate.getForObject(url, Map.class);
+        Map<String, Object> product = unwrapEnvelope(raw);
         if (product == null) {
           log.warn("[D-04] product-service returned null for productId={}", item.productId());
           continue;
         }
-        // product-service response: {id, name, stock, ...} — stock field từ Plan 08-01
+        // product-service response (sau unwrap envelope): {id, name, stock, ...} — Plan 08-01
         Object stockObj = product.get("stock");
         int stock = stockObj == null ? 0 : ((Number) stockObj).intValue();
         if (item.quantity() > stock) {
@@ -369,7 +370,8 @@ public class OrderCrudService {
         // Fetch current stock
         String getUrl = "http://api-gateway:8080/api/products/" + item.productId();
         @SuppressWarnings("unchecked")
-        Map<String, Object> product = restTemplate.getForObject(getUrl, Map.class);
+        Map<String, Object> raw = restTemplate.getForObject(getUrl, Map.class);
+        Map<String, Object> product = unwrapEnvelope(raw);
         if (product == null) {
           log.error("[D-05] Cannot deduct stock for productId={}: product not found", item.productId());
           continue;
@@ -392,6 +394,19 @@ public class OrderCrudService {
         // KHÔNG throw — order đã saved, deduct failure là acceptable (MVP)
       }
     }
+  }
+
+  /**
+   * Product-service trả ApiResponse envelope { status, message, data: { ... } }.
+   * BUG-FIX (cart-stock-shortage-false-positive): unwrap `data` trước khi đọc field
+   * — nếu không, mọi product.get("stock") trả null → false STOCK_SHORTAGE.
+   */
+  @SuppressWarnings("unchecked")
+  private static Map<String, Object> unwrapEnvelope(Map<String, Object> raw) {
+    if (raw == null) return null;
+    Object data = raw.get("data");
+    if (data instanceof Map) return (Map<String, Object>) data;
+    return raw; // fallback: response không phải envelope (legacy/contract test)
   }
 
   /**

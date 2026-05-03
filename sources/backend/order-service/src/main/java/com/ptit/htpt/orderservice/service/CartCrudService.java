@@ -174,12 +174,26 @@ public class CartCrudService {
     }
   }
 
+  /**
+   * Product-service trả ApiResponse envelope { status, message, data: { id, name, stock, ... } }.
+   * BUG-FIX (cart-stock-shortage-false-positive): unwrap `data` trước khi đọc field, nếu không
+   * mọi product.get("stock") sẽ trả null → stock=0 → false STOCK_SHORTAGE cho mọi ADD.
+   */
+  @SuppressWarnings("unchecked")
+  private static Map<String, Object> unwrapEnvelope(Map<String, Object> raw) {
+    if (raw == null) return null;
+    Object data = raw.get("data");
+    if (data instanceof Map) return (Map<String, Object>) data;
+    return raw; // fallback: response không phải envelope (legacy/contract test)
+  }
+
   /** Validate quantity <= stock. Fail → throw StockShortageException (409). Pattern reuse OrderCrudService. */
   private void validateStockOrThrow(String productId, int requestedQuantity) {
     try {
       String url = "http://api-gateway:8080/api/products/" + productId;
       @SuppressWarnings("unchecked")
-      Map<String, Object> product = restTemplate.getForObject(url, Map.class);
+      Map<String, Object> raw = restTemplate.getForObject(url, Map.class);
+      Map<String, Object> product = unwrapEnvelope(raw);
       if (product == null) {
         log.warn("[cart] product-service returned null for productId={}", productId);
         return; // best-effort: nếu product-svc không response, KHÔNG block
@@ -205,7 +219,8 @@ public class CartCrudService {
     try {
       String url = "http://api-gateway:8080/api/products/" + productId;
       @SuppressWarnings("unchecked")
-      Map<String, Object> product = restTemplate.getForObject(url, Map.class);
+      Map<String, Object> raw = restTemplate.getForObject(url, Map.class);
+      Map<String, Object> product = unwrapEnvelope(raw);
       if (product == null) return desired;
       Object stockObj = product.get("stock");
       int stock = stockObj == null ? Integer.MAX_VALUE : ((Number) stockObj).intValue();
