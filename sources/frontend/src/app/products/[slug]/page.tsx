@@ -248,7 +248,10 @@ export default function ProductDetailPage() {
                     onClick={async () => {
                       setAddingToCart(true);
                       try {
-                        addToCart(
+                        // BUG-FIX (add-cart-409-shows-success): PHẢI await — nếu không
+                        // promise rejection (vd 409 STOCK_SHORTAGE từ backend) thoát khỏi
+                        // try/catch, success toast vẫn hiện sai và cart không thay đổi.
+                        await addToCart(
                           {
                             id: product.id,
                             name: product.name,
@@ -261,8 +264,21 @@ export default function ProductDetailPage() {
                           quantity,
                         );
                         showToast('Đã thêm vào giỏ hàng', 'success');
-                      } catch {
-                        showToast('Không thể thêm vào giỏ hàng', 'error');
+                      } catch (err) {
+                        // Map domain code → message tiếng Việt rõ ràng. STOCK_SHORTAGE
+                        // kèm productName + available để user biết phải làm gì.
+                        if (isApiError(err) && err.code === 'STOCK_SHORTAGE') {
+                          const items = (err.details as { items?: Array<{ productName: string; available: number }> } | undefined)?.items;
+                          const first = items?.[0];
+                          const detail = first
+                            ? ` (${first.productName}: còn ${first.available})`
+                            : '';
+                          showToast(`Sản phẩm không đủ tồn kho${detail}`, 'error');
+                        } else if (isApiError(err) && err.code === 'UNAUTHORIZED') {
+                          showToast('Phiên đăng nhập hết hạn — vui lòng đăng nhập lại', 'error');
+                        } else {
+                          showToast('Không thể thêm vào giỏ hàng', 'error');
+                        }
                       } finally {
                         setAddingToCart(false);
                       }

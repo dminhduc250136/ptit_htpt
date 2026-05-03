@@ -128,8 +128,27 @@ async function request<T>(
     return (parsed as ApiEnvelope<T> | null)?.data as T;
   }
 
-  // Failure envelope (identical keys on service-origin and gateway-origin per Phase 3 D-05..D-07)
-  const err = (parsed ?? {}) as Partial<ApiErrorBody>;
+  // Failure envelope (identical keys on service-origin and gateway-origin per Phase 3 D-05..D-07).
+  // BUG-FIX (add-cart-409-shows-success): Backend wraps the error body inside `data`
+  // (e.g. { timestamp, status, message: "Conflict", data: { code, message, items, ... } }).
+  // Trước đây lấy `parsed` ở root → `err.code` undefined → ApiError fallback 'INTERNAL_ERROR'
+  // và mất `details.items` (STOCK_SHORTAGE). Ưu tiên `parsed.data` nếu có shape error,
+  // fallback root để tương thích trường hợp backend không bọc envelope.
+  const root = (parsed ?? {}) as Partial<ApiErrorBody> & { data?: Partial<ApiErrorBody> };
+  const inner = (root.data && typeof root.data === 'object' ? root.data : undefined) as Partial<ApiErrorBody> | undefined;
+  const err: Partial<ApiErrorBody> = {
+    code: inner?.code ?? root.code,
+    status: inner?.status ?? root.status,
+    message: inner?.message ?? root.message,
+    fieldErrors: inner?.fieldErrors ?? root.fieldErrors,
+    traceId: inner?.traceId ?? root.traceId,
+    path: inner?.path ?? root.path,
+    details: inner ?? root.details,
+  };
+  // Domain-specific: backend trả `domainCode` (vd STOCK_SHORTAGE) trong data — promote
+  // lên `code` để FE switch theo nghiệp vụ thay vì code HTTP chung.
+  const domainCode = (inner as { domainCode?: string } | undefined)?.domainCode;
+  if (domainCode) err.code = domainCode;
 
   // Silent 401: clear tokens and redirect to /login.
   // Exception: auth endpoints (login/register) intentionally return 401 for bad credentials —
