@@ -13,6 +13,11 @@
  * return 401 for bad credentials — they must NOT trigger the "session expired" redirect because
  * the caller (login page) handles the 401 itself to show an error banner. Only non-auth 401s
  * (i.e. stale tokens on protected endpoints) should redirect to /login.
+ *
+ * BUG-FIX (login-success-redirect-loop): Khi user đang ở /login hoặc /register mà có
+ * 401 từ endpoint khác (cart/profile/chat...), KHÔNG encode pathname thành returnTo —
+ * nếu không sẽ tạo URL `/login?returnTo=%2Flogin` và sau khi auth thành công login page
+ * sẽ replace về chính nó, gây vòng lặp.
  */
 
 import { ApiError, type FieldError } from './errors';
@@ -27,6 +32,16 @@ const AUTH_PATHS_NO_REDIRECT = [
   '/api/users/auth/login',
   '/api/users/auth/register',
 ];
+
+// Pathname prefixes mà KHÔNG nên trở thành giá trị returnTo (tránh self-loop sau login).
+const AUTH_PAGE_PATHS = ['/login', '/register'];
+
+function isAuthPagePath(pathname: string): boolean {
+  const lower = pathname.toLowerCase();
+  return AUTH_PAGE_PATHS.some(
+    (p) => lower === p || lower.startsWith(`${p}/`) || lower.startsWith(`${p}?`),
+  );
+}
 
 interface ApiEnvelope<T> {
   timestamp?: string;
@@ -121,7 +136,13 @@ async function request<T>(
       // Open-redirect hardening (T-04-03): validate pathname is a local relative path.
       // Reject protocol-relative ('//evil.com') and absolute URLs.
       const pathname = window.location.pathname;
-      if (pathname.startsWith('/') && !pathname.startsWith('//')) {
+      // BUG-FIX (login-success-redirect-loop): nếu user đang ở /login|/register, KHÔNG
+      // encode làm returnTo — sẽ tạo self-loop sau khi auth thành công.
+      if (
+        pathname.startsWith('/') &&
+        !pathname.startsWith('//') &&
+        !isAuthPagePath(pathname)
+      ) {
         const returnTo = encodeURIComponent(pathname);
         window.location.href = `/login?returnTo=${returnTo}`;
       } else {

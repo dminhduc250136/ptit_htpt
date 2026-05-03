@@ -11,15 +11,32 @@ import { login } from '@/services/auth';
 import { ApiError } from '@/services/errors';
 import { useAuth } from '@/providers/AuthProvider';
 
+/**
+ * Sanitize `returnTo` query param.
+ *
+ * - T-04-03 open-redirect hardening: chỉ chấp nhận relative path bắt đầu bằng '/'
+ *   và KHÔNG bắt đầu '//' (chặn protocol-relative URL như '//evil.example.com').
+ * - BUG-FIX (login-success-redirect-loop): từ chối returnTo trỏ về chính các trang
+ *   auth (/login, /register) — nếu không, một lần 401 trên endpoint không-auth khi
+ *   user đang ở /login sẽ tạo URL `/login?returnTo=%2Flogin`, và sau khi đăng nhập
+ *   thành công router.replace(returnTo) sẽ đưa về lại /login (vòng lặp).
+ */
+function sanitizeReturnTo(raw: string | null): string {
+  if (!raw) return '/';
+  if (!raw.startsWith('/') || raw.startsWith('//')) return '/';
+  // So sánh phần pathname (bỏ query/hash) với danh sách auth pages.
+  const pathOnly = raw.split('?')[0].split('#')[0].toLowerCase();
+  const normalized = pathOnly.endsWith('/') && pathOnly.length > 1
+    ? pathOnly.slice(0, -1)
+    : pathOnly;
+  if (normalized === '/login' || normalized === '/register') return '/';
+  return raw;
+}
+
 function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const rawReturnTo = searchParams.get('returnTo') ?? '/';
-  // T-04-03 open-redirect hardening: relative paths only.
-  // Reject anything that is not a single-slash-prefixed path (protocol-relative
-  // URLs like "//evil.example.com" would hijack the redirect otherwise).
-  const returnTo =
-    rawReturnTo.startsWith('/') && !rawReturnTo.startsWith('//') ? rawReturnTo : '/';
+  const returnTo = sanitizeReturnTo(searchParams.get('returnTo'));
 
   const { login: authLogin } = useAuth();
 
