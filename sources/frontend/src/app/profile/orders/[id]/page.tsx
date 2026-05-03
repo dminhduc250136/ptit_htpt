@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useParams } from 'next/navigation';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button/Button';
 import RetrySection from '@/components/ui/RetrySection/RetrySection';
@@ -13,8 +14,12 @@ import { statusMap, paymentMethodMap, paymentStatusMap } from '@/lib/orderLabels
 import { useEnrichedItems } from '@/lib/useEnrichedItems';
 import type { Order } from '@/types';
 
-export default function OrderDetailPage({ params }: { params: { id: string } }) {
-  const { id } = params;
+export default function OrderDetailPage() {
+  // BUG-FIX: Next.js 15 — props.params là Promise trong client component, destructuring
+  // đồng bộ trả undefined → API call /api/orders/undefined. Dùng useParams hook (pattern
+  // khớp với products/[slug] và admin/orders/[id]).
+  const params = useParams<{ id: string }>();
+  const id = params?.id ?? '';
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
