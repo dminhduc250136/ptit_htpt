@@ -11,6 +11,8 @@ import { getAdminOrderById, updateOrderState } from '@/services/orders';
 import type { Order } from '@/types';
 import { paymentMethodMap, statusMap } from '@/lib/orderLabels';
 import { useEnrichedItems } from '@/lib/useEnrichedItems';
+import SuggestReplyModal from '@/components/chat/SuggestReplyModal/SuggestReplyModal';
+import { fetchSuggestReply } from '@/services/admin-chat';
 
 const STATUS_OPTIONS = ['PENDING', 'CONFIRMED', 'SHIPPING', 'DELIVERED', 'CANCELLED'];
 
@@ -25,6 +27,10 @@ export default function AdminOrderDetailPage() {
   const [failed, setFailed] = useState(false);
   const [newStatus, setNewStatus] = useState('');
   const [saving, setSaving] = useState(false);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  const [suggestText, setSuggestText] = useState('');
+  const [suggestError, setSuggestError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -56,6 +62,31 @@ export default function AdminOrderDetailPage() {
       showToast('Không thể cập nhật trạng thái. Vui lòng thử lại', 'error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSuggestReply = async () => {
+    if (!order) return;
+    setSuggestOpen(true);
+    setSuggestLoading(true);
+    setSuggestError(null);
+    setSuggestText('');
+    try {
+      const data = await fetchSuggestReply(order.id);
+      setSuggestText(data.text);
+    } catch (e) {
+      setSuggestError(e instanceof Error ? e.message : 'Không thể sinh gợi ý');
+    } finally {
+      setSuggestLoading(false);
+    }
+  };
+
+  const handleCopySuggestion = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('Đã sao chép gợi ý vào clipboard', 'success');
+    } catch {
+      showToast('Trình duyệt không cho phép sao chép tự động — chọn và Ctrl+C thủ công', 'error');
     }
   };
 
@@ -216,6 +247,24 @@ export default function AdminOrderDetailPage() {
         </div>
       </div>
 
+      {/* AI suggest reply card */}
+      <div style={cardStyle}>
+        <h3 style={{ fontSize: 'var(--text-title-lg)', fontWeight: 700, marginBottom: 'var(--space-3)' }}>
+          Phản hồi khách hàng
+        </h3>
+        <p style={{ color: 'var(--on-surface-variant)', marginBottom: 'var(--space-3)', fontSize: 'var(--text-body-sm)' }}>
+          AI sẽ đề xuất nội dung phản hồi khách dựa trên thông tin đơn hàng. Bạn cần kiểm tra và gửi thủ công.
+        </p>
+        <Button
+          onClick={handleSuggestReply}
+          disabled={suggestLoading}
+          loading={suggestLoading}
+          data-testid="suggest-reply-button"
+        >
+          AI gợi ý phản hồi
+        </Button>
+      </div>
+
       {/* Status update card */}
       <div style={cardStyle}>
         <h3 style={{ fontSize: 'var(--text-title-lg)', fontWeight: 700, marginBottom: 'var(--space-3)' }}>Cập nhật trạng thái</h3>
@@ -234,6 +283,15 @@ export default function AdminOrderDetailPage() {
           Cập nhật trạng thái
         </Button>
       </div>
+
+      <SuggestReplyModal
+        open={suggestOpen}
+        onClose={() => setSuggestOpen(false)}
+        loading={suggestLoading}
+        initialText={suggestText}
+        error={suggestError}
+        onCopy={handleCopySuggestion}
+      />
     </div>
   );
 }

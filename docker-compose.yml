@@ -114,6 +114,16 @@ services:
         - "3000:3000"
       depends_on:
         - api-gateway
+        - postgres
+      environment:
+        ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+        JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-key-minimum-32-characters-for-hs256-ok}
+        DB_HOST: postgres
+        DB_PORT: 5432
+        DB_NAME: tmdt
+        DB_USER: tmdt
+        DB_PASSWORD: tmdt
+        API_GATEWAY_URL: http://api-gateway:8080
 
 volumes:
   tmdt-pgdata:
