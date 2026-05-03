@@ -10,8 +10,10 @@ import Badge from '@/components/ui/Badge/Badge';
 import ProductCard from '@/components/ui/ProductCard/ProductCard';
 import RetrySection from '@/components/ui/RetrySection/RetrySection';
 import { useToast } from '@/components/ui/Toast/Toast';
+import { useQueryClient } from '@tanstack/react-query';
 import { getProductBySlug, listProducts } from '@/services/products';
 import { addToCart } from '@/services/cart';
+import { CART_QUERY_KEY } from '@/hooks/useCart';
 import { isApiError } from '@/services/errors';
 import { formatPrice } from '@/services/api';
 import type { Product } from '@/types';
@@ -22,6 +24,7 @@ export default function ProductDetailPage() {
   const slug = params?.slug;
   const router = useRouter();
   const { showToast } = useToast();
+  const queryClient = useQueryClient();
 
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
@@ -263,6 +266,10 @@ export default function ProductDetailPage() {
                           },
                           quantity,
                         );
+                        // BUG-FIX (cart-not-rendering): page này gọi service trực tiếp,
+                        // không qua useAddToCart mutation → React Query cache ['cart'] không
+                        // tự invalidate, Header/cart page render từ cache cũ. Invalidate tay.
+                        await queryClient.invalidateQueries({ queryKey: CART_QUERY_KEY });
                         showToast('Đã thêm vào giỏ hàng', 'success');
                       } catch (err) {
                         // Map domain code → message tiếng Việt rõ ràng. STOCK_SHORTAGE
