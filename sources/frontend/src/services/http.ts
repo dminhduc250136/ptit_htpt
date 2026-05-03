@@ -18,6 +18,11 @@
  * 401 từ endpoint khác (cart/profile/chat...), KHÔNG encode pathname thành returnTo —
  * nếu không sẽ tạo URL `/login?returnTo=%2Flogin` và sau khi auth thành công login page
  * sẽ replace về chính nó, gây vòng lặp.
+ *
+ * BUG-FIX (login-success-redirect-loop, regression sau 302e2a1): Khi đã ở /login|/register,
+ * KHÔNG thực hiện hard navigation `window.location.href` nữa — chỉ clearTokens. Trang login
+ * tự xử lý điều hướng sau khi `await authLogin(...)` hoàn tất. Hard nav trước đây đè lên
+ * `router.replace('/')` đang chạy, khiến user bị giữ lại ở /login dù đã đăng nhập đúng.
  */
 
 import { ApiError, type FieldError } from './errors';
@@ -133,20 +138,20 @@ async function request<T>(
   if (res.status === 401 && !AUTH_PATHS_NO_REDIRECT.includes(path)) {
     clearTokens();
     if (typeof window !== 'undefined') {
-      // Open-redirect hardening (T-04-03): validate pathname is a local relative path.
-      // Reject protocol-relative ('//evil.com') and absolute URLs.
       const pathname = window.location.pathname;
-      // BUG-FIX (login-success-redirect-loop): nếu user đang ở /login|/register, KHÔNG
-      // encode làm returnTo — sẽ tạo self-loop sau khi auth thành công.
-      if (
-        pathname.startsWith('/') &&
-        !pathname.startsWith('//') &&
-        !isAuthPagePath(pathname)
-      ) {
-        const returnTo = encodeURIComponent(pathname);
-        window.location.href = `/login?returnTo=${returnTo}`;
-      } else {
-        window.location.href = `/login`;
+      // BUG-FIX (login-success-redirect-loop, regression): Nếu user đang ở /login|/register,
+      // CHỈ clearTokens — KHÔNG hard-navigate. Trang login đang chạy `await authLogin(...)`
+      // và sẽ tự `router.replace(...)` sau khi xử lý. Hard nav ở đây sẽ đè lên router.replace,
+      // khiến user kẹt ở /login dù đăng nhập thành công.
+      if (!isAuthPagePath(pathname)) {
+        // Open-redirect hardening (T-04-03): validate pathname is a local relative path.
+        // Reject protocol-relative ('//evil.com') and absolute URLs.
+        if (pathname.startsWith('/') && !pathname.startsWith('//')) {
+          const returnTo = encodeURIComponent(pathname);
+          window.location.href = `/login?returnTo=${returnTo}`;
+        } else {
+          window.location.href = `/login`;
+        }
       }
     }
   }
@@ -162,8 +167,8 @@ async function request<T>(
   );
 }
 
-export const httpGet    = <T>(path: string) => request<T>('GET', path);
+export const httpGet    = <T>(path: string, extraHeaders?: Record<string, string>) => request<T>('GET', path, undefined, extraHeaders);
 export const httpPost   = <T>(path: string, body?: unknown, extraHeaders?: Record<string, string>) => request<T>('POST', path, body, extraHeaders);
 export const httpPut    = <T>(path: string, body?: unknown, extraHeaders?: Record<string, string>) => request<T>('PUT', path, body, extraHeaders);
 export const httpPatch  = <T>(path: string, body?: unknown, extraHeaders?: Record<string, string>) => request<T>('PATCH', path, body, extraHeaders);
-export const httpDelete = <T>(path: string) => request<T>('DELETE', path);
+export const httpDelete = <T>(path: string, extraHeaders?: Record<string, string>) => request<T>('DELETE', path, undefined, extraHeaders);

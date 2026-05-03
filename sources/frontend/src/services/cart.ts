@@ -12,6 +12,12 @@
  *   AuthProvider.login → setTokens → mergeGuestCartToServer() → success: clearCart() localStorage
  *
  * SSR-safe: typeof window guard ở mọi localStorage access.
+ *
+ * BUG-FIX (login-success-redirect-loop, regression sau 302e2a1):
+ * Backend cart-service yêu cầu header `X-User-Id` (CartCrudService.requireUserId → 401).
+ * Gateway hiện tại KHÔNG tự inject từ JWT, nên mọi cart endpoint phải tự gửi header này.
+ * Đọc `userId` từ `localStorage.userProfile` (AuthProvider.login đã ghi trước khi gọi
+ * mergeGuestCartToServer). Pattern khớp với `services/orders.ts` & `services/coupons.ts`.
  */
 
 import type { Product } from '@/types';
@@ -102,6 +108,29 @@ function _localUpdate(productId: string, qty: number): void {
 // ===== Internal: Server (user) namespace =====
 
 /**
+ * Đọc `userId` từ `localStorage.userProfile` (AuthProvider ghi khi login/register).
+ * Trả `null` khi không có (SSR, chưa login, hoặc parse lỗi). Không throw — caller
+ * vẫn có thể gọi endpoint, backend sẽ trả 401 với thông điệp rõ.
+ */
+function getCurrentUserId(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem('userProfile');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { id?: string } | null;
+    return parsed?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/** Build extra headers cho mọi cart server call — luôn kèm X-User-Id nếu có. */
+function _userHeaders(): Record<string, string> | undefined {
+  const userId = getCurrentUserId();
+  return userId ? { 'X-User-Id': userId } : undefined;
+}
+
+/**
  * Server cart trả về chỉ có productId + quantity.
  * Để FE render UI (name, price, image, stock), hydrate từ product-svc.
  * Trade-off: GET /cart sau đó GET /products/{id} cho mỗi item — N+1 calls.
@@ -136,32 +165,32 @@ async function hydrateServerCartItems(serverItems: ServerCartItem[]): Promise<Ca
 }
 
 async function _serverGet(): Promise<CartItem[]> {
-  const dto = await httpGet<ServerCartDto>('/api/orders/cart');
+  const dto = await httpGet<ServerCartDto>('/api/orders/cart', _userHeaders());
   return hydrateServerCartItems(dto.items);
 }
 
 async function _serverAdd(productId: string, quantity: number): Promise<CartItem[]> {
-  const dto = await httpPost<ServerCartDto>('/api/orders/cart/items', { productId, quantity });
+  const dto = await httpPost<ServerCartDto>('/api/orders/cart/items', { productId, quantity }, _userHeaders());
   return hydrateServerCartItems(dto.items);
 }
 
 async function _serverSet(productId: string, quantity: number): Promise<CartItem[]> {
-  const dto = await httpPatch<ServerCartDto>(`/api/orders/cart/items/${productId}`, { quantity });
+  const dto = await httpPatch<ServerCartDto>(`/api/orders/cart/items/${productId}`, { quantity }, _userHeaders());
   return hydrateServerCartItems(dto.items);
 }
 
 async function _serverRemove(productId: string): Promise<CartItem[]> {
-  const dto = await httpDelete<ServerCartDto>(`/api/orders/cart/items/${productId}`);
+  const dto = await httpDelete<ServerCartDto>(`/api/orders/cart/items/${productId}`, _userHeaders());
   return hydrateServerCartItems(dto.items);
 }
 
 async function _serverClear(): Promise<CartItem[]> {
-  const dto = await httpDelete<ServerCartDto>('/api/orders/cart');
+  const dto = await httpDelete<ServerCartDto>('/api/orders/cart', _userHeaders());
   return hydrateServerCartItems(dto.items);
 }
 
 async function _serverMerge(items: Array<{ productId: string; quantity: number }>): Promise<ServerCartDto> {
-  return httpPost<ServerCartDto>('/api/orders/cart/merge', { items });
+  return httpPost<ServerCartDto>('/api/orders/cart/merge', { items }, _userHeaders());
 }
 
 // ===== Public API =====
