@@ -33,6 +33,7 @@ public final class OrderMapper {
     return new OrderDto(
         e.id(), e.userId(), e.total(), e.status(), e.note(),
         items, shippingAddress, e.paymentMethod(),
+        e.discountAmount(), e.couponCode(),
         e.createdAt(), e.updatedAt()
     );
   }

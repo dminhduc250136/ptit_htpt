@@ -51,6 +51,15 @@ public class OrderEntity {
   @Column(name = "payment_method", length = 30)
   private String paymentMethod;
 
+  // Phase 20 / COUP-01 (D-02): snapshot 2 cột coupon trên orders cho display nhanh
+  // (KHÔNG join coupon_redemptions). Bảo toàn lịch sử nếu coupon bị xoá sau này.
+  // Default 0 (DEFAULT 0 trong V5 ALTER) — backward compatible với order cũ.
+  @Column(name = "discount_amount", nullable = false, precision = 15, scale = 2)
+  private BigDecimal discountAmount = BigDecimal.ZERO;
+
+  @Column(name = "coupon_code", length = 64)
+  private String couponCode;
+
   @Column(nullable = false)
   private boolean deleted = false;
 
@@ -110,6 +119,13 @@ public class OrderEntity {
   public String shippingAddress() { return shippingAddress; }
   public String paymentMethod() { return paymentMethod; }
 
+  // Phase 20 / COUP-01 (D-02): snapshot accessors. Set qua setter trong
+  // OrderCrudService.create sau khi atomic redeem (Plan 20-03).
+  public BigDecimal discountAmount() { return discountAmount; }
+  public String couponCode() { return couponCode; }
+  public void setDiscountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount; }
+  public void setCouponCode(String couponCode) { this.couponCode = couponCode; }
+
   public void addItem(OrderItemEntity item) {
     this.items.add(item);
   }
@@ -120,6 +136,16 @@ public class OrderEntity {
 
   public void setPaymentMethod(String paymentMethod) {
     this.paymentMethod = paymentMethod;
+  }
+
+  /**
+   * Phase 20 / Plan 20-03 (D-08, D-12): cho phép OrderCrudService set lại total
+   * sau khi tính discount từ coupon. Bumps updatedAt để trigger optimistic versioning
+   * nếu sau này thêm @Version.
+   */
+  public void setTotal(BigDecimal total) {
+    this.total = total;
+    this.updatedAt = Instant.now();
   }
 
   public boolean deleted() { return deleted; }

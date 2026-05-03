@@ -25,7 +25,7 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 | Service | Version | Purpose | Phase |
 |---------|---------|---------|-------|
 | product-svc | V101 | Seed ~100 sản phẩm trong db/seed-dev/ (Spring profile `dev` only) | Phase 16 |
-| order-svc | V3 | Coupons + coupon_redemptions tables | Phase 20 |
+| order-svc | V5 | Coupons + coupon_redemptions tables (V5 vì V4 đã shipped Phase 18) | Phase 20 |
 | order-svc | V4 | Carts + cart_items tables | Phase 18 |
 | chat_svc | — | Schema init qua Next.js API route (raw pg driver, không Flyway) | Phase 22 |
 
@@ -45,10 +45,10 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 
 ## Phases
 
-- [x] **Phase 17: Sửa Order Detail Items** — Fix hardcoded placeholder, hiển thị full line items cả user + admin (4/4 plans complete 2026-05-02)
 - [x] **Phase 16: Seed Catalog Hiện Thực** ✅ 2026-05-02 — ~100 sản phẩm / 5 tech categories + Unsplash WebP + brand thực tế (3/3 plans, manual UAT defer cho `/gsd-verify-work`)
-- [ ] **Phase 18: Kiểm Toán Storage + Cart→DB** — Audit localStorage/sessionStorage + migrate cart sang DB per-user
-- [ ] **Phase 19: Hoàn Thiện Admin: Charts + Low-Stock** — 4 analytics charts + low-stock alert dashboard
+- [x] **Phase 17: Sửa Order Detail Items** — Fix hardcoded placeholder, hiển thị full line items cả user + admin (4/4 plans complete 2026-05-02)
+- [x] **Phase 18: Kiểm Toán Storage + Cart→DB** — Audit localStorage/sessionStorage + migrate cart sang DB per-user — **COMPLETED 2026-05-02**
+- [x] **Phase 19: Hoàn Thiện Admin: Charts + Low-Stock** — 4 analytics charts + low-stock alert dashboard ✅ 2026-05-02
 - [ ] **Phase 20: Hệ Thống Coupon** — % off + fixed amount, admin CRUD, checkout input, atomic redemption
 - [x] **Phase 21: Hoàn Thiện Reviews** ✅ 2026-05-02 — Author edit/delete + sort controls + admin moderation (4/4 plans complete)
 - [ ] **Phase 22: AI Chatbot Claude API MVP** — Customer FAQ + product Q&A + recommendation, streaming, history persist
@@ -105,13 +105,13 @@ Plans:
   2. Guest add vào giỏ → login → giỏ hàng merge đúng, không bị duplicate item
   3. Audit report (SUMMARY.md) liệt kê tất cả `localStorage`/`sessionStorage` keys được classify: (a) đã migrate sang DB, (b) UI preference giữ lại hợp lý, (c) auth-token reviewed
   4. Cart localStorage không chứa dữ liệu user sau khi logout
-**Plans:** 4 plans
-
-Plans:
-- [x] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
-- [x] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
-- [x] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
-- [x] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
+**Plans:** 6 plans
+- [x] 18-01-PLAN.md — BE foundation: Flyway V4 carts+cart_items, JPA entities, repos, cleanup InMemoryCartRepository
+- [x] 18-02-PLAN.md — BE service+controller: CartCrudService với native upsert + CartController 6 endpoints
+- [x] 18-03-PLAN.md — FE service+hooks: services/cart.ts dual-backend wrapper + useCart React Query hooks
+- [x] 18-04-PLAN.md — FE consumers: cart page + checkout page + Header badge refactor sang React Query
+- [x] 18-05-PLAN.md — Auth integration: AuthProvider login merge cart + logout clear cart
+- [x] 18-06-PLAN.md — Storage audit + UAT checkpoint: classify mọi localStorage key + 4 phase truths verify
 **UI hint**: yes
 
 ---
@@ -130,10 +130,10 @@ Plans:
 **Plans:** 4 plans
 
 Plans:
-- [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
-- [ ] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
-- [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
-- [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
+- [x] 19-01-PLAN.md — order-svc AdminChartsController (revenue + top-products + status-distribution) + ProductBatchClient + integration tests ✅ 2026-05-02
+- [x] 19-02-PLAN.md — user-svc AdminChartsController (signups) + repository @Query + integration tests ✅ 2026-05-02
+- [x] 19-03-PLAN.md — product-svc AdminChartsController (low-stock) + AdminProductBatchController + LowStockService + integration tests ✅ 2026-05-02
+- [x] 19-04-PLAN.md — FE: install recharts@3.8.1 + chart fetchers + 4 chart components + ChartCard + LowStockSection + extend admin/page.tsx + 2 Playwright smoke specs ✅ 2026-05-02
 **UI hint**: yes
 
 ---
@@ -148,13 +148,15 @@ Plans:
   2. Admin tại `/admin/coupons` tạo, chỉnh sửa, disable/delete coupon với đầy đủ field: type (% hoặc fixed), value, min_order, expiry, max_total_uses
   3. Hai user cùng dùng coupon "last slot" đồng thời → chỉ 1 user thành công (race condition safe, KHÔNG double-redemption)
   4. Đơn hàng tại `/account/orders/[id]` và `/admin/orders/[id]` hiển thị coupon code + discount amount nếu order có áp dụng coupon
-**Plans:** 4 plans
+**Plans:** 6 plans
 
 Plans:
-- [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
-- [ ] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
-- [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
-- [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
+- [ ] 20-01-PLAN.md — BE foundation: Flyway V5 migration + JPA entities + repositories (CouponEntity, CouponRedemptionEntity, OrderEntity extension)
+- [ ] 20-02-PLAN.md — BE service + admin controller: CouponService CRUD + CouponPreviewService.validate + CouponRedemptionService.atomicRedeem + AdminCouponController + error code enum + DTOs
+- [ ] 20-03-PLAN.md — BE integration: extend OrderCrudService.create với atomic coupon + extend OrderEntity discountAmount/couponCode + extend OrderDto + POST /orders/coupons/validate + race condition IT (D-25)
+- [ ] 20-04-PLAN.md — Gateway routes (user coupons + admin coupons) + ROADMAP patch (V3 → V5)
+- [ ] 20-05-PLAN.md — FE checkout coupon section: useApplyCoupon mutation + Input/Áp dụng button + chip + auto-revalidate + extend createOrder body với couponCode + error toast mapping
+- [ ] 20-06-PLAN.md — FE admin /admin/coupons page (rhf+zod+modal CRUD) + sidebar nav link + extend /profile/orders/[id] và /admin/orders/[id] hiển thị couponCode + discountAmount
 **UI hint**: yes
 
 ---
@@ -190,13 +192,10 @@ Plans:
   3. Người dùng mở lại chatbot sau khi đóng tab → thấy lịch sử chat sessions cũ, có thể tiếp tục conversation
   4. Admin tại `/admin/orders/[id]` click "AI suggest reply" → nhận gợi ý phản hồi customer dựa trên context order — admin review và gửi thủ công (KHÔNG auto-confirm)
   5. API key Anthropic KHÔNG bao giờ xuất hiện trong Network tab của browser (proxy qua Next.js API route)
-**Plans:** 4 plans
+**Plans:** TBD (sẽ chốt khi `/gsd-ai-integration-phase 22` chạy)
 
 Plans:
-- [ ] 17-01-PLAN.md — Tạo lib helpers (orderLabels + useEnrichedItems hook)
-- [ ] 17-02-PLAN.md — Rewrite admin order detail page (xóa placeholder + render items + shipping/payment)
-- [ ] 17-03-PLAN.md — Extend user order detail page (thumbnail + brand subtitle) + CSS
-- [ ] 17-04-PLAN.md — Extend Playwright E2E specs (regression-guard ADM-ORD-3 + ORD-DTL-2)
+- [ ] (TBD) — Plans sẽ được chốt khi AI integration workflow chạy cho Phase 22
 **UI hint**: yes
 
 ---
@@ -205,9 +204,9 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 17. Sửa Order Detail Items | 4/4 | Complete    | 2026-05-02 |
-| 16. Seed Catalog Hiện Thực | 2/3 | In progress | - |
-| 18. Kiểm Toán Storage + Cart→DB | 0/? | Not started | - |
+| 16. Seed Catalog Hiện Thực | 3/3 | Complete | 2026-05-02 |
+| 17. Sửa Order Detail Items | 4/4 | Complete | 2026-05-02 |
+| 18. Kiểm Toán Storage + Cart→DB | 6/6 | COMPLETED | 2026-05-02 |
 | 19. Hoàn Thiện Admin: Charts + Low-Stock | 0/? | Not started | - |
 | 20. Hệ Thống Coupon | 0/? | Not started | - |
 | 21. Hoàn Thiện Reviews | 4/4 | Complete    | 2026-05-02 |

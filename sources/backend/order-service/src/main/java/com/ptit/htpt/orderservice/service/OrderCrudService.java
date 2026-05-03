@@ -1,14 +1,13 @@
 package com.ptit.htpt.orderservice.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ptit.htpt.orderservice.domain.CartEntity;
+import com.ptit.htpt.orderservice.domain.CouponEntity;
 import com.ptit.htpt.orderservice.domain.OrderDto;
 import com.ptit.htpt.orderservice.domain.OrderEntity;
 import com.ptit.htpt.orderservice.domain.OrderItemEntity;
 import com.ptit.htpt.orderservice.domain.OrderMapper;
 import com.ptit.htpt.orderservice.exception.StockShortageException;
 import com.ptit.htpt.orderservice.exception.StockShortageException.StockShortageItem;
-import com.ptit.htpt.orderservice.repository.InMemoryCartRepository;
 import com.ptit.htpt.orderservice.repository.OrderItemRepository;
 import com.ptit.htpt.orderservice.repository.OrderRepository;
 import jakarta.validation.Valid;
@@ -41,55 +40,22 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class OrderCrudService {
   private static final Logger log = LoggerFactory.getLogger(OrderCrudService.class);
-  private final InMemoryCartRepository cartRepository;
   private final OrderRepository orderRepository;
   private final OrderItemRepository orderItemRepository;
   private final ObjectMapper objectMapper;
   private final RestTemplate restTemplate;
+  private final CouponRedemptionService couponRedemptionService;
 
-  public OrderCrudService(InMemoryCartRepository cartRepository,
-                          OrderRepository orderRepository,
+  public OrderCrudService(OrderRepository orderRepository,
                           OrderItemRepository orderItemRepository,
                           ObjectMapper objectMapper,
-                          RestTemplate restTemplate) {
-    this.cartRepository = cartRepository;
+                          RestTemplate restTemplate,
+                          CouponRedemptionService couponRedemptionService) {
     this.orderRepository = orderRepository;
     this.orderItemRepository = orderItemRepository;
     this.objectMapper = objectMapper;
     this.restTemplate = restTemplate;
-  }
-
-  public Map<String, Object> listCarts(int page, int size, String sort, boolean includeDeleted) {
-    List<CartEntity> all = cartRepository.findAllCarts().stream()
-        .filter(cart -> includeDeleted || !cart.deleted())
-        .sorted(cartComparator(sort))
-        .toList();
-    return paginate(all, page, size);
-  }
-
-  public CartEntity getCart(String id, boolean includeDeleted) {
-    CartEntity cart = cartRepository.findCartById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart item not found"));
-    if (!includeDeleted && cart.deleted()) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart item not found");
-    }
-    return cart;
-  }
-
-  public CartEntity createCart(CartUpsertRequest request) {
-    CartEntity cart = CartEntity.create(request.userId(), request.productId(), request.quantity(), request.status());
-    return cartRepository.saveCart(cart);
-  }
-
-  public CartEntity updateCart(String id, CartUpsertRequest request) {
-    CartEntity current = getCart(id, true);
-    CartEntity updated = current.update(request.userId(), request.productId(), request.quantity(), request.status());
-    return cartRepository.saveCart(updated);
-  }
-
-  public void deleteCart(String id) {
-    CartEntity current = getCart(id, true);
-    cartRepository.saveCart(current.softDelete());
+    this.couponRedemptionService = couponRedemptionService;
   }
 
   /**
@@ -148,7 +114,8 @@ public class OrderCrudService {
     // D-04: Validate stock trước khi persist — throw 409 STOCK_SHORTAGE nếu quantity > stock
     validateStockOrThrow(command.items());
 
-    BigDecimal totalAmount = command.items().stream()
+    // D-10: Server compute subtotal từ items — KHÔNG tin client cartTotal
+    BigDecimal subtotal = command.items().stream()
         .map(item -> item.unitPrice().multiply(BigDecimal.valueOf(item.quantity())))
         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -160,10 +127,26 @@ public class OrderCrudService {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid shippingAddress format");
     }
 
-    // Tạo và persist OrderEntity
-    OrderEntity order = OrderEntity.create(userId, totalAmount, "PENDING", command.note());
+    // Tạo OrderEntity với subtotal làm total mặc định (no coupon path)
+    OrderEntity order = OrderEntity.create(userId, subtotal, "PENDING", command.note());
     order.setShippingAddress(shippingAddressJson);
     order.setPaymentMethod(command.paymentMethod());
+
+    // === COUPON STEP (D-08, D-09, D-10, D-12) ===
+    // KHÔNG tin client discountAmount — server compute lại từ subtotal qua
+    // CouponPreviewService.computeDiscount. atomicRedeem trong cùng @Transactional
+    // → fail (CONFLICT_OR_EXHAUSTED hoặc ALREADY_REDEEMED) → toàn transaction rollback.
+    if (command.couponCode() != null && !command.couponCode().isBlank()) {
+      // D-09: re-fetch coupon by code (KHÔNG dùng id từ preview — tránh TOCTOU window)
+      CouponEntity coupon = couponRedemptionService.atomicRedeem(
+          command.couponCode(), userId, order.id());
+      // D-10: server-side discount math từ subtotal (cap ≤ subtotal)
+      BigDecimal discountAmount = CouponPreviewService.computeDiscount(coupon, subtotal);
+      order.setDiscountAmount(discountAmount);
+      order.setCouponCode(coupon.code());
+      order.setTotal(subtotal.subtract(discountAmount));
+    }
+    // No coupon path: discountAmount giữ default BigDecimal.ZERO, couponCode null
 
     // Tạo OrderItemEntity cho từng item — cascade ALL sẽ persist cùng order
     // D-06: productName snapshot lấy trực tiếp từ command (FE truyền item.name từ cart state)
@@ -250,17 +233,6 @@ public class OrderCrudService {
     return paginate(dtos, query.page(), query.size());
   }
 
-  private Comparator<CartEntity> cartComparator(String sort) {
-    if (sort == null || sort.isBlank()) {
-      return Comparator.comparing(CartEntity::updatedAt).reversed();
-    }
-    boolean desc = sort.endsWith(",desc");
-    Comparator<CartEntity> comparator = sort.startsWith("userId")
-        ? Comparator.comparing(CartEntity::userId, String.CASE_INSENSITIVE_ORDER)
-        : Comparator.comparing(CartEntity::id);
-    return desc ? comparator.reversed() : comparator;
-  }
-
   private Comparator<OrderEntity> orderComparator(String sort) {
     if (sort == null || sort.isBlank()) {
       return Comparator.comparing(OrderEntity::updatedAt).reversed();
@@ -292,13 +264,6 @@ public class OrderCrudService {
     return result;
   }
 
-  public record CartUpsertRequest(
-      @NotBlank String userId,
-      @NotBlank String productId,
-      @Min(1) int quantity,
-      @NotBlank String status
-  ) {}
-
   public record OrderUpsertRequest(
       @NotBlank String userId,
       @DecimalMin("0.0") BigDecimal totalAmount,
@@ -317,7 +282,10 @@ public class OrderCrudService {
       @NotEmpty List<@Valid OrderItemRequest> items,
       @NotNull @Valid ShippingAddressRequest shippingAddress,
       @NotBlank String paymentMethod,
-      String note
+      String note,
+      // Phase 20 / Plan 20-03 (D-12): optional coupon code. null/blank → tạo order như cũ
+      // (backward compat). Validation lỏng — server sẽ tra DB qua atomicRedeem để xác thực.
+      String couponCode
   ) {}
 
   public record OrderItemRequest(
