@@ -18,6 +18,28 @@ import { httpGet, httpPost, httpPatch } from './http';
 
 export type _PathsSurface = _OrdersPaths;
 
+/**
+ * Đọc userId từ localStorage (AuthProvider ghi vào sau login).
+ * BUG-FIX (orders-cross-user-leak): listMyOrders/getOrderById trước đây không gửi
+ * X-User-Id → backend không filter theo user → mọi tài khoản thấy cùng orders.
+ */
+function getCurrentUserId(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = window.localStorage.getItem('userProfile');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { id?: string } | null;
+    return parsed?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function _userHeaders(): Record<string, string> | undefined {
+  const userId = getCurrentUserId();
+  return userId ? { 'X-User-Id': userId } : undefined;
+}
+
 export interface ListOrdersParams {
   page?: number;
   size?: number;
@@ -45,7 +67,8 @@ export interface ListOrdersParams {
  */
 export function createOrder(body: CreateOrderRequest, userId?: string): Promise<Order> {
   const headers: Record<string, string> = {};
-  if (userId) headers['X-User-Id'] = userId;
+  const effectiveUserId = userId ?? getCurrentUserId() ?? undefined;
+  if (effectiveUserId) headers['X-User-Id'] = effectiveUserId;
   return httpPost<Order>(`/api/orders`, body, headers);
 }
 
@@ -60,11 +83,11 @@ export function listMyOrders(params?: ListOrdersParams): Promise<PaginatedRespon
   if (params?.to)    qs.set('to',   params.to);
   if (params?.q)     qs.set('q',    params.q);
   const suffix = qs.toString() ? `?${qs}` : '';
-  return httpGet<PaginatedResponse<Order>>(`/api/orders${suffix}`);
+  return httpGet<PaginatedResponse<Order>>(`/api/orders${suffix}`, _userHeaders());
 }
 
 export function getOrderById(id: string): Promise<Order> {
-  return httpGet<Order>(`/api/orders/${encodeURIComponent(id)}`);
+  return httpGet<Order>(`/api/orders/${encodeURIComponent(id)}`, _userHeaders());
 }
 
 // Admin order functions — gateway: /api/orders/admin → /admin/orders

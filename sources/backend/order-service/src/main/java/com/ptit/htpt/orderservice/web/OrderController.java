@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/orders")
@@ -40,20 +41,29 @@ public class OrderController {
       @RequestParam(required = false) String q,
       @RequestHeader(value = "X-User-Id", required = false) String userId
   ) {
-    // Nếu có userId → dùng listMyOrders với filter (ACCT-02 path)
-    // Nếu không có userId → fallback listOrders cũ (backward compat cho admin/test)
-    if (userId != null && !userId.isBlank()) {
-      OrderCrudService.ListMyOrdersQuery query = new OrderCrudService.ListMyOrdersQuery(
-          userId, status, from, to, q, page, size, sort
-      );
-      return ApiResponse.of(200, "Orders listed", orderCrudService.listMyOrders(query));
+    // BUG-FIX (orders-cross-user-leak): trước đây thiếu X-User-Id → fallback listOrders
+    // trả TẤT CẢ orders → mọi tài khoản thấy chung data. Endpoint này là user-facing
+    // (/orders), admin có /admin/orders riêng. Bắt buộc X-User-Id.
+    if (userId == null || userId.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing X-User-Id session header");
     }
-    return ApiResponse.of(200, "Orders listed", orderCrudService.listOrders(page, size, sort, false));
+    OrderCrudService.ListMyOrdersQuery query = new OrderCrudService.ListMyOrdersQuery(
+        userId, status, from, to, q, page, size, sort
+    );
+    return ApiResponse.of(200, "Orders listed", orderCrudService.listMyOrders(query));
   }
 
   @GetMapping("/{id}")
-  public ApiResponse<Object> getOrder(@PathVariable String id) {
-    return ApiResponse.of(200, "Order loaded", orderCrudService.getOrder(id, false));
+  public ApiResponse<Object> getOrder(
+      @PathVariable String id,
+      @RequestHeader(value = "X-User-Id", required = false) String userId
+  ) {
+    // BUG-FIX (orders-cross-user-leak): IDOR — trước đây không check ownership.
+    // Bất kỳ user nào biết id đều load được order của user khác.
+    if (userId == null || userId.isBlank()) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Missing X-User-Id session header");
+    }
+    return ApiResponse.of(200, "Order loaded", orderCrudService.getOrderForUser(id, userId));
   }
 
   @PostMapping

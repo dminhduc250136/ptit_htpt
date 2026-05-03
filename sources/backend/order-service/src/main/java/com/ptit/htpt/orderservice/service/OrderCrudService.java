@@ -87,6 +87,20 @@ public class OrderCrudService {
     return OrderMapper.toDto(order);
   }
 
+  /**
+   * BUG-FIX (orders-cross-user-leak): User-facing GET /orders/{id} phải kiểm tra ownership.
+   * Trả 404 (không 403) để tránh leak existence của order của user khác.
+   */
+  @Transactional(readOnly = true)
+  public OrderDto getOrderForUser(String id, String userId) {
+    OrderEntity order = orderRepository.findByIdWithItems(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+    if (!userId.equals(order.userId())) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found");
+    }
+    return OrderMapper.toDto(order);
+  }
+
   public OrderDto createOrder(OrderUpsertRequest request) {
     OrderEntity order = OrderEntity.create(request.userId(), request.totalAmount(), request.status(), request.note());
     return OrderMapper.toDto(orderRepository.save(order));
