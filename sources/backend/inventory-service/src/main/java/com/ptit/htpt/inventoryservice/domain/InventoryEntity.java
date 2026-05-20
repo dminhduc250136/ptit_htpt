@@ -67,6 +67,14 @@ public class InventoryEntity {
     this.updatedAt = Instant.now();
   }
 
+  /** Phase 23 D-10: giảm quantity theo delta (KHÁC adjustQuantity vốn SET tuyệt đối).
+   * Cho phép quantity âm sau decrement — caller log warning ở D-10 bước 2 (audit concurrency,
+   * KHÔNG block message vì stock đã validate đồng bộ trước đó qua REST D-11). */
+  public void decrementQuantity(int delta) {
+    this.quantity = this.quantity - delta;
+    this.updatedAt = Instant.now();
+  }
+
   // Getters: keep record-style accessor names cho service layer compatibility
   public String id() { return id; }
   public String productId() { return productId; }
