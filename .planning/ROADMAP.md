@@ -222,10 +222,15 @@ Plans:
   5. Khi consumer ném exception, message được retry 3 lần với exponential backoff; sau 3 lần thất bại, message rơi vào Dead Letter Queue `order-events.dlq` — verify được trong Management UI
   6. Producer log và consumer log có cùng `traceId` (tận dụng TraceIdFilter sẵn có) để theo dõi xuyên service — đáp ứng yêu cầu "log để theo dõi message" (mục 4 đề)
   7. Có ít nhất 1 integration test (Testcontainers + RabbitMQ container) chứng minh luồng end-to-end: tạo order → message publish → 2 consumer xử lý → side effect xảy ra trong DB
-**Plans:** chưa lập (chạy /gsd-plan-phase 23 để tạo)
+**Plans:** 6 plans
 
 Plans:
-- [ ] (sẽ tạo bởi /gsd-plan-phase 23)
+- [ ] 23-01-PLAN.md — Bootstrap infra: docker-compose RabbitMQ service + db/init notification_svc schema + REQUIREMENTS.md backfill MQ-01..MQ-05
+- [ ] 23-02-PLAN.md — notification-service persistence bootstrap: pom JPA+Flyway+AMQP + application.yml datasource+rabbitmq + V1 init schema (dispatch_log + processed_events)
+- [ ] 23-03-PLAN.md — Producer: RabbitMQConfig topology 3 service + OrderEventPublisher afterCommit+CorrelationData + OrderCrudService chèn publish + XÓA deductStock REST legacy
+- [ ] 23-04-PLAN.md — Inventory consumer: V2 migration + V102 seed inventory + JPA entities + OrderPlacedListener idempotent + decrementForOrder
+- [ ] 23-05-PLAN.md — Notification consumer: JPA entities (DispatchLog + ProcessedEvent) + NotificationDispatchService render template + OrderPlacedNotifyListener idempotent
+- [ ] 23-06-PLAN.md — Integration tests (4 scenarios D-18: happy/idempotent/DLQ/retry) + smoke script verify-mq.sh + cập nhật architecture/02-sequence-diagrams.md
 **UI hint**: no (toàn bộ là backend + infrastructure)
 
 ---
