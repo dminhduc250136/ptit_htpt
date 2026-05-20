@@ -229,7 +229,7 @@ Plans:
 - [x] 23-02-PLAN.md — notification-service persistence bootstrap: pom JPA+Flyway+AMQP + application.yml datasource+rabbitmq + V1 init schema (dispatch_log + processed_events) ✅ 2026-05-20 (commits cb0e90a + 6ac96c1)
 - [x] 23-03-PLAN.md — Producer: RabbitMQConfig topology 3 service + OrderEventPublisher afterCommit+CorrelationData + OrderCrudService chèn publish + XÓA deductStock REST legacy ✅ 2026-05-20 (commits c5876d9 + 3d8c238)
 - [x] 23-04-PLAN.md — Inventory consumer: V2 migration + V102 seed inventory + JPA entities + OrderPlacedListener idempotent + decrementForOrder ✅ 2026-05-20 (commits 253102f + b2c729b)
-- [ ] 23-05-PLAN.md — Notification consumer: JPA entities (DispatchLog + ProcessedEvent) + NotificationDispatchService render template + OrderPlacedNotifyListener idempotent
+- [x] 23-05-PLAN.md — Notification consumer: JPA entities (DispatchLog + ProcessedEvent) + NotificationDispatchService render template + OrderPlacedNotifyListener idempotent ✅ 2026-05-20 (commits 68e5ce8 + 26d45ec)
 - [ ] 23-06-PLAN.md — Integration tests (4 scenarios D-18: happy/idempotent/DLQ/retry) + smoke script verify-mq.sh + cập nhật architecture/02-sequence-diagrams.md
 **UI hint**: no (toàn bộ là backend + infrastructure)
 

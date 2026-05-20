@@ -9,15 +9,15 @@ progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 14
-  completed_plans: 19
+  completed_plans: 20
   percent: 57
 ---
 
 ## Current Position
 
 Phase: 23-message-queue-rabbitmq — Executing
-Plan: 4 of 6 — 23-04 COMPLETED (Inventory consumer: V2 migration processed_events+stock_ledger + V102 seed copy stock + ProcessedEventEntity/StockLedgerEntity + ProcessedEventRepository.insertIfAbsent ON CONFLICT DO NOTHING + InventoryEntity.decrementQuantity delta-style + InventoryCrudService.decrementForOrder + OrderPlacedListener @RabbitListener idempotent + TraceIdConsumerInterceptor)
-Status: 23-05 next (notification-service consumer: NotificationListener + dispatch_log + processed_events idempotency).
+Plan: 5 of 6 — 23-05 COMPLETED (Notification consumer: ProcessedEventEntity + DispatchLogEntity match V1 cols + ProcessedEventRepository.insertIfAbsent ON CONFLICT DO NOTHING + DispatchLogRepository + NotificationDispatchService.recordOrderConfirmation render template subject+body status=SENT channel=email + OrderPlacedNotifyListener @RabbitListener notification.order-events idempotent + TraceIdConsumerInterceptor — mirror inventory pattern)
+Status: 23-06 next (Integration tests 4 scenarios D-18 happy/idempotent/DLQ/retry + verify-mq.sh + architecture sequence diagrams).
 Last activity: 2026-05-20
 
 ```
@@ -71,8 +71,25 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 23-message-queue-rabbitmq P02 | 2min | 2 tasks | 8 files |
 | Phase 23-message-queue-rabbitmq P03 | 6min | 2 tasks | 9 files |
 | Phase 23-message-queue-rabbitmq P04 | 8min | 2 tasks | 13 files |
+| Phase 23-message-queue-rabbitmq P05 | 5min | 2 tasks | 10 files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 23 Plan 05 decisions (2026-05-20):**
+
+- MQ-04 notification consumer hoàn tất: 10 file Java mới trong notification-service. KHÔNG tạo migration mới — V1__init_schema.sql của Plan 23-02 đã có sẵn cả dispatch_log + processed_events trong schema notification_svc
+- ProcessedEventEntity + DispatchLogEntity JPA record-style accessors (KHÔNG Lombok); DispatchLogEntity match đúng 10 cột V1 (id/eventId/recipientUserId/channel/subject/body/status/sentAt/createdAt/updatedAt) + factory create() generate UUID + Instant.now cho 3 timestamp
+- ProcessedEventRepository.insertIfAbsent native ON CONFLICT (event_id) DO NOTHING return true nếu insert thực sự — identical pattern inventory Plan 23-04
+- DispatchLogRepository findByEventId + findByRecipientUserId — debug/audit + user history lookup
+- NotificationDispatchService.recordOrderConfirmation @Transactional: subject="Xác nhận đơn hàng {orderId}", body StringBuilder concat (cảm ơn + orderId + totalAmount+currency + items.size) → DispatchLogEntity.create(eventId, userId, "email", subject, body, "SENT") → save. KHÔNG SMTP, KHÔNG template engine ngoài (Thymeleaf/Freemarker) — dev scope
+- Hằng số STATUS_SENT="SENT" + CHANNEL_EMAIL="email" private static final trong service (D-14)
+- OrderEventEnvelope + 2 exception (Transient/Permanent) copy từ inventory-service đổi package; PermanentMessageException vẫn extend AmqpRejectAndDontRequeueException (Pitfall 4) — đồng nhất với consumer-side pattern, listener chỉ re-throw
+- OrderPlacedNotifyListener @RabbitListener(queues="notification.order-events") + @Transactional; Pitfall 8 flow: insertIfAbsent TRƯỚC recordOrderConfirmation; duplicate eventId → log status=skipped-duplicate + return; PermanentException re-throw; TransientDataAccessException → wrap TransientMessageException; RuntimeException fallback → AmqpRejectAndDontRequeueException
+- 3 log path [MQ-CONSUME] (received/done/skipped-duplicate) + [MQ-DLQ] + [MQ-RETRY] (D-17) — identical structure với inventory listener
+- TraceIdConsumerInterceptor copy nguyên từ inventory-service đổi package — utility helper KHÔNG Spring AOP
+- KHÔNG re-declare RabbitMQConfig (đã có Plan 23-03); listener dùng literal "notification.order-events" cho @RabbitListener (annotation cần compile-time constant)
+- KHÔNG Lombok — explicit constructor injection cho NotificationDispatchService (1 dep) + OrderPlacedNotifyListener (2 deps)
+- Maven CLI vẫn defer trên Windows env này; compile + IT runtime verify ở Plan 23-06 hoặc /gsd-verify-work
 
 **Phase 23 Plan 04 decisions (2026-05-20):**
 
@@ -268,3 +285,4 @@ Không có blocker.
 - Phase 23 Plan 02: notification-service persistence bootstrap + spring.rabbitmq config 3 service — **COMPLETED 2026-05-20** (MQ-04 prep + V1 dispatch_log + processed_events)
 - Phase 23 Plan 03: Producer topology + OrderEventPublisher afterCommit + XÓA deductStock REST — **COMPLETED 2026-05-20** (MQ-02 producer done; Wave 2 consumer plans next)
 - Phase 23 Plan 04: Inventory consumer V2 migration + OrderPlacedListener idempotent + InventoryCrudService.decrementForOrder — **COMPLETED 2026-05-20** (MQ-03 done; 13 files, 2 commits)
+- Phase 23 Plan 05: Notification consumer DispatchLogEntity + ProcessedEventEntity + NotificationDispatchService render template + OrderPlacedNotifyListener idempotent — **COMPLETED 2026-05-20** (MQ-04 done; 10 files, 2 commits)
