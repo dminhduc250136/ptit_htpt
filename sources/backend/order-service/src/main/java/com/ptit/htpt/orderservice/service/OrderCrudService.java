@@ -8,6 +8,8 @@ import com.ptit.htpt.orderservice.domain.OrderItemEntity;
 import com.ptit.htpt.orderservice.domain.OrderMapper;
 import com.ptit.htpt.orderservice.exception.StockShortageException;
 import com.ptit.htpt.orderservice.exception.StockShortageException.StockShortageItem;
+import com.ptit.htpt.orderservice.messaging.event.OrderEventEnvelope;
+import com.ptit.htpt.orderservice.messaging.publisher.OrderEventPublisher;
 import com.ptit.htpt.orderservice.repository.OrderItemRepository;
 import com.ptit.htpt.orderservice.repository.OrderRepository;
 import jakarta.validation.Valid;
@@ -27,11 +29,7 @@ import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -45,17 +43,20 @@ public class OrderCrudService {
   private final ObjectMapper objectMapper;
   private final RestTemplate restTemplate;
   private final CouponRedemptionService couponRedemptionService;
+  private final OrderEventPublisher orderEventPublisher;
 
   public OrderCrudService(OrderRepository orderRepository,
                           OrderItemRepository orderItemRepository,
                           ObjectMapper objectMapper,
                           RestTemplate restTemplate,
-                          CouponRedemptionService couponRedemptionService) {
+                          CouponRedemptionService couponRedemptionService,
+                          OrderEventPublisher orderEventPublisher) {
     this.orderRepository = orderRepository;
     this.orderItemRepository = orderItemRepository;
     this.objectMapper = objectMapper;
     this.restTemplate = restTemplate;
     this.couponRedemptionService = couponRedemptionService;
+    this.orderEventPublisher = orderEventPublisher;
   }
 
   /**
@@ -177,8 +178,21 @@ public class OrderCrudService {
 
     OrderEntity saved = orderRepository.save(order);
 
-    // D-05: Deduct stock sau persist — best-effort, không rollback order nếu fail
-    deductStockAfterPersist(command.items());
+    // Phase 23 D-03/D-12: thay vì gọi REST deductStock đồng bộ (đã XÓA), publish event
+    // OrderPlaced SAU khi DB commit. inventory-service consumer trừ kho async (Wave 2).
+    // OrderEventPublisher tự defer publish qua TransactionSynchronizationManager.afterCommit;
+    // capture MDC traceId NGAY tại thread này (Pitfall 1 — afterCommit có thể MDC empty).
+    List<OrderEventEnvelope.Item> payloadItems = saved.items().stream()
+        .map(it -> new OrderEventEnvelope.Item(it.productId(), it.quantity(), it.unitPrice()))
+        .toList();
+    OrderEventEnvelope.OrderPlacedPayload payload = new OrderEventEnvelope.OrderPlacedPayload(
+        saved.id(),
+        saved.userId(),
+        payloadItems,
+        saved.total(),
+        "VND"
+    );
+    orderEventPublisher.publishOrderPlaced(payload);
 
     return OrderMapper.toDto(saved);
   }
@@ -374,46 +388,12 @@ public class OrderCrudService {
   }
 
   /**
-   * D-05: Decrement stock sau khi order đã persist thành công.
-   * Gọi GET /api/products/{id} để lấy currentStock → tính newStock → PATCH /api/products/admin/{id}.
-   * Nếu fail → log.error, KHÔNG rollback order (user confirmed MVP acceptable).
-   */
-  private void deductStockAfterPersist(List<OrderItemRequest> items) {
-    for (OrderItemRequest item : items) {
-      try {
-        // Fetch current stock
-        String getUrl = "http://api-gateway:8080/api/products/" + item.productId();
-        @SuppressWarnings("unchecked")
-        Map<String, Object> raw = restTemplate.getForObject(getUrl, Map.class);
-        Map<String, Object> product = unwrapEnvelope(raw);
-        if (product == null) {
-          log.error("[D-05] Cannot deduct stock for productId={}: product not found", item.productId());
-          continue;
-        }
-        Object stockObj = product.get("stock");
-        int currentStock = stockObj == null ? 0 : ((Number) stockObj).intValue();
-        int newStock = Math.max(0, currentStock - item.quantity());
-
-        // PATCH /api/products/admin/{id} với stock mới
-        String patchUrl = "http://api-gateway:8080/api/products/admin/" + item.productId();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        Map<String, Object> patchBody = buildStockUpdateBody(product, newStock);
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(patchBody, headers);
-        restTemplate.exchange(patchUrl, HttpMethod.PATCH, entity, Void.class);
-        log.info("[D-05] Stock deducted for productId={}: {} → {}", item.productId(), currentStock, newStock);
-      } catch (Exception ex) {
-        log.error("[D-05] Stock deduct failed for productId={} qty={}: {}",
-            item.productId(), item.quantity(), ex.getMessage());
-        // KHÔNG throw — order đã saved, deduct failure là acceptable (MVP)
-      }
-    }
-  }
-
-  /**
    * Product-service trả ApiResponse envelope { status, message, data: { ... } }.
    * BUG-FIX (cart-stock-shortage-false-positive): unwrap `data` trước khi đọc field
    * — nếu không, mọi product.get("stock") trả null → false STOCK_SHORTAGE.
+   *
+   * GIỮ LẠI vì validateStockOrThrow vẫn cần unwrap envelope của product-service (D-11).
+   * Phase 23 D-12 chỉ XÓA stock-deduct REST, NOT stock-validate REST.
    */
   @SuppressWarnings("unchecked")
   private static Map<String, Object> unwrapEnvelope(Map<String, Object> raw) {
@@ -421,26 +401,5 @@ public class OrderCrudService {
     Object data = raw.get("data");
     if (data instanceof Map) return (Map<String, Object>) data;
     return raw; // fallback: response không phải envelope (legacy/contract test)
-  }
-
-  /**
-   * Builds PATCH body reusing existing product fields from GET response + overriding stock.
-   * Prevents null-out of name/price/description when PATCH requires full ProductUpsertRequest.
-   */
-  @SuppressWarnings("unchecked")
-  private Map<String, Object> buildStockUpdateBody(Map<String, Object> existingProduct, int newStock) {
-    Map<String, Object> body = new java.util.LinkedHashMap<>();
-    for (Map.Entry<String, Object> entry : existingProduct.entrySet()) {
-      if (entry.getValue() != null) {
-        body.put(entry.getKey(), entry.getValue());
-      }
-    }
-    body.put("stock", newStock);
-    // Remove read-only fields that would cause validation errors
-    body.remove("id");
-    body.remove("createdAt");
-    body.remove("updatedAt");
-    body.remove("deleted");
-    return body;
   }
 }
