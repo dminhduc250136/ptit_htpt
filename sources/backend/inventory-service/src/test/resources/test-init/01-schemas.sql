@@ -1,1 +1,2 @@
 CREATE SCHEMA IF NOT EXISTS inventory_svc;
+CREATE SCHEMA IF NOT EXISTS product_svc;

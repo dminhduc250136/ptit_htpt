@@ -1,0 +1,25 @@
+# Test profile cho inventory-service (Phase 23 — Plan 23-06 Wave 3 IT).
+# Datasource + rabbitmq host/port được Testcontainers @ServiceConnection inject runtime.
+# Override retry delay nhanh hơn (100ms/500ms) để IT chạy gọn — production yml dùng 1s/10s.
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        default_schema: inventory_svc
+  flyway:
+    enabled: true
+    schemas: inventory_svc
+    default-schema: inventory_svc
+    locations: classpath:db/migration
+  rabbitmq:
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 100
+          max-interval: 500
+          max-attempts: 3
+          multiplier: 2
+        default-requeue-rejected: false
