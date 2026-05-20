@@ -1,10 +1,10 @@
 {
   "config": {
-    "configFile": "C:\\Users\\DoMinhDuc\\gsd-workspaces\\phase-22-chatbot\\tmdt-use-gsd\\sources\\frontend\\playwright.config.ts",
-    "rootDir": "C:/Users/DoMinhDuc/gsd-workspaces/phase-22-chatbot/tmdt-use-gsd/sources/frontend/e2e",
+    "configFile": "D:\\SYP_PROJECT\\gsd-learning\\tmdt-use-gsd\\sources\\frontend\\playwright.config.ts",
+    "rootDir": "D:/SYP_PROJECT/gsd-learning/tmdt-use-gsd/sources/frontend/e2e",
     "forbidOnly": false,
     "fullyParallel": false,
-    "globalSetup": "C:\\Users\\DoMinhDuc\\gsd-workspaces\\phase-22-chatbot\\tmdt-use-gsd\\sources\\frontend\\e2e\\global-setup.ts",
+    "globalSetup": "D:\\SYP_PROJECT\\gsd-learning\\tmdt-use-gsd\\sources\\frontend\\e2e\\global-setup.ts",
     "globalTeardown": null,
     "globalTimeout": 0,
     "grep": {},
@@ -14,13 +14,13 @@
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "C:/Users/DoMinhDuc/gsd-workspaces/phase-22-chatbot/tmdt-use-gsd/sources/frontend/test-results",
+        "outputDir": "D:/SYP_PROJECT/gsd-learning/tmdt-use-gsd/sources/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {},
         "id": "chromium",
         "name": "chromium",
-        "testDir": "C:/Users/DoMinhDuc/gsd-workspaces/phase-22-chatbot/tmdt-use-gsd/sources/frontend/e2e",
+        "testDir": "D:/SYP_PROJECT/gsd-learning/tmdt-use-gsd/sources/frontend/e2e",
         "testIgnore": [
           "**/*.legacy.spec.ts.bak",
           "**/global-setup.ts"
@@ -58,20 +58,20 @@
   },
   "suites": [
     {
-      "title": "chatbot-admin.spec.ts",
-      "file": "chatbot-admin.spec.ts",
+      "title": "01-auth.spec.ts",
+      "file": "01-auth.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Chatbot — admin suggest reply",
-          "file": "chatbot-admin.spec.ts",
-          "line": 16,
+          "title": "01-AUTH: Xác thực",
+          "file": "01-auth.spec.ts",
+          "line": 19,
           "column": 6,
           "specs": [
             {
-              "title": "admin click button → modal hiện gợi ý có disclaimer",
+              "title": "AUTH-01: Đăng ký tài khoản mới → tự động đăng nhập",
               "ok": true,
               "tags": [],
               "tests": [
@@ -85,9 +85,149 @@
                   "status": "skipped"
                 }
               ],
-              "id": "8c9520c1333bed0d521d-bc096ebce424b98d10df",
-              "file": "chatbot-admin.spec.ts",
-              "line": 17,
+              "id": "791b3c4e0869e77b2651-2c4c5dc3fbbb56a2c3e1",
+              "file": "01-auth.spec.ts",
+              "line": 21,
+              "column": 7
+            },
+            {
+              "title": "AUTH-02: Đăng ký với email đã tồn tại → báo lỗi",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "791b3c4e0869e77b2651-57323a09207abea1805c",
+              "file": "01-auth.spec.ts",
+              "line": 42,
+              "column": 7
+            },
+            {
+              "title": "AUTH-03: Đăng nhập đúng credentials → vào được hệ thống",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "791b3c4e0869e77b2651-5fdf2664e2dcb85ebd82",
+              "file": "01-auth.spec.ts",
+              "line": 59,
+              "column": 7
+            },
+            {
+              "title": "AUTH-04: Đăng nhập sai mật khẩu → báo lỗi, không tạo session",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "791b3c4e0869e77b2651-32b98c40993778eeca10",
+              "file": "01-auth.spec.ts",
+              "line": 73,
+              "column": 7
+            },
+            {
+              "title": "AUTH-05: Đăng xuất → xóa session",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "791b3c4e0869e77b2651-f0c9224bd74b4ceeca81",
+              "file": "01-auth.spec.ts",
+              "line": 91,
+              "column": 7
+            },
+            {
+              "title": "AUTH-06: Chưa đăng nhập vào route bảo vệ → redirect /login?returnTo",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "791b3c4e0869e77b2651-b0388fd81bc0196faec1",
+              "file": "01-auth.spec.ts",
+              "line": 116,
+              "column": 7
+            },
+            {
+              "title": "AUTH-07: Sau đăng nhập từ returnTo → quay lại trang đích",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "791b3c4e0869e77b2651-f296bec6c13a6a1ef07e",
+              "file": "01-auth.spec.ts",
+              "line": 124,
+              "column": 7
+            },
+            {
+              "title": "AUTH-08: USER thường vào /admin → redirect /403 (role gate)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "791b3c4e0869e77b2651-b5cb2eb2ed907922aaae",
+              "file": "01-auth.spec.ts",
+              "line": 140,
               "column": 7
             }
           ]
@@ -95,20 +235,20 @@
       ]
     },
     {
-      "title": "chatbot-customer.spec.ts",
-      "file": "chatbot-customer.spec.ts",
+      "title": "02-catalog.spec.ts",
+      "file": "02-catalog.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Chatbot — customer",
-          "file": "chatbot-customer.spec.ts",
-          "line": 16,
+          "title": "02-CATALOG: Danh mục sản phẩm",
+          "file": "02-catalog.spec.ts",
+          "line": 14,
           "column": 6,
           "specs": [
             {
-              "title": "happy path: user gửi tin nhắn và thấy streaming bubble",
+              "title": "CAT-01: Trang chủ render hero + CTA dẫn tới /products",
               "ok": true,
               "tags": [],
               "tests": [
@@ -122,13 +262,13 @@
                   "status": "skipped"
                 }
               ],
-              "id": "bbb47b77029ca3039378-47236e550162f983ed49",
-              "file": "chatbot-customer.spec.ts",
-              "line": 19,
+              "id": "1da3148f1f6353302c5e-dcbf75c76b6c025b6f2b",
+              "file": "02-catalog.spec.ts",
+              "line": 16,
               "column": 7
             },
             {
-              "title": "markdown render: assistant **bold** rendered as <strong>",
+              "title": "CAT-02: /products hiển thị danh sách product card",
               "ok": true,
               "tags": [],
               "tests": [
@@ -142,13 +282,13 @@
                   "status": "skipped"
                 }
               ],
-              "id": "bbb47b77029ca3039378-1c71624279d93564251d",
-              "file": "chatbot-customer.spec.ts",
+              "id": "1da3148f1f6353302c5e-7fb94b726e94ba4623ec",
+              "file": "02-catalog.spec.ts",
               "line": 32,
               "column": 7
             },
             {
-              "title": "history persist: send → reload → sessions sidebar có entry",
+              "title": "CAT-03: Lọc theo category qua URL → chỉ hiện SP đúng category",
               "ok": true,
               "tags": [],
               "tests": [
@@ -162,21 +302,1359 @@
                   "status": "skipped"
                 }
               ],
-              "id": "bbb47b77029ca3039378-9dad54b8f6b9988c84b6",
-              "file": "chatbot-customer.spec.ts",
-              "line": 46,
+              "id": "1da3148f1f6353302c5e-070cb7da9705d4419e0b",
+              "file": "02-catalog.spec.ts",
+              "line": 47,
+              "column": 7
+            },
+            {
+              "title": "CAT-04: Lọc theo brand trong FilterSidebar",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1da3148f1f6353302c5e-1dccbebfc21b8c5765e4",
+              "file": "02-catalog.spec.ts",
+              "line": 63,
+              "column": 7
+            },
+            {
+              "title": "CAT-05: Lọc theo khoảng giá",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1da3148f1f6353302c5e-d459e4aa71498353cc05",
+              "file": "02-catalog.spec.ts",
+              "line": 91,
+              "column": 7
+            },
+            {
+              "title": "CAT-06: Tìm kiếm trong /products → kết quả khớp từ khóa",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1da3148f1f6353302c5e-1606367c3eda424e4838",
+              "file": "02-catalog.spec.ts",
+              "line": 121,
+              "column": 7
+            },
+            {
+              "title": "CAT-07: Trang /search — nhập từ khóa hiển thị kết quả",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1da3148f1f6353302c5e-ec94c6e73d32037f2291",
+              "file": "02-catalog.spec.ts",
+              "line": 150,
+              "column": 7
+            },
+            {
+              "title": "CAT-08: Trang chi tiết sản phẩm render đủ thông tin",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1da3148f1f6353302c5e-02f271e3ece4737b4215",
+              "file": "02-catalog.spec.ts",
+              "line": 174,
+              "column": 7
+            },
+            {
+              "title": "CAT-09: Truy cập slug không tồn tại → trang 404 / not-found",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1da3148f1f6353302c5e-25da3e9beb580e8ab9cc",
+              "file": "02-catalog.spec.ts",
+              "line": 191,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "03-cart.spec.ts",
+      "file": "03-cart.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "03-CART: Giỏ hàng",
+          "file": "03-cart.spec.ts",
+          "line": 18,
+          "column": 6,
+          "specs": [
+            {
+              "title": "CART-01: Thêm SP vào giỏ từ trang chi tiết → giỏ có item",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ce3bd1caa0073183365b-0abc768b108d731351a4",
+              "file": "03-cart.spec.ts",
+              "line": 20,
+              "column": 7
+            },
+            {
+              "title": "CART-02: Tăng số lượng item → qty và tổng tiền cập nhật",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ce3bd1caa0073183365b-4ce80dddb5b7b1a8246a",
+              "file": "03-cart.spec.ts",
+              "line": 44,
+              "column": 7
+            },
+            {
+              "title": "CART-03: Giảm số lượng item",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ce3bd1caa0073183365b-240226f40b33b0dbbaa0",
+              "file": "03-cart.spec.ts",
+              "line": 65,
+              "column": 7
+            },
+            {
+              "title": "CART-04: Xóa item khỏi giỏ",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ce3bd1caa0073183365b-083214ffbaed33634240",
+              "file": "03-cart.spec.ts",
+              "line": 88,
+              "column": 7
+            },
+            {
+              "title": "CART-05: Tóm tắt đơn hàng hiển thị tạm tính + tổng tiền",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ce3bd1caa0073183365b-74e0d758455e688b3690",
+              "file": "03-cart.spec.ts",
+              "line": 114,
+              "column": 7
+            },
+            {
+              "title": "CART-06: Nút \"Tiến hành thanh toán\" dẫn tới /checkout",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ce3bd1caa0073183365b-426b0456c799d05a8f42",
+              "file": "03-cart.spec.ts",
+              "line": 131,
+              "column": 7
+            },
+            {
+              "title": "CART-07: Xóa hết item → hiển thị empty state",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "ce3bd1caa0073183365b-1e51df8b3f0cf4cdf955",
+              "file": "03-cart.spec.ts",
+              "line": 147,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "04-checkout.spec.ts",
+      "file": "04-checkout.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "04-CHECKOUT: Thanh toán",
+          "file": "04-checkout.spec.ts",
+          "line": 30,
+          "column": 6,
+          "specs": [
+            {
+              "title": "CHK-01: Trang checkout render đủ section (giao hàng, thanh toán, đơn hàng)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "fbb197d5a8ab7a818340-4ce35e2b62b2686c433e",
+              "file": "04-checkout.spec.ts",
+              "line": 32,
+              "column": 7
+            },
+            {
+              "title": "CHK-02: Chọn địa chỉ từ AddressPicker (nếu có địa chỉ đã lưu)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "fbb197d5a8ab7a818340-feaf8639423d77d7998b",
+              "file": "04-checkout.spec.ts",
+              "line": 53,
+              "column": 7
+            },
+            {
+              "title": "CHK-03: Áp dụng coupon không hợp lệ → báo lỗi",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "fbb197d5a8ab7a818340-e79efe55be07586511d2",
+              "file": "04-checkout.spec.ts",
+              "line": 81,
+              "column": 7
+            },
+            {
+              "title": "CHK-04: Chọn phương thức thanh toán COD",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "fbb197d5a8ab7a818340-5736a162dd6d150e110f",
+              "file": "04-checkout.spec.ts",
+              "line": 104,
+              "column": 7
+            },
+            {
+              "title": "CHK-05: Đặt hàng thành công → redirect tới đơn hàng",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "fbb197d5a8ab7a818340-830b5eb9c11e7a694454",
+              "file": "04-checkout.spec.ts",
+              "line": 117,
+              "column": 7
+            },
+            {
+              "title": "CHK-06: Submit form thiếu thông tin giao hàng → báo lỗi validation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "fbb197d5a8ab7a818340-9e265f98886fbf8f2502",
+              "file": "04-checkout.spec.ts",
+              "line": 164,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "05-orders.spec.ts",
+      "file": "05-orders.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "05-ORDERS: Đơn hàng",
+          "file": "05-orders.spec.ts",
+          "line": 20,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ORD-01: /profile/orders render danh sách đơn hàng",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b20fc82f5682c0caf3e8-0eea97357f74a56ebd4e",
+              "file": "05-orders.spec.ts",
+              "line": 22,
+              "column": 7
+            },
+            {
+              "title": "ORD-02: Lọc đơn hàng theo trạng thái",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b20fc82f5682c0caf3e8-a08e5e7e389b76e31896",
+              "file": "05-orders.spec.ts",
+              "line": 33,
+              "column": 7
+            },
+            {
+              "title": "ORD-03: Lọc đơn hàng theo khoảng ngày",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b20fc82f5682c0caf3e8-110a563669f60017169c",
+              "file": "05-orders.spec.ts",
+              "line": 55,
+              "column": 7
+            },
+            {
+              "title": "ORD-04: Xem chi tiết đơn hàng → bảng items 4 cột + địa chỉ + thanh toán",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b20fc82f5682c0caf3e8-ea3576d5d6476aea5f42",
+              "file": "05-orders.spec.ts",
+              "line": 73,
+              "column": 7
+            },
+            {
+              "title": "ORD-05 (Bảo mật): Truy cập đơn hàng ID không tồn tại → không lộ dữ liệu",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b20fc82f5682c0caf3e8-cafedeb5ff71e5bd85ab",
+              "file": "05-orders.spec.ts",
+              "line": 99,
+              "column": 7
+            },
+            {
+              "title": "ORD-06: Tìm đơn hàng theo mã đơn",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "b20fc82f5682c0caf3e8-56ea0235604d1e1248a8",
+              "file": "05-orders.spec.ts",
+              "line": 124,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "06-profile.spec.ts",
+      "file": "06-profile.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "06-PROFILE: Tài khoản",
+          "file": "06-profile.spec.ts",
+          "line": 20,
+          "column": 6,
+          "specs": [
+            {
+              "title": "PRF-01: /profile render được sau đăng nhập",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "669a0737244eebe6ff91-aa475d7c24caea214f98",
+              "file": "06-profile.spec.ts",
+              "line": 22,
+              "column": 7
+            },
+            {
+              "title": "PRF-02: Sửa thông tin cá nhân (settings) → lưu thành công + persist",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "669a0737244eebe6ff91-51ff48f16358c34c8bf2",
+              "file": "06-profile.spec.ts",
+              "line": 30,
+              "column": 7
+            },
+            {
+              "title": "PRF-03: Đổi mật khẩu — sai mật khẩu hiện tại → field-level error",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "669a0737244eebe6ff91-664ec3a5af70ca7245d8",
+              "file": "06-profile.spec.ts",
+              "line": 64,
+              "column": 7
+            },
+            {
+              "title": "PRF-04: Đổi mật khẩu — đúng mật khẩu → thành công, giữ session",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "669a0737244eebe6ff91-657f9bba52d911575ae0",
+              "file": "06-profile.spec.ts",
+              "line": 83,
+              "column": 7
+            },
+            {
+              "title": "ADDR-01: /profile/addresses render danh sách địa chỉ",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "669a0737244eebe6ff91-70f42c5cf7331b3c7894",
+              "file": "06-profile.spec.ts",
+              "line": 113,
+              "column": 7
+            },
+            {
+              "title": "ADDR-02: Thêm địa chỉ mới → xuất hiện trong danh sách",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "669a0737244eebe6ff91-f701599ef70493d79b4d",
+              "file": "06-profile.spec.ts",
+              "line": 122,
+              "column": 7
+            },
+            {
+              "title": "ADDR-03: Xóa địa chỉ → biến mất khỏi danh sách",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "669a0737244eebe6ff91-35f669d42282b8d7e04a",
+              "file": "06-profile.spec.ts",
+              "line": 156,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "07-reviews.spec.ts",
+      "file": "07-reviews.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "07-REVIEWS: Đánh giá sản phẩm",
+          "file": "07-reviews.spec.ts",
+          "line": 22,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Xem review (ẩn danh)",
+              "file": "07-reviews.spec.ts",
+              "line": 24,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "REV-01: ReviewSection render trên PDP",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "72dea8a2ece3c32a730d-75aa7fd4a2d7727c8e58",
+                  "file": "07-reviews.spec.ts",
+                  "line": 27,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Viết & quản lý review (user)",
+              "file": "07-reviews.spec.ts",
+              "line": 45,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "REV-02: Viết review — eligible thì gửi, không eligible thì thấy hint",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "72dea8a2ece3c32a730d-bfdbde019cf622879bd7",
+                  "file": "07-reviews.spec.ts",
+                  "line": 48,
+                  "column": 9
+                },
+                {
+                  "title": "REV-03: Sửa review của chính mình (nếu có)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "72dea8a2ece3c32a730d-e2fa360a0e6e2547b185",
+                  "file": "07-reviews.spec.ts",
+                  "line": 87,
+                  "column": 9
+                },
+                {
+                  "title": "REV-04: Xóa review của chính mình (nếu có)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "72dea8a2ece3c32a730d-03d7b6147a81c2d7f5f8",
+                  "file": "07-reviews.spec.ts",
+                  "line": 112,
+                  "column": 9
+                },
+                {
+                  "title": "REV-05: Đổi sắp xếp review → URL persist ?sort=",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "72dea8a2ece3c32a730d-334801cb3133e3942992",
+                  "file": "07-reviews.spec.ts",
+                  "line": 131,
+                  "column": 9
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "08-admin.spec.ts",
+      "file": "08-admin.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "08-ADMIN: Quản trị",
+          "file": "08-admin.spec.ts",
+          "line": 21,
+          "column": 6,
+          "specs": [
+            {
+              "title": "ADM-01: Dashboard render KPI + dropdown thời gian + 4 chart",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "08e67c4ac00590d7c81b-5b168a2dbe8c9400f090",
+              "file": "08-admin.spec.ts",
+              "line": 23,
+              "column": 7
+            },
+            {
+              "title": "ADM-02: Đổi khoảng thời gian dashboard → charts refetch không crash",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "08e67c4ac00590d7c81b-4f8190b4c4232611b961",
+              "file": "08-admin.spec.ts",
+              "line": 35,
+              "column": 7
+            },
+            {
+              "title": "ADM-03: Section sản phẩm sắp hết hàng render",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "08e67c4ac00590d7c81b-9cc610fcbd7a65ba89c8",
+              "file": "08-admin.spec.ts",
+              "line": 44,
+              "column": 7
+            },
+            {
+              "title": "ADM-04: Danh sách sản phẩm render heading + bảng",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "08e67c4ac00590d7c81b-7872a976e822cf64b089",
+              "file": "08-admin.spec.ts",
+              "line": 58,
+              "column": 7
+            },
+            {
+              "title": "ADM-05: Tạo sản phẩm mới → toast thành công",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "08e67c4ac00590d7c81b-f00bfdeae55aebf63267",
+              "file": "08-admin.spec.ts",
+              "line": 66,
+              "column": 7
+            },
+            {
+              "title": "ADM-06: Tạo sản phẩm thiếu tên → toast lỗi validation",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "08e67c4ac00590d7c81b-680e45b427cbf9faab1a",
+              "file": "08-admin.spec.ts",
+              "line": 95,
+              "column": 7
+            },
+            {
+              "title": "ADM-07: Danh sách đơn hàng render heading + bảng",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "08e67c4ac00590d7c81b-ad8821fab35e41c9480a",
+              "file": "08-admin.spec.ts",
+              "line": 106,
+              "column": 7
+            },
+            {
+              "title": "ADM-08: Mở chi tiết đơn hàng từ danh sách",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "08e67c4ac00590d7c81b-5f6d94af5e56a3341c6f",
+              "file": "08-admin.spec.ts",
+              "line": 115,
+              "column": 7
+            },
+            {
+              "title": "ADM-09: Danh sách người dùng render với ≥1 row (seed)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "08e67c4ac00590d7c81b-4267aecca1b200382d11",
+              "file": "08-admin.spec.ts",
+              "line": 133,
+              "column": 7
+            },
+            {
+              "title": "ADM-10: Sửa thông tin người dùng → toast thành công",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "08e67c4ac00590d7c81b-11947fd906d7c9cecc81",
+              "file": "08-admin.spec.ts",
+              "line": 143,
+              "column": 7
+            },
+            {
+              "title": "ADM-11: Danh sách coupon render heading",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "08e67c4ac00590d7c81b-b6deacf391cfc8021f85",
+              "file": "08-admin.spec.ts",
+              "line": 162,
+              "column": 7
+            },
+            {
+              "title": "ADM-12: Tạo coupon mới → toast thành công",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "08e67c4ac00590d7c81b-ca9c4b2b09df778e3db2",
+              "file": "08-admin.spec.ts",
+              "line": 170,
+              "column": 7
+            },
+            {
+              "title": "ADM-13: Trang kiểm duyệt review render heading + filter",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "08e67c4ac00590d7c81b-b9ec9ca4978a6ee11521",
+              "file": "08-admin.spec.ts",
+              "line": 195,
+              "column": 7
+            },
+            {
+              "title": "ADM-14: Ẩn review → toast, rồi bỏ ẩn",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "08e67c4ac00590d7c81b-214f56bbfb0849ec6b73",
+              "file": "08-admin.spec.ts",
+              "line": 206,
+              "column": 7
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "09-chatbot.spec.ts",
+      "file": "09-chatbot.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "09-CHATBOT: Trợ lý AI",
+          "file": "09-chatbot.spec.ts",
+          "line": 21,
+          "column": 6,
+          "specs": [],
+          "suites": [
+            {
+              "title": "Khách (anonymous)",
+              "file": "09-chatbot.spec.ts",
+              "line": 23,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "BOT-01: Khách thấy CTA đăng nhập, không thấy FAB chat",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "624a22212686fffb62a3-ec62b25bdde65d88173c",
+                  "file": "09-chatbot.spec.ts",
+                  "line": 26,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Khách hàng (user)",
+              "file": "09-chatbot.spec.ts",
+              "line": 36,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "BOT-02: Gửi tin nhắn → nhận phản hồi streaming",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "624a22212686fffb62a3-1b0711962bc6c9d57525",
+                  "file": "09-chatbot.spec.ts",
+                  "line": 39,
+                  "column": 9
+                },
+                {
+                  "title": "BOT-03: Phản hồi render markdown (bold/italic)",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "624a22212686fffb62a3-57cb577bf44dbcdae5b0",
+                  "file": "09-chatbot.spec.ts",
+                  "line": 54,
+                  "column": 9
+                },
+                {
+                  "title": "BOT-04: Lịch sử chat persist sau reload",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "624a22212686fffb62a3-a0ae8dd139f5e13def53",
+                  "file": "09-chatbot.spec.ts",
+                  "line": 69,
+                  "column": 9
+                },
+                {
+                  "title": "BOT-05 (Edge): Lỗi stream → hiển thị error banner",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "624a22212686fffb62a3-3371153d7b4ed4d72d39",
+                  "file": "09-chatbot.spec.ts",
+                  "line": 103,
+                  "column": 9
+                }
+              ]
+            },
+            {
+              "title": "Admin (suggest reply)",
+              "file": "09-chatbot.spec.ts",
+              "line": 123,
+              "column": 8,
+              "specs": [
+                {
+                  "title": "BOT-06: Admin tạo gợi ý trả lời → modal có textarea + disclaimer",
+                  "ok": true,
+                  "tags": [],
+                  "tests": [
+                    {
+                      "timeout": 30000,
+                      "annotations": [],
+                      "expectedStatus": "passed",
+                      "projectId": "chromium",
+                      "projectName": "chromium",
+                      "results": [],
+                      "status": "skipped"
+                    }
+                  ],
+                  "id": "624a22212686fffb62a3-7ba4b1b6cb40086db6d7",
+                  "file": "09-chatbot.spec.ts",
+                  "line": 126,
+                  "column": 9
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "10-journey.spec.ts",
+      "file": "10-journey.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [],
+      "suites": [
+        {
+          "title": "10-JOURNEY-1: Hành trình mua hàng (khách hàng)",
+          "file": "10-journey.spec.ts",
+          "line": 16,
+          "column": 6,
+          "specs": [
+            {
+              "title": "JOURNEY-1: Duyệt → giỏ hàng → checkout → đặt hàng → đơn hàng",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "1796283b98325eae7abc-c0b7393d3a792176a55f",
+              "file": "10-journey.spec.ts",
+              "line": 19,
               "column": 7
             }
           ]
         },
         {
-          "title": "Chatbot — guest",
-          "file": "chatbot-customer.spec.ts",
-          "line": 83,
+          "title": "10-JOURNEY-2: Hành trình quản trị (admin)",
+          "file": "10-journey.spec.ts",
+          "line": 106,
           "column": 6,
           "specs": [
             {
-              "title": "guest sees login cta",
+              "title": "JOURNEY-2: Dashboard → quản lý sản phẩm → quản lý đơn hàng",
               "ok": true,
               "tags": [],
               "tests": [
@@ -190,9 +1668,9 @@
                   "status": "skipped"
                 }
               ],
-              "id": "bbb47b77029ca3039378-18d2da6cbf0c76d86185",
-              "file": "chatbot-customer.spec.ts",
-              "line": 87,
+              "id": "1796283b98325eae7abc-17b4779e7f49875a2de0",
+              "file": "10-journey.spec.ts",
+              "line": 109,
               "column": 7
             }
           ]
@@ -200,20 +1678,20 @@
       ]
     },
     {
-      "title": "chatbot-edge.spec.ts",
-      "file": "chatbot-edge.spec.ts",
+      "title": "seed-catalog.spec.ts",
+      "file": "seed-catalog.spec.ts",
       "column": 0,
       "line": 0,
       "specs": [],
       "suites": [
         {
-          "title": "Chatbot — edge cases",
-          "file": "chatbot-edge.spec.ts",
-          "line": 15,
+          "title": "SEED-CAT-1: catalog render per-category",
+          "file": "seed-catalog.spec.ts",
+          "line": 26,
           "column": 6,
           "specs": [
             {
-              "title": "rate limit: API trả 429 → toast \"quá nhanh\"",
+              "title": "category \"Điện thoại\" có ≥20 product cards",
               "ok": true,
               "tags": [],
               "tests": [
@@ -227,13 +1705,13 @@
                   "status": "skipped"
                 }
               ],
-              "id": "8e949e243af8178b5cf5-1bdffe30fa52b034f2d1",
-              "file": "chatbot-edge.spec.ts",
-              "line": 18,
-              "column": 7
+              "id": "441c39809648188949c5-da0ca5eba5ce052e902f",
+              "file": "seed-catalog.spec.ts",
+              "line": 39,
+              "column": 9
             },
             {
-              "title": "error then retry button works",
+              "title": "category \"Laptop\" có ≥20 product cards",
               "ok": true,
               "tags": [],
               "tests": [
@@ -247,13 +1725,13 @@
                   "status": "skipped"
                 }
               ],
-              "id": "8e949e243af8178b5cf5-09f8d2710ec38d2f19c5",
-              "file": "chatbot-edge.spec.ts",
-              "line": 37,
-              "column": 7
+              "id": "441c39809648188949c5-82209a76ed3130447045",
+              "file": "seed-catalog.spec.ts",
+              "line": 39,
+              "column": 9
             },
             {
-              "title": "xml escape: user message với </product_context> không leak system instructions",
+              "title": "category \"Chuột\" có ≥20 product cards",
               "ok": true,
               "tags": [],
               "tests": [
@@ -267,13 +1745,13 @@
                   "status": "skipped"
                 }
               ],
-              "id": "8e949e243af8178b5cf5-780f1020b5f02be6f6be",
-              "file": "chatbot-edge.spec.ts",
-              "line": 68,
-              "column": 7
+              "id": "441c39809648188949c5-d24fd6359e122a0d3bd9",
+              "file": "seed-catalog.spec.ts",
+              "line": 39,
+              "column": 9
             },
             {
-              "title": "no key leak: no NEXT_PUBLIC_ANTHROPIC_* anywhere in source tree",
+              "title": "category \"Bàn phím\" có ≥20 product cards",
               "ok": true,
               "tags": [],
               "tests": [
@@ -287,9 +1765,85 @@
                   "status": "skipped"
                 }
               ],
-              "id": "8e949e243af8178b5cf5-d293fc6bddb02b7785bf",
-              "file": "chatbot-edge.spec.ts",
-              "line": 89,
+              "id": "441c39809648188949c5-6f6b414ce48ede624d19",
+              "file": "seed-catalog.spec.ts",
+              "line": 39,
+              "column": 9
+            },
+            {
+              "title": "category \"Tai nghe\" có ≥20 product cards",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "441c39809648188949c5-8cf9b7c55c9f3478888b",
+              "file": "seed-catalog.spec.ts",
+              "line": 39,
+              "column": 9
+            }
+          ]
+        },
+        {
+          "title": "SEED-CAT-2: no broken Unsplash images",
+          "file": "seed-catalog.spec.ts",
+          "line": 63,
+          "column": 6,
+          "specs": [
+            {
+              "title": "/products: Unsplash image responses không 4xx/5xx (tolerant 20% với pattern-augmented IDs)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "441c39809648188949c5-e5cc1cf7a7573283cdcc",
+              "file": "seed-catalog.spec.ts",
+              "line": 66,
+              "column": 7
+            }
+          ]
+        },
+        {
+          "title": "SEED-CAT-3: FilterSidebar brand list domain-tech",
+          "file": "seed-catalog.spec.ts",
+          "line": 109,
+          "column": 6,
+          "specs": [
+            {
+              "title": "brand panel có ≥7 tech brand + KHÔNG có brand catalog cũ (MAC/Anessa/Cuckoo)",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 30000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "441c39809648188949c5-c5a2c5a8b79fe50b26c6",
+              "file": "seed-catalog.spec.ts",
+              "line": 112,
               "column": 7
             }
           ]
@@ -299,10 +1853,10 @@
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-05-02T18:02:38.210Z",
-    "duration": 21.612999999999943,
+    "startTime": "2026-05-18T15:26:13.256Z",
+    "duration": 259.13700000000006,
     "expected": 0,
-    "skipped": 9,
+    "skipped": 77,
     "unexpected": 0,
     "flaky": 0
   }

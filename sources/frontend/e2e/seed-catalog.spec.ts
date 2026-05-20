@@ -40,7 +40,7 @@ test.describe('SEED-CAT-1: catalog render per-category', () => {
       // products/page.tsx line 18,42-44: ?category={slug} → match category.slug → set selectedCategory
       // listProducts gọi với size=24 → server trả về ≤24 SP → expect đúng 20 cho mỗi cat tech
       await page.goto(`/products?category=${cat.slug}`);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState('domcontentloaded');
 
       // Đếm product card links (cùng selector smoke.spec.ts SMOKE-1 — verified visible)
       // Loại trừ anchor "/products" (header link) và link card "/products/{slug}".
@@ -81,7 +81,7 @@ test.describe('SEED-CAT-2: no broken Unsplash images', () => {
     });
 
     await page.goto('/products');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
     // Scroll để trigger lazy-load (next/image lazy by default)
     await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
     await page.waitForTimeout(2500);
@@ -111,7 +111,7 @@ test.describe('SEED-CAT-3: FilterSidebar brand list domain-tech', () => {
 
   test('brand panel có ≥7 tech brand + KHÔNG có brand catalog cũ (MAC/Anessa/Cuckoo)', async ({ page }) => {
     await page.goto('/products');
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // FilterSidebar brand list selector verified từ FilterSidebar.tsx line 156-157:
     // <div role="group" aria-label="Danh sách thương hiệu">

@@ -12,7 +12,7 @@
 | v1.0 — MVP Stabilization | API surface nhất quán + Swagger/OpenAPI + contract alignment | Phase 1-4 | SHIPPED 2026-04-25 |
 | v1.1 — Real End-User Experience | DB foundation + auth thật + admin CRUD + cart→order persistence | Phase 5-8 | SHIPPED 2026-04-26 |
 | v1.2 — UI/UX Completion | Residual closure + profile + address book + reviews + search + public polish | Phase 9-15 | SHIPPED 2026-05-02 |
-| v1.3 — Catalog Realism & Commerce Intelligence | Seed catalog đầy đủ, cart→DB, admin analytics, review polish, AI chatbot, coupon | Phase 16-22 | ACTIVE |
+| v1.3 — Catalog Realism & Commerce Intelligence | Seed catalog đầy đủ, cart→DB, admin analytics, review polish, AI chatbot, coupon, message queue, microservice hardening (DB tách hạ tầng + bảo mật gateway) | Phase 16-25 | ACTIVE |
 
 ---
 
@@ -52,6 +52,9 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 - [ ] **Phase 20: Hệ Thống Coupon** — % off + fixed amount, admin CRUD, checkout input, atomic redemption
 - [x] **Phase 21: Hoàn Thiện Reviews** ✅ 2026-05-02 — Author edit/delete + sort controls + admin moderation (4/4 plans complete)
 - [ ] **Phase 22: AI Chatbot Claude API MVP** — Customer FAQ + product Q&A + recommendation, streaming, history persist
+- [ ] **Phase 23: Message Queue Integration (RabbitMQ)** — Đáp ứng yêu cầu BẮT BUỘC 3.3 của đề chủ đề 4: giao tiếp bất đồng bộ giữa các microservice qua RabbitMQ; luồng OrderPlaced → inventory + notification với retry + DLQ
+- [ ] **Phase 24: Database Per Service (tách CSDL hạ tầng)** — Củng cố yêu cầu 3.4 + tính chịu lỗi độc lập (mục 4): chuyển từ "shared postgres / separate schema" sang "mỗi service một postgres container + credential riêng". Demo được failure isolation (1 DB chết → các service khác vẫn chạy)
+- [ ] **Phase 25: Gateway JWT Edge Authentication (vá lỗ hổng X-User-Id)** — Củng cố yêu cầu 4 (JWT): gateway verify JWT + strip X-User-Id từ client + inject trusted X-User-Id sau khi verify. Bỏ port mapping của các service nội bộ trong docker-compose. Đóng lỗ hổng `orders-cross-user-leak` ở tầng kiến trúc
 
 ---
 
@@ -206,6 +209,63 @@ Plans:
 
 ---
 
+### Phase 23: Message Queue Integration (RabbitMQ)
+
+**Goal:** Các microservice giao tiếp bất đồng bộ qua RabbitMQ trong ít nhất một luồng nghiệp vụ — đáp ứng yêu cầu BẮT BUỘC 3.3 của đề chủ đề 4. Khi khách đặt hàng, order-service publish event `OrderPlaced` lên RabbitMQ; inventory-service consume để trừ kho; notification-service consume để ghi dispatch log. Luồng có retry + Dead Letter Queue để xử lý lỗi message (đáp ứng 3.5).
+**Depends on:** Phase 18 (cart→DB phải xong để order workflow ổn định), Phase 20 (Coupon — không bắt buộc nhưng nếu xong sẽ có order workflow đầy đủ hơn để publish event)
+**Requirements:** MQ-01, MQ-02, MQ-03, MQ-04, MQ-05
+**Success Criteria** (what must be TRUE):
+  1. Hệ thống có 1 container RabbitMQ chạy trong docker-compose.yml với Management UI truy cập được tại http://localhost:15672
+  2. Khi user đặt hàng thành công, order-service publish event `OrderPlaced` (routing key `order.placed`) vào topic exchange `order.events` SAU KHI DB commit — Publisher Confirms được bật để chắc message đã vào broker
+  3. inventory-service consume event `OrderPlaced` từ queue `inventory.order-events`, trừ kho atomic, lưu ledger entry — idempotent qua bảng `processed_events` (xử lý cùng eventId 2 lần chỉ trừ kho 1 lần)
+  4. notification-service consume event `OrderPlaced` từ queue `notification.order-events`, ghi vào dispatch_log một bản ghi thông báo — idempotent tương tự
+  5. Khi consumer ném exception, message được retry 3 lần với exponential backoff; sau 3 lần thất bại, message rơi vào Dead Letter Queue `order-events.dlq` — verify được trong Management UI
+  6. Producer log và consumer log có cùng `traceId` (tận dụng TraceIdFilter sẵn có) để theo dõi xuyên service — đáp ứng yêu cầu "log để theo dõi message" (mục 4 đề)
+  7. Có ít nhất 1 integration test (Testcontainers + RabbitMQ container) chứng minh luồng end-to-end: tạo order → message publish → 2 consumer xử lý → side effect xảy ra trong DB
+**Plans:** chưa lập (chạy /gsd-plan-phase 23 để tạo)
+
+Plans:
+- [ ] (sẽ tạo bởi /gsd-plan-phase 23)
+**UI hint**: no (toàn bộ là backend + infrastructure)
+
+---
+
+### Phase 24: Database Per Service (tách CSDL hạ tầng)
+
+**Goal:** Mỗi backend microservice có postgres container + credential riêng (database-per-service đúng nghĩa). Demo được failure isolation: tắt 1 postgres → các service khác vẫn hoạt động bình thường.
+**Depends on:** Không cứng (độc lập với Phase 23). Khuyến nghị làm sau Phase 23 để tránh xung đột docker-compose merge.
+**Requirements:** DB-01, DB-02, DB-03, DB-04
+**Success Criteria** (what must be TRUE):
+  1. docker-compose.yml có 5 container postgres riêng (postgres-user, postgres-product, postgres-order, postgres-payment, postgres-inventory) — mỗi cái có volume + healthcheck riêng. notification-service hiện không dùng DB → không tạo container.
+  2. Mỗi service application.yml trỏ tới đúng host postgres của mình + credential riêng (không còn dùng chung `tmdt/tmdt`). Service không thể truy cập DB của service khác về mặt vật lý (kiểm chứng bằng test connection sai).
+  3. Stop container `postgres-user` → user-service trả 503/lỗi DB, nhưng `/api/products`, `/api/orders`, `/api/inventory` vẫn hoạt động bình thường (đọc/ghi DB của chúng). Đây là failure isolation thực sự.
+  4. Flyway migration của mỗi service vẫn chạy đúng khi container postgres của service đó khởi động lần đầu. Existing data (nếu có) phải được migrate sang DB mới.
+**Plans:** chưa lập (chạy /gsd-discuss-phase 24 → /gsd-plan-phase 24)
+
+Plans:
+- [ ] (sẽ tạo bởi /gsd-plan-phase 24)
+**UI hint**: no (infrastructure thuần)
+
+---
+
+### Phase 25: Gateway JWT Edge Authentication (vá lỗ hổng X-User-Id)
+
+**Goal:** API Gateway trở thành điểm verify JWT duy nhất, inject trusted `X-User-Id` từ JWT claim cho các service nội bộ. Service nội bộ không còn lộ port ra mạng ngoài. Đóng lỗ hổng cho phép client tự đặt `X-User-Id` để đọc dữ liệu user khác.
+**Depends on:** Không cứng. Có thể làm song song Phase 23/24.
+**Requirements:** SEC-01, SEC-02, SEC-03, SEC-04
+**Success Criteria** (what must be TRUE):
+  1. Gateway có filter verify JWT trên mọi route protected (`/api/orders/**`, `/api/users/me/**`, `/api/admin/**`). JWT sai/hết hạn/thiếu → 401 ngay tại gateway, không tới service.
+  2. Gateway strip `X-User-Id` đến từ client (mọi giá trị client gửi đều bị loại bỏ), sau verify JWT thành công thì inject `X-User-Id` mới từ claim `sub`. Service tin header này vì biết chỉ gateway tạo được.
+  3. docker-compose.yml: bỏ `ports:` mapping của 6 service nội bộ (user/product/order/payment/inventory/notification). Chỉ gateway và frontend lộ ra host. Verify: `curl http://localhost:8081/...` (port cũ của user-service) không kết nối được, nhưng `curl http://localhost:8080/api/users/...` qua gateway thì OK.
+  4. Test reproduce bug `orders-cross-user-leak` cũ: gọi `/api/orders` với JWT của user A nhưng cố giả `X-User-Id` của user B → vẫn trả orders của A (X-User-Id giả bị strip).
+**Plans:** chưa lập (chạy /gsd-discuss-phase 25 → /gsd-plan-phase 25)
+
+Plans:
+- [ ] (sẽ tạo bởi /gsd-plan-phase 25)
+**UI hint**: no (backend + infrastructure + security)
+
+---
+
 ## Progress Table
 
 | Phase | Plans Complete | Status | Completed |
@@ -217,6 +277,9 @@ Plans:
 | 20. Hệ Thống Coupon | 0/? | Not started | - |
 | 21. Hoàn Thiện Reviews | 4/4 | Complete    | 2026-05-02 |
 | 22. AI Chatbot Claude API MVP | 7/7 | Ready for verify | 2026-05-02 |
+| 23. Message Queue Integration (RabbitMQ) | 0/? | Not planned | - |
+| 24. Database Per Service (tách CSDL hạ tầng) | 0/? | Not planned | - |
+| 25. Gateway JWT Edge Authentication | 0/? | Not planned | - |
 
 ---
 
@@ -251,8 +314,21 @@ Plans:
 | AI-03 | Phase 22 |
 | AI-04 | Phase 22 |
 | AI-05 | Phase 22 |
+| MQ-01 | Phase 23 |
+| MQ-02 | Phase 23 |
+| MQ-03 | Phase 23 |
+| MQ-04 | Phase 23 |
+| MQ-05 | Phase 23 |
+| DB-01 | Phase 24 |
+| DB-02 | Phase 24 |
+| DB-03 | Phase 24 |
+| DB-04 | Phase 24 |
+| SEC-01 | Phase 25 |
+| SEC-02 | Phase 25 |
+| SEC-03 | Phase 25 |
+| SEC-04 | Phase 25 |
 
-**Mapped: 27/27 REQs** (SEED 4 + ORDER 1 + ADMIN-06 1 + STORE 3 + ADMIN-01-05 5 + COUP 5 + REV 3 + AI 5)
+**Mapped: 40/40 REQs** (SEED 4 + ORDER 1 + ADMIN-06 1 + STORE 3 + ADMIN-01-05 5 + COUP 5 + REV 3 + AI 5 + MQ 5 + DB 4 + SEC 4)
 
 ---
 

@@ -179,6 +179,13 @@ Không có blocker.
 
 ## Accumulated Context
 
+### Roadmap Evolution
+
+- 2026-05-20 — Phase 23 added: Message Queue Integration (RabbitMQ) — đáp ứng yêu cầu BẮT BUỘC 3.3 của đề chủ đề 4 (giao tiếp bất đồng bộ giữa các microservice). Luồng OrderPlaced → inventory + notification với retry + DLQ. Broker chọn RabbitMQ (đơn giản hơn Kafka, có sẵn DLX, Management UI demo trực quan).
+- 2026-05-20 — Phase 23 CONTEXT captured: 18 decisions (D-01 đến D-18) qua 4 gray areas. Quyết định chính: 1 event OrderPlaced (topic exchange `order.events`); publish-after-commit; idempotency qua processed_events table; retry 3 lần exp backoff + DLQ qua x-dead-letter-exchange; GIỮ REST stock validate đồng bộ + BỎ REST stock deduct (thay bằng inventory consumer); notification ghi dispatch_log (defer SMTP). 8 deferred ideas (Saga đầy đủ, SMTP, observability, tách DB, X-User-Id...).
+- 2026-05-20 — Phase 24 added: Database Per Service (tách CSDL hạ tầng) — củng cố 3.4 + failure isolation. 5 postgres container riêng (user/product/order/payment/inventory). Demo: tắt 1 DB → service khác vẫn chạy.
+- 2026-05-20 — Phase 25 added: Gateway JWT Edge Authentication — vá lỗ hổng X-User-Id. Gateway verify JWT + strip + inject trusted header. Bỏ port expose của service nội bộ. Đóng bug orders-cross-user-leak ở tầng kiến trúc.
+
 - Project: tmdt-use-gsd — dự án thử nghiệm GSD workflow (Spring Boot microservices + Next.js + API gateway + Docker Compose).
 - Foundation v1.0 + v1.1 + v1.2 reuse được: ApiErrorResponse + traceId envelope; Swagger/OpenAPI codegen; Postgres + JPA + Flyway 5 services; auth thật JWT HS256; admin CRUD qua gateway; FE typed services; rhf+zod pattern; Playwright E2E suite (14 baseline + 4 smoke); reviews verified-buyer cross-service; FilterSidebar pattern; M3 design tokens.
 - Visible-first priority applied: feature invisible → defer; visible → ship.
