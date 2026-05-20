@@ -9,7 +9,7 @@
 
 ## Scope Summary
 
-7 trục bổ sung cho tmdt-use-gsd e-commerce demo (Spring Boot microservices + Next.js):
+8 trục bổ sung cho tmdt-use-gsd e-commerce demo (Spring Boot microservices + Next.js):
 
 1. **SEED** — Catalog 100 SP / 5 categories realistic + ảnh Unsplash WebP
 2. **STORE** — Audit toàn FE storage + cart→DB migration
@@ -18,6 +18,7 @@
 5. **AI** — Claude API chatbot MVP (customer + admin suggest reply)
 6. **ORDER** — Order detail items fix BE/FE cả user + admin
 7. **COUP** — Coupon system (% off + fixed + admin CRUD)
+8. **MQ** — RabbitMQ async messaging cho luồng OrderPlaced (producer + 2 consumer + retry + DLQ + idempotency)
 
 **Locks (từ research + user answers):**
 - Review delete = **soft-delete** (column `deleted_at` hoặc `hidden`); admin vẫn xem
@@ -90,6 +91,14 @@
 - [ ] **COUP-04** — Atomic redemption: `UPDATE coupons SET used_count = used_count + 1 WHERE id = ? AND active = true AND (max_total_uses IS NULL OR used_count < max_total_uses) AND expires_at > NOW()` + check `rows_affected = 1`. Insert vào `coupon_redemptions` cùng transaction với order create. Race-safe.
 - [ ] **COUP-05** — Order display: `/account/orders/[id]` + `/admin/orders/[id]` hiển thị coupon code + discount amount nếu order có coupon (lookup qua `coupon_redemptions.order_id`).
 
+### MQ — Message Queue (RabbitMQ Integration)
+
+- [ ] **MQ-01** — RabbitMQ container chạy trong docker-compose.yml với Management UI tại http://localhost:15672 (user guest/pass guest cho dev). Image `rabbitmq:3-management`. Healthcheck `rabbitmq-diagnostics ping`. Per D-01, D-02.
+- [ ] **MQ-02** — order-service publish event `OrderPlaced` (routing key `order.placed`) vào topic exchange `order.events` (durable=true) SAU KHI DB commit, với Publisher Confirms bật (`publisher-confirm-type=correlated` + `publisher-returns=true`). JSON envelope `{eventId, eventType, occurredAt, traceId, payload}`. Per D-01, D-03, D-04, D-15.
+- [ ] **MQ-03** — inventory-service consume từ queue `inventory.order-events` (bind `order.#`), trừ `InventoryEntity.quantity` atomic + ghi `inventory_svc.stock_ledger` entry, idempotent qua bảng `inventory_svc.processed_events` (PK event_id, INSERT ... ON CONFLICT DO NOTHING). Per D-06, D-10.
+- [ ] **MQ-04** — notification-service consume từ queue `notification.order-events` (bind `order.#`), ghi `notification_svc.dispatch_log` (status=SENT, channel=email, không gửi SMTP thật), idempotent qua `notification_svc.processed_events`. Per D-14.
+- [ ] **MQ-05** — Consumer throw exception → retry 3 lần exponential backoff (1s → 2s → 4s, config `spring.rabbitmq.listener.simple.retry.*`); `PermanentMessageException` → reject ngay (0 retry) vào DLQ `order-events.dlq` qua DLX `order.dlx` (direct). Verify được message trong DLQ qua Management UI. traceId propagate qua header `X-Trace-Id` xuyên 3 service. Per D-07, D-08, D-09, D-16, D-17.
+
 ---
 
 ## Future Requirements (Defer v1.4+)
@@ -160,6 +169,11 @@
 | AI-03 | Phase 22 | — | Active |
 | AI-04 | Phase 22 | — | Active |
 | AI-05 | Phase 22 | 22-04 + 22-06 | Satisfied 2026-05-02 |
+| MQ-01 | Phase 23 | 23-01 | Active |
+| MQ-02 | Phase 23 | — | Active |
+| MQ-03 | Phase 23 | — | Active |
+| MQ-04 | Phase 23 | — | Active |
+| MQ-05 | Phase 23 | — | Active |
 
-**Total active REQs: 27** (SEED 4 + ORDER 1 + ADMIN-06 1 + STORE 3 + ADMIN-01-05 5 + COUP 5 + REV 3 + AI 5)
-**Mapped: 27/27** (100% coverage)
+**Total active REQs: 32** (SEED 4 + ORDER 1 + ADMIN-06 1 + STORE 3 + ADMIN-01-05 5 + COUP 5 + REV 3 + AI 5 + MQ 5)
+**Mapped: 32/32** (100% coverage)
