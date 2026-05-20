@@ -9,7 +9,7 @@ import type { ChatMessageRow } from './types';
 export async function createSession(userId: string, title: string): Promise<number> {
   const safeTitle = Array.from(title).slice(0, 50).join('').trim() || 'Đoạn chat mới';
   const { rows } = await chatPgPool.query<{ id: string }>(
-    `INSERT INTO chat_svc.chat_sessions (user_id, title) VALUES ($1, $2) RETURNING id`,
+    `INSERT INTO chat_sessions (user_id, title) VALUES ($1, $2) RETURNING id`,
     [userId, safeTitle],
   );
   return Number(rows[0].id);
@@ -21,7 +21,7 @@ export async function createSession(userId: string, title: string): Promise<numb
  */
 export async function loadHistory(sessionId: number): Promise<ChatMessageRow[]> {
   const { rows } = await chatPgPool.query<{ role: 'user' | 'assistant'; content: string }>(
-    `SELECT role, content FROM chat_svc.chat_messages
+    `SELECT role, content FROM chat_messages
      WHERE session_id = $1 ORDER BY created_at DESC LIMIT 20`,
     [sessionId],
   );
@@ -30,21 +30,21 @@ export async function loadHistory(sessionId: number): Promise<ChatMessageRow[]> 
 
 export async function appendUserMessage(sessionId: number, content: string): Promise<void> {
   await chatPgPool.query(
-    `INSERT INTO chat_svc.chat_messages (session_id, role, content) VALUES ($1, 'user', $2)`,
+    `INSERT INTO chat_messages (session_id, role, content) VALUES ($1, 'user', $2)`,
     [sessionId, content],
   );
 }
 
 export async function appendAssistantMessage(sessionId: number, content: string): Promise<void> {
   await chatPgPool.query(
-    `INSERT INTO chat_svc.chat_messages (session_id, role, content) VALUES ($1, 'assistant', $2)`,
+    `INSERT INTO chat_messages (session_id, role, content) VALUES ($1, 'assistant', $2)`,
     [sessionId, content],
   );
 }
 
 export async function touchSession(sessionId: number): Promise<void> {
   await chatPgPool.query(
-    `UPDATE chat_svc.chat_sessions SET updated_at = now() WHERE id = $1`,
+    `UPDATE chat_sessions SET updated_at = now() WHERE id = $1`,
     [sessionId],
   );
 }
@@ -62,7 +62,7 @@ export async function listSessions(
   }
   params.push(Math.min(limit, 50));
   const { rows } = await chatPgPool.query<{ id: string; title: string; updated_at: string }>(
-    `SELECT id, title, updated_at FROM chat_svc.chat_sessions
+    `SELECT id, title, updated_at FROM chat_sessions
      WHERE ${where} ORDER BY updated_at DESC LIMIT $${params.length}`,
     params,
   );
@@ -75,13 +75,13 @@ export async function listSessions(
  */
 export async function listMessages(userId: string, sessionId: number): Promise<ChatMessageRow[]> {
   const owner = await chatPgPool.query<{ user_id: string }>(
-    `SELECT user_id FROM chat_svc.chat_sessions WHERE id = $1`,
+    `SELECT user_id FROM chat_sessions WHERE id = $1`,
     [sessionId],
   );
   if (owner.rowCount === 0) throw new Error('NOT_FOUND');
   if (owner.rows[0].user_id !== userId) throw new Error('FORBIDDEN');
   const { rows } = await chatPgPool.query<{ role: 'user' | 'assistant'; content: string }>(
-    `SELECT role, content FROM chat_svc.chat_messages
+    `SELECT role, content FROM chat_messages
      WHERE session_id = $1 ORDER BY created_at ASC`,
     [sessionId],
   );
