@@ -1,1 +1,3 @@
 CREATE SCHEMA IF NOT EXISTS order_svc;
+CREATE SCHEMA IF NOT EXISTS inventory_svc;
+CREATE SCHEMA IF NOT EXISTS notification_svc;
