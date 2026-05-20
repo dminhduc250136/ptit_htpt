@@ -20,6 +20,25 @@ spring:
     default-schema: inventory_svc
     baseline-on-migrate: false
     locations: classpath:db/migration
+  # Phase 23 / Plan 23-02: messaging — consumer OrderPlaced (D-07, D-10)
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: 5672
+    username: ${SPRING_RABBITMQ_USER:guest}
+    password: ${SPRING_RABBITMQ_PASS:guest}
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    listener:
+      simple:
+        acknowledge-mode: auto
+        prefetch: 10
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1000
+          multiplier: 2.0
+          max-interval: 10000
 
 server:
   port: 8080
