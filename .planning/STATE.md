@@ -16,8 +16,8 @@ progress:
 ## Current Position
 
 Phase: 23-message-queue-rabbitmq — Executing
-Plan: 1 of 6 — 23-01 COMPLETED (bootstrap RabbitMQ + schema notification_svc + MQ-01..MQ-05 backfilled)
-Status: 23-02 next (notification-service persistence bootstrap). Wave 0 done, Wave 1 ready.
+Plan: 2 of 6 — 23-02 COMPLETED (notification-service persistence bootstrap + spring.rabbitmq config 3 service + V1__init_schema dispatch_log + processed_events)
+Status: 23-03 next (Producer: RabbitMQConfig topology + OrderEventPublisher afterCommit + XÓA deductStock REST legacy).
 Last activity: 2026-05-20
 
 ```
@@ -68,8 +68,20 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 19-ho-n-thi-n-admin-charts-low-stock P04 | 18min | 3 tasks | 15 files |
 | Phase 20-coupons P03 | 12min | 2 tasks | 7 files |
 | Phase 23-message-queue-rabbitmq P01 | 4min | 2 tasks | 3 files |
+| Phase 23-message-queue-rabbitmq P02 | 2min | 2 tasks | 8 files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 23 Plan 02 decisions (2026-05-20):**
+
+- MQ-04 notification-service persistence bootstrap: thừa hưởng nguyên block persistence stack từ inventory-service pom (spring-boot-starter-data-jpa + postgresql + flyway-core + flyway-database-postgresql) + spring-boot-starter-amqp + 5 test deps (starter-test + testcontainers postgresql/junit-jupiter/rabbitmq + spring-rabbit-test) — parent Spring Boot 3.3.2 BOM auto-manage versions
+- order-service + inventory-service pom: thêm spring-boot-starter-amqp + testcontainers:rabbitmq + spring-rabbit-test (đã có persistence stack từ Phase 5) — 3 service producer/consumer config đồng nhất
+- notification-service application.yml REPLACE toàn bộ: datasource currentSchema=notification_svc env-var fallback, jpa ddl-auto=validate + default_schema=notification_svc + format_sql + open-in-view=false, flyway enabled + schemas/default-schema=notification_svc + baseline-on-migrate=false, spring.rabbitmq publisher-confirm-type=correlated + publisher-returns=true + listener.simple retry 3×exp backoff 1s→2s→4s max-10s prefetch=10 default-requeue-rejected=false, profile dev seed-dev location
+- order/inventory application.yml: thêm spring.rabbitmq block giống notification (D-04 confirm + D-07 retry) — copy-paste có chủ ý cho consistency, KHÔNG tách shared yml fragment (Spring Boot không support import yml cross-service)
+- V1__init_schema.sql: idempotent (CREATE SCHEMA IF NOT EXISTS + CREATE TABLE IF NOT EXISTS) safe co-exist với schema từ db/init Plan 23-01; dispatch_log 10 cột (D-14: id PK + event_id + recipient_user_id + channel + subject + body + status + sent_at + timestamps) + 2 index; processed_events 3 cột (D-06: event_id PK + event_type + processed_at) + 1 index
+- test/resources/application-test.yml: override retry initial-interval=100ms / max-interval=500ms — IT chạy gọn (3 retry × 100ms thay vì 7s) mà vẫn validate được retry flow; datasource + rabbitmq host/port để Testcontainers @ServiceConnection inject runtime Wave 3
+- T-23-07 Tampering mitigated: ddl-auto=validate (KHÔNG update/create) + baseline-on-migrate=false — chỉ Flyway tạo schema, JPA validate match
+- KHÔNG Lombok (project convention) — explicit constructor injection sẽ áp dụng ở Wave 2 consumer code
 
 **Phase 23 Plan 01 decisions (2026-05-20):**
 
