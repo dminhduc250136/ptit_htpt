@@ -16,6 +16,23 @@ services:
     ports:
       - "5432:5432"
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: tmdt-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - tmdt-rabbitmqdata:/var/lib/rabbitmq
+
   api-gateway:
     build: ./sources/backend/api-gateway
     ports:
@@ -63,6 +80,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: dev
       DB_HOST: postgres
@@ -70,6 +89,9 @@ services:
       DB_NAME: tmdt
       DB_USER: tmdt
       DB_PASSWORD: tmdt
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USER: guest
+      SPRING_RABBITMQ_PASS: guest
     ports:
       - "8083:8080"
 
@@ -93,6 +115,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: dev
       DB_HOST: postgres
@@ -100,11 +124,29 @@ services:
       DB_NAME: tmdt
       DB_USER: tmdt
       DB_PASSWORD: tmdt
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USER: guest
+      SPRING_RABBITMQ_PASS: guest
     ports:
       - "8085:8080"
 
   notification-service:
     build: ./sources/backend/notification-service
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: tmdt
+      DB_USER: tmdt
+      DB_PASSWORD: tmdt
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USER: guest
+      SPRING_RABBITMQ_PASS: guest
     ports:
       - "8086:8080"
 
@@ -127,3 +169,4 @@ services:
 
 volumes:
   tmdt-pgdata:
+  tmdt-rabbitmqdata:
