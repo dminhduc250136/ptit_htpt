@@ -9,15 +9,15 @@ progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 14
-  completed_plans: 17
+  completed_plans: 18
   percent: 57
 ---
 
 ## Current Position
 
 Phase: 23-message-queue-rabbitmq — Executing
-Plan: 2 of 6 — 23-02 COMPLETED (notification-service persistence bootstrap + spring.rabbitmq config 3 service + V1__init_schema dispatch_log + processed_events)
-Status: 23-03 next (Producer: RabbitMQConfig topology + OrderEventPublisher afterCommit + XÓA deductStock REST legacy).
+Plan: 3 of 6 — 23-03 COMPLETED (Producer: RabbitMQConfig topology 3 service + OrderEventPublisher afterCommit + Publisher Confirms 5s + TraceIdMessagePostProcessor + XÓA deductStock REST legacy trong OrderCrudService)
+Status: 23-04 next (inventory-service consumer: OrderPlacedListener + stock_ledger + processed_events idempotency + InventoryCrudService.decrementForOrder).
 Last activity: 2026-05-20
 
 ```
@@ -69,8 +69,23 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 20-coupons P03 | 12min | 2 tasks | 7 files |
 | Phase 23-message-queue-rabbitmq P01 | 4min | 2 tasks | 3 files |
 | Phase 23-message-queue-rabbitmq P02 | 2min | 2 tasks | 8 files |
+| Phase 23-message-queue-rabbitmq P03 | 6min | 2 tasks | 9 files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 23 Plan 03 decisions (2026-05-20):**
+
+- MQ-02 producer hoàn tất: 3 RabbitMQConfig.java identical ở order/inventory/notification (Open Q #3 — AmqpAdmin idempotent với matching args); topology gồm TopicExchange order.events durable + DirectExchange order.dlx + DLQ order-events.dlq + 2 queue inventory.order-events/notification.order-events bind order.# với x-dead-letter-exchange args; RabbitTemplate setMandatory=true (D-04 publisher-returns)
+- OrderEventEnvelope record (eventId/eventType/occurredAt/traceId/payload với nested OrderPlacedPayload + Item) + factory createOrderPlaced cap UUID + Instant.now (D-15 JSON envelope)
+- 2 messaging exception (Transient/Permanent) extends RuntimeException — D-08 phân loại retry vs DLQ; Wave 2 consumer sẽ wrap PermanentMessageException → AmqpRejectAndDontRequeueException
+- TraceIdMessagePostProcessor implements MessagePostProcessor + factory capture() đọc MDC NGAY tại caller thread (Pitfall 1 RESEARCH §469-474: afterCommit callback có thể chạy sau TraceIdFilter cleanup MDC trong finally)
+- OrderEventPublisher.publishOrderPlaced: capture MDC traceId NGAY → build envelope → TransactionSynchronizationManager.registerSynchronization (nếu có tx) HOẶC publish ngay (fallback test); doPublish dùng CorrelationData per-message + getFuture().get(5s, TimeUnit.MILLISECONDS); 5 log path D-17 ([MQ-PUB] success / [MQ-PUB-NACK] / [MQ-PUB-TIMEOUT] / [MQ-PUB-INTERRUPT] / [MQ-PUB-ERR])
+- CONFIRM_TIMEOUT_MS=5000L (D-04 lock): block tối đa 5s/event đủ ngắn không treo HTTP request, đủ dài cho intra-docker round-trip <50ms thông thường
+- OrderCrudService.createOrderFromCommand chèn orderEventPublisher.publishOrderPlaced(payload) ngay sau orderRepository.save(); payload build từ saved entity (record-style accessor saved.id()/userId()/items()/total() + per-item productId()/quantity()/unitPrice()); currency="VND" hardcode (đa tệ defer phase ops)
+- D-12 XÓA hoàn toàn: deductStockAfterPersist (cũ 31 dòng) + buildStockUpdateBody (cũ 16 dòng) + imports HttpEntity/HttpHeaders/HttpMethod/MediaType — KHÔNG còn dùng. inventory consumer Wave 2 trừ kho async
+- D-11 GIỮ NGUYÊN: validateStockOrThrow + unwrapEnvelope + RestTemplate inject — stock validate đồng bộ vẫn trả 409 STOCK_SHORTAGE
+- KHÔNG Lombok (project convention) — explicit constructor injection cho OrderCrudService (6 deps) + OrderEventPublisher (1 dep)
+- Maven CLI vẫn defer trên Windows env này; compile + IT runtime verify ở Wave 3 plan hoặc local mvn
 
 **Phase 23 Plan 02 decisions (2026-05-20):**
 
@@ -233,3 +248,6 @@ Không có blocker.
 - Phase 19 Plan 03: product-svc admin /low-stock + /batch endpoints — **COMPLETED 2026-05-02** (ADMIN-05 BE layer done + cross-svc enrichment helper cho Plan 01)
 - Phase 19 Plan 04: FE admin charts grid + low-stock — **COMPLETED 2026-05-02** (recharts@3.8.1 + 5 fetchers + 6 components + admin/page extend + 2 Playwright specs)
 - Phase 19: Hoàn Thiện Admin Charts + Low-Stock — **COMPLETED 2026-05-02** (4/4 plans, ADMIN-01..05 closed)
+- Phase 23 Plan 01: Bootstrap RabbitMQ + Schema notification_svc — **COMPLETED 2026-05-20** (MQ-01 hạ tầng container + REQUIREMENTS backfill MQ-01..MQ-05)
+- Phase 23 Plan 02: notification-service persistence bootstrap + spring.rabbitmq config 3 service — **COMPLETED 2026-05-20** (MQ-04 prep + V1 dispatch_log + processed_events)
+- Phase 23 Plan 03: Producer topology + OrderEventPublisher afterCommit + XÓA deductStock REST — **COMPLETED 2026-05-20** (MQ-02 producer done; Wave 2 consumer plans next)

@@ -94,7 +94,7 @@
 ### MQ — Message Queue (RabbitMQ Integration)
 
 - [ ] **MQ-01** — RabbitMQ container chạy trong docker-compose.yml với Management UI tại http://localhost:15672 (user guest/pass guest cho dev). Image `rabbitmq:3-management`. Healthcheck `rabbitmq-diagnostics ping`. Per D-01, D-02.
-- [ ] **MQ-02** — order-service publish event `OrderPlaced` (routing key `order.placed`) vào topic exchange `order.events` (durable=true) SAU KHI DB commit, với Publisher Confirms bật (`publisher-confirm-type=correlated` + `publisher-returns=true`). JSON envelope `{eventId, eventType, occurredAt, traceId, payload}`. Per D-01, D-03, D-04, D-15.
+- [x] **MQ-02** — order-service publish event `OrderPlaced` (routing key `order.placed`) vào topic exchange `order.events` (durable=true) SAU KHI DB commit, với Publisher Confirms bật (`publisher-confirm-type=correlated` + `publisher-returns=true`). JSON envelope `{eventId, eventType, occurredAt, traceId, payload}`. Per D-01, D-03, D-04, D-15. ✅ 2026-05-20 (Phase 23 Plan 03)
 - [ ] **MQ-03** — inventory-service consume từ queue `inventory.order-events` (bind `order.#`), trừ `InventoryEntity.quantity` atomic + ghi `inventory_svc.stock_ledger` entry, idempotent qua bảng `inventory_svc.processed_events` (PK event_id, INSERT ... ON CONFLICT DO NOTHING). Per D-06, D-10.
 - [ ] **MQ-04** — notification-service consume từ queue `notification.order-events` (bind `order.#`), ghi `notification_svc.dispatch_log` (status=SENT, channel=email, không gửi SMTP thật), idempotent qua `notification_svc.processed_events`. Per D-14.
 - [ ] **MQ-05** — Consumer throw exception → retry 3 lần exponential backoff (1s → 2s → 4s, config `spring.rabbitmq.listener.simple.retry.*`); `PermanentMessageException` → reject ngay (0 retry) vào DLQ `order-events.dlq` qua DLX `order.dlx` (direct). Verify được message trong DLQ qua Management UI. traceId propagate qua header `X-Trace-Id` xuyên 3 service. Per D-07, D-08, D-09, D-16, D-17.
@@ -170,7 +170,7 @@
 | AI-04 | Phase 22 | — | Active |
 | AI-05 | Phase 22 | 22-04 + 22-06 | Satisfied 2026-05-02 |
 | MQ-01 | Phase 23 | 23-01 | Active |
-| MQ-02 | Phase 23 | — | Active |
+| MQ-02 | Phase 23 | 23-03 | Completed 2026-05-20 |
 | MQ-03 | Phase 23 | — | Active |
 | MQ-04 | Phase 23 | — | Active |
 | MQ-05 | Phase 23 | — | Active |
