@@ -5,7 +5,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "cart_items", schema = "order_svc",
+@Table(name = "cart_items",
        uniqueConstraints = @UniqueConstraint(columnNames = {"cart_id", "product_id"}))
 public class CartItemEntity {
   @Id @Column(length = 36, nullable = false, updatable = false) private String id;

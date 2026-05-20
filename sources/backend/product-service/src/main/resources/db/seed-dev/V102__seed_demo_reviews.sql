@@ -12,7 +12,7 @@
 
 -- created_at để NOW() (vừa tạo) — review của user demo còn trong cửa sổ chỉnh sửa 24h
 -- để test REV-03 (sửa review) chạy được. Review của admin để 2 ngày trước (chỉ cần hiển thị).
-INSERT INTO product_svc.reviews
+INSERT INTO reviews
   (id, product_id, user_id, reviewer_name, rating, content, hidden, deleted_at, created_at, updated_at)
 VALUES
   ('rev-demo-001', 'prod-pho-001', '00000000-0000-0000-0000-000000000002',
@@ -24,5 +24,5 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 -- Cập nhật thống kê rating cho 2 sản phẩm có review (avg_rating + review_count — V5 columns)
-UPDATE product_svc.products SET avg_rating = 5.0, review_count = 1 WHERE id = 'prod-pho-001';
-UPDATE product_svc.products SET avg_rating = 4.0, review_count = 1 WHERE id = 'prod-lap-001';
+UPDATE products SET avg_rating = 5.0, review_count = 1 WHERE id = 'prod-pho-001';
+UPDATE products SET avg_rating = 4.0, review_count = 1 WHERE id = 'prod-lap-001';

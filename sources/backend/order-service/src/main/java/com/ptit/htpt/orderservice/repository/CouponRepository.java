@@ -38,7 +38,7 @@ public interface CouponRepository extends JpaRepository<CouponEntity, String> {
    */
   @Modifying
   @Query(value = """
-      UPDATE order_svc.coupons
+      UPDATE coupons
       SET used_count = used_count + 1, updated_at = now()
       WHERE code = :code
         AND active = true

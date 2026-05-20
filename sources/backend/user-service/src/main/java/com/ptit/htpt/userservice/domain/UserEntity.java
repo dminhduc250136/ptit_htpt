@@ -21,9 +21,9 @@ import org.hibernate.annotations.SQLRestriction;
  * Accessor giữ record-style (`username()`, `email()`, ...) để giảm churn cho service layer.
  */
 @Entity
-@Table(name = "users", schema = "user_svc")
+@Table(name = "users")
 @SQLRestriction("deleted = false")
-@SQLDelete(sql = "UPDATE user_svc.users SET deleted = true, updated_at = NOW() WHERE id = ?")
+@SQLDelete(sql = "UPDATE users SET deleted = true, updated_at = NOW() WHERE id = ?")
 public class UserEntity {
 
   @Id

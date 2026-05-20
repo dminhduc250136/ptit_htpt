@@ -7,7 +7,7 @@
 --
 -- Idempotent: ON CONFLICT (id) DO NOTHING.
 
-INSERT INTO user_svc.addresses
+INSERT INTO addresses
   (id, user_id, full_name, phone, street, ward, district, city, is_default, created_at)
 VALUES
   ('addr-demo-001', '00000000-0000-0000-0000-000000000002',

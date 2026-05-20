@@ -18,7 +18,7 @@ import java.util.UUID;
  * T-11-01-04: Partial unique index WHERE is_default=true ở DB đảm bảo SC-3.
  */
 @Entity
-@Table(name = "addresses", schema = "user_svc")
+@Table(name = "addresses")
 public class AddressEntity {
 
     @Id

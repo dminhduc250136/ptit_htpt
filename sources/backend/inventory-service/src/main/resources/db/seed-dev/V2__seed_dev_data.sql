@@ -2,7 +2,7 @@
 -- product_id PHẢI khớp `prod-001`..`prod-010` từ Plan 03 product_svc V2 seed
 -- (RESEARCH Open Q #4 + Plan 07 cross-service IDs block). Plan 08 Task 8.1 sẽ assert
 -- NOT EXISTS query trên cross-schema để verify orphan = 0 rows.
-INSERT INTO inventory_svc.inventory_items (id, product_id, quantity, reserved, created_at, updated_at) VALUES
+INSERT INTO inventory_items (id, product_id, quantity, reserved, created_at, updated_at) VALUES
   ('inv-001', 'prod-001', 25, 0, NOW(), NOW()),
   ('inv-002', 'prod-002', 40, 0, NOW(), NOW()),
   ('inv-003', 'prod-003', 120, 0, NOW(), NOW()),

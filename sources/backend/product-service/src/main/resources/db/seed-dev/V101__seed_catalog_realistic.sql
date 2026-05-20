@@ -8,14 +8,14 @@
 -- ============================================================
 -- BLOCK 1: Soft-delete 5 categories cũ từ V100 (D-04)
 -- ============================================================
-UPDATE product_svc.categories
+UPDATE categories
 SET deleted = TRUE, updated_at = NOW()
 WHERE id IN ('cat-electronics', 'cat-fashion', 'cat-household', 'cat-books', 'cat-cosmetics');
 
 -- ============================================================
 -- BLOCK 2: Soft-delete 10 products cũ từ V100 (D-04, D-05 giữ FK inventory_svc)
 -- ============================================================
-UPDATE product_svc.products
+UPDATE products
 SET deleted = TRUE, status = 'INACTIVE', updated_at = NOW()
 WHERE id IN ('prod-001','prod-002','prod-003','prod-004','prod-005',
              'prod-006','prod-007','prod-008','prod-009','prod-010');
@@ -23,7 +23,7 @@ WHERE id IN ('prod-001','prod-002','prod-003','prod-004','prod-005',
 -- ============================================================
 -- BLOCK 3: INSERT 5 tech categories mới (D-07)
 -- ============================================================
-INSERT INTO product_svc.categories (id, name, slug, deleted, created_at, updated_at) VALUES
+INSERT INTO categories (id, name, slug, deleted, created_at, updated_at) VALUES
   ('cat-phone',     'Điện thoại', 'dien-thoai', FALSE, NOW(), NOW()),
   ('cat-laptop',    'Laptop',     'laptop',     FALSE, NOW(), NOW()),
   ('cat-mouse',     'Chuột',      'chuot',      FALSE, NOW(), NOW()),
@@ -36,7 +36,7 @@ ON CONFLICT (id) DO NOTHING;
 --   Stock: 1 row stock=0, 2 rows stock<10, 17 rows stock 15-150
 --   Original_price: 14 rows có giá gạch (markup 5-25%), 6 rows NULL
 -- ============================================================
-INSERT INTO product_svc.products (
+INSERT INTO products (
   id, name, slug, category_id, brand,
   price, original_price, short_description, thumbnail_url,
   stock, status, deleted, created_at, updated_at
@@ -127,7 +127,7 @@ ON CONFLICT (id) DO NOTHING;
 -- BLOCK 4b: LAPTOP — 20 SP (price 12M-60M, brands Apple/Dell/HP/Lenovo/ASUS/Acer/MSI)
 --   Stock: 1 row stock=0, 2 rows stock<10, 17 rows stock 15-150
 -- ============================================================
-INSERT INTO product_svc.products (
+INSERT INTO products (
   id, name, slug, category_id, brand,
   price, original_price, short_description, thumbnail_url,
   stock, status, deleted, created_at, updated_at
@@ -218,7 +218,7 @@ ON CONFLICT (id) DO NOTHING;
 -- BLOCK 4c: MOUSE — 20 SP (price 250K-3.5M, brands Logitech/Razer/SteelSeries/Microsoft/Apple)
 --   Stock: 1 row stock=0, 2 rows stock<10, 17 rows stock 15-150
 -- ============================================================
-INSERT INTO product_svc.products (
+INSERT INTO products (
   id, name, slug, category_id, brand,
   price, original_price, short_description, thumbnail_url,
   stock, status, deleted, created_at, updated_at
@@ -309,7 +309,7 @@ ON CONFLICT (id) DO NOTHING;
 -- BLOCK 4d: KEYBOARD — 20 SP (price 400K-6M, brands Keychron/Logitech/Razer/Corsair/Akko/Leopold)
 --   Stock: 1 row stock=0, 2 rows stock<10, 17 rows stock 15-150
 -- ============================================================
-INSERT INTO product_svc.products (
+INSERT INTO products (
   id, name, slug, category_id, brand,
   price, original_price, short_description, thumbnail_url,
   stock, status, deleted, created_at, updated_at
@@ -400,7 +400,7 @@ ON CONFLICT (id) DO NOTHING;
 -- BLOCK 4e: HEADPHONE — 20 SP (price 350K-12M, brands Sony/Bose/Apple/Sennheiser/JBL/Audio-Technica)
 --   Stock: 1 row stock=0, 2 rows stock<10, 17 rows stock 15-150
 -- ============================================================
-INSERT INTO product_svc.products (
+INSERT INTO products (
   id, name, slug, category_id, brand,
   price, original_price, short_description, thumbnail_url,
   stock, status, deleted, created_at, updated_at

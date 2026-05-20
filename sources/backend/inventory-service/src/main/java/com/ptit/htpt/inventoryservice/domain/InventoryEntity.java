@@ -16,7 +16,7 @@ import java.util.UUID;
  * loại bỏ vì inventory không cần audit ẩn). Phase 8 sẽ thêm reservation flow + stock decrement.
  */
 @Entity
-@Table(name = "inventory_items", schema = "inventory_svc")
+@Table(name = "inventory_items")
 public class InventoryEntity {
 
   @Id

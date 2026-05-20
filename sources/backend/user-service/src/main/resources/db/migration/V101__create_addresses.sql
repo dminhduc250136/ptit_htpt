@@ -2,7 +2,7 @@
 -- addresses table: id UUID, user_id UUID FK (không enforce FK để tránh cross-schema issue),
 -- full_name, phone, street, ward, district, city, is_default, created_at
 
-CREATE TABLE user_svc.addresses (
+CREATE TABLE addresses (
     id          VARCHAR(36)  NOT NULL PRIMARY KEY,
     user_id     VARCHAR(36)  NOT NULL,
     full_name   VARCHAR(100) NOT NULL,
@@ -18,9 +18,9 @@ CREATE TABLE user_svc.addresses (
 -- D-05: Partial unique index — chỉ 1 row is_default=true per user_id
 -- Enforces SC-3 (concurrent set-default)
 CREATE UNIQUE INDEX idx_addresses_user_default
-    ON user_svc.addresses (user_id)
+    ON addresses (user_id)
     WHERE is_default = true;
 
 -- Index cho query by user_id (sort by created_at DESC)
 CREATE INDEX idx_addresses_user_created
-    ON user_svc.addresses (user_id, created_at DESC);
+    ON addresses (user_id, created_at DESC);

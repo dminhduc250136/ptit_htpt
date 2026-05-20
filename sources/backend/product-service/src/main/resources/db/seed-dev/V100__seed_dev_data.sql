@@ -3,14 +3,14 @@
 -- Cross-service contract: prod-001..prod-010 dùng bởi Plan 07 inventory_svc.inventory_items
 -- (Plan 08 verify orphan-row count = 0).
 
-INSERT INTO product_svc.categories (id, name, slug, deleted, created_at, updated_at) VALUES
+INSERT INTO categories (id, name, slug, deleted, created_at, updated_at) VALUES
   ('cat-electronics', 'Điện tử',    'dien-tu',    FALSE, NOW(), NOW()),
   ('cat-fashion',     'Thời trang', 'thoi-trang', FALSE, NOW(), NOW()),
   ('cat-household',   'Gia dụng',   'gia-dung',   FALSE, NOW(), NOW()),
   ('cat-books',       'Sách',       'sach',       FALSE, NOW(), NOW()),
   ('cat-cosmetics',   'Mỹ phẩm',    'my-pham',    FALSE, NOW(), NOW());
 
-INSERT INTO product_svc.products (id, name, slug, category_id, price, status, deleted, created_at, updated_at) VALUES
+INSERT INTO products (id, name, slug, category_id, price, status, deleted, created_at, updated_at) VALUES
   ('prod-001', 'Tai nghe bluetooth Sony WH-1000XM5', 'tai-nghe-sony-wh-1000xm5', 'cat-electronics', 7990000.00, 'ACTIVE', FALSE, NOW(), NOW()),
   ('prod-002', 'Bàn phím cơ Keychron K2',            'ban-phim-co-keychron-k2',  'cat-electronics', 2490000.00, 'ACTIVE', FALSE, NOW(), NOW()),
   ('prod-003', 'Áo thun cotton basic',               'ao-thun-cotton-basic',     'cat-fashion',      199000.00, 'ACTIVE', FALSE, NOW(), NOW()),

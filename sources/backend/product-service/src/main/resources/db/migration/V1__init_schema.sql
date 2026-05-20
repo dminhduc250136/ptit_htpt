@@ -1,7 +1,7 @@
 -- Phase 5 Plan 03: product_svc schema baseline.
 -- Tables: categories, products. UUID String PK. Soft-delete column.
 
-CREATE TABLE product_svc.categories (
+CREATE TABLE categories (
   id VARCHAR(36) PRIMARY KEY,
   name VARCHAR(200) NOT NULL,
   slug VARCHAR(220) NOT NULL,
@@ -11,7 +11,7 @@ CREATE TABLE product_svc.categories (
   CONSTRAINT uq_categories_slug UNIQUE (slug)
 );
 
-CREATE TABLE product_svc.products (
+CREATE TABLE products (
   id VARCHAR(36) PRIMARY KEY,
   name VARCHAR(300) NOT NULL,
   slug VARCHAR(320) NOT NULL,
@@ -22,8 +22,8 @@ CREATE TABLE product_svc.products (
   created_at TIMESTAMP WITH TIME ZONE NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL,
   CONSTRAINT uq_products_slug UNIQUE (slug),
-  CONSTRAINT fk_products_category FOREIGN KEY (category_id) REFERENCES product_svc.categories(id)
+  CONSTRAINT fk_products_category FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 
-CREATE INDEX idx_products_category_id ON product_svc.products(category_id);
-CREATE INDEX idx_products_status ON product_svc.products(status) WHERE deleted = FALSE;
+CREATE INDEX idx_products_category_id ON products(category_id);
+CREATE INDEX idx_products_status ON products(status) WHERE deleted = FALSE;

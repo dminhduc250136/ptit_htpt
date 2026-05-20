@@ -4,7 +4,7 @@
 -- FK cross-schema (orders.user_id → user_svc.users.id) KHÔNG enforce — vi phạm microservice boundary;
 -- consistency assert ở Plan 05-08 Task 8.1 (NOT EXISTS query).
 
-CREATE TABLE order_svc.orders (
+CREATE TABLE orders (
   id VARCHAR(36) PRIMARY KEY,
   user_id VARCHAR(36) NOT NULL,
   total NUMERIC(12, 2) NOT NULL,
@@ -15,4 +15,4 @@ CREATE TABLE order_svc.orders (
   updated_at TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
-CREATE INDEX idx_orders_user_id ON order_svc.orders(user_id);
+CREATE INDEX idx_orders_user_id ON orders(user_id);
