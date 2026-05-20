@@ -1,0 +1,89 @@
+package com.ptit.htpt.notificationservice.messaging.consumer;
+
+import com.ptit.htpt.notificationservice.messaging.event.OrderEventEnvelope;
+import com.ptit.htpt.notificationservice.messaging.exception.PermanentMessageException;
+import com.ptit.htpt.notificationservice.messaging.exception.TransientMessageException;
+import com.ptit.htpt.notificationservice.messaging.tracing.TraceIdConsumerInterceptor;
+import com.ptit.htpt.notificationservice.repository.ProcessedEventRepository;
+import com.ptit.htpt.notificationservice.service.NotificationDispatchService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.amqp.AmqpRejectAndDontRequeueException;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.dao.DataAccessResourceFailureException;
+import org.springframework.dao.TransientDataAccessException;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+/**
+ * D-14: Consume OrderPlaced từ queue notification.order-events.
+ * Render template "order-confirmation" + insert dispatch_log status=SENT, channel=email.
+ * KHÔNG gửi SMTP thật.
+ *
+ * <p>Idempotent qua processed_events table (D-06).
+ * PermanentException → DLQ ngay (D-08 + Pitfall 4: AmqpRejectAndDontRequeueException, 0 retry).
+ * TransientException → Spring retry interceptor (D-07: 3 lần exp backoff 1s→2s→4s).
+ *
+ * <p>Pitfall 8 (RESEARCH §511-514): INSERT processed_events ĐẦU TIÊN trong cùng transaction —
+ * nếu render/persist fail thì rollback cả INSERT, message retry hoặc DLQ; nếu duplicate eventId
+ * thì insertIfAbsent return false → skip business logic + ACK.
+ *
+ * <p>Pattern mirror với inventory-service OrderPlacedListener (Plan 23-04) — chỉ khác:
+ *  - Queue name: notification.order-events (literal — annotation cần compile-time constant)
+ *  - Service call: notificationDispatchService.recordOrderConfirmation(eventId, payload)
+ *  - KHÔNG re-declare RabbitMQConfig (đã có Plan 23-03).
+ */
+@Component
+public class OrderPlacedNotifyListener {
+  private static final Logger log = LoggerFactory.getLogger(OrderPlacedNotifyListener.class);
+  private static final String QUEUE = "notification.order-events";
+  private static final String EVENT_TYPE = "OrderPlaced";
+
+  private final ProcessedEventRepository processedEventRepository;
+  private final NotificationDispatchService notificationDispatchService;
+
+  public OrderPlacedNotifyListener(ProcessedEventRepository processedEventRepository,
+                                    NotificationDispatchService notificationDispatchService) {
+    this.processedEventRepository = processedEventRepository;
+    this.notificationDispatchService = notificationDispatchService;
+  }
+
+  @RabbitListener(queues = QUEUE)
+  @Transactional
+  public void onOrderPlaced(@Payload OrderEventEnvelope envelope,
+                             @Header(name = "X-Trace-Id", required = false) String traceIdHeader) {
+    TraceIdConsumerInterceptor.enter(traceIdHeader);
+    String eventId = envelope.eventId();
+    try {
+      log.info("[MQ-CONSUME] queue={} eventId={} status=received", QUEUE, eventId);
+
+      // D-06 + Pitfall 8: INSERT processed_events ĐẦU TIÊN trong cùng transaction.
+      boolean inserted = processedEventRepository.insertIfAbsent(eventId, EVENT_TYPE);
+      if (!inserted) {
+        log.info("[MQ-CONSUME] queue={} eventId={} status=skipped-duplicate", QUEUE, eventId);
+        return;
+      }
+
+      // Business logic (D-14): render template order-confirmation + insert dispatch_log status=SENT.
+      notificationDispatchService.recordOrderConfirmation(eventId, envelope.payload());
+
+      log.info("[MQ-CONSUME] queue={} eventId={} status=done", QUEUE, eventId);
+    } catch (PermanentMessageException e) {
+      // PermanentMessageException đã extend AmqpRejectAndDontRequeueException → Spring skip retry.
+      log.error("[MQ-DLQ] eventId={} reason={} payload={}", eventId, e.getMessage(), envelope);
+      throw e;
+    } catch (DataAccessResourceFailureException | TransientDataAccessException e) {
+      log.warn("[MQ-RETRY] eventId={} error={}", eventId, e.getMessage());
+      throw new TransientMessageException("DB transient on consume eventId=" + eventId, e);
+    } catch (RuntimeException e) {
+      // Mặc định coi như permanent — tránh retry vô tận với lỗi không lường trước.
+      log.error("[MQ-DLQ] eventId={} reason=unexpected error={} payload={}",
+          eventId, e.getMessage(), envelope);
+      throw new AmqpRejectAndDontRequeueException("Unexpected: " + e.getMessage(), e);
+    } finally {
+      TraceIdConsumerInterceptor.exit();
+    }
+  }
+}
