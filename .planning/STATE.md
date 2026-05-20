@@ -9,15 +9,15 @@ progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 14
-  completed_plans: 18
+  completed_plans: 19
   percent: 57
 ---
 
 ## Current Position
 
 Phase: 23-message-queue-rabbitmq — Executing
-Plan: 3 of 6 — 23-03 COMPLETED (Producer: RabbitMQConfig topology 3 service + OrderEventPublisher afterCommit + Publisher Confirms 5s + TraceIdMessagePostProcessor + XÓA deductStock REST legacy trong OrderCrudService)
-Status: 23-04 next (inventory-service consumer: OrderPlacedListener + stock_ledger + processed_events idempotency + InventoryCrudService.decrementForOrder).
+Plan: 4 of 6 — 23-04 COMPLETED (Inventory consumer: V2 migration processed_events+stock_ledger + V102 seed copy stock + ProcessedEventEntity/StockLedgerEntity + ProcessedEventRepository.insertIfAbsent ON CONFLICT DO NOTHING + InventoryEntity.decrementQuantity delta-style + InventoryCrudService.decrementForOrder + OrderPlacedListener @RabbitListener idempotent + TraceIdConsumerInterceptor)
+Status: 23-05 next (notification-service consumer: NotificationListener + dispatch_log + processed_events idempotency).
 Last activity: 2026-05-20
 
 ```
@@ -70,8 +70,24 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 23-message-queue-rabbitmq P01 | 4min | 2 tasks | 3 files |
 | Phase 23-message-queue-rabbitmq P02 | 2min | 2 tasks | 8 files |
 | Phase 23-message-queue-rabbitmq P03 | 6min | 2 tasks | 9 files |
+| Phase 23-message-queue-rabbitmq P04 | 8min | 2 tasks | 13 files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 23 Plan 04 decisions (2026-05-20):**
+
+- MQ-03 inventory consumer hoàn tất: V2 migration tạo processed_events (PK event_id D-06 idempotency) + stock_ledger (D-10 audit per-item per-eventId) trong schema inventory_svc + 3 indexes
+- V102 seed-dev copy product_svc.products.stock → inventory_svc.inventory_items.quantity (idempotent NOT EXISTS); KHÔNG filter deleted_at vì products schema KHÔNG có cột này (verified V1..V7 migrations — chỉ reviews table có)
+- ProcessedEventEntity + StockLedgerEntity JPA record-style accessors; ProcessedEventRepository.insertIfAbsent native ON CONFLICT (event_id) DO NOTHING return true nếu insert thực sự (Pattern 4 RESEARCH §391-403)
+- InventoryEntity.decrementQuantity(int delta) method MỚI delta-style — TÁCH HẲN khỏi adjustQuantity cũ set-style để không phá controller adjust legacy
+- InventoryCrudService.decrementForOrder @Transactional constructor inject thêm StockLedgerRepository (2 deps total); per-item findByProductId().orElseThrow(PermanentMessageException) → decrementQuantity → save inv + ledger; quantity âm sau decrement → log.warn audit, KHÔNG block (D-10 bước 2)
+- PermanentMessageException của inventory-service extend AmqpRejectAndDontRequeueException (KHÁC order-service vẫn extend RuntimeException) — consumer-side cần Spring retry SKIP (Pitfall 4); listener chỉ re-throw thay vì wrap
+- OrderPlacedListener @RabbitListener(queues="inventory.order-events") + @Transactional; Pitfall 8 flow: insertIfAbsent TRƯỚC business; duplicate eventId → log status=skipped-duplicate + return; PermanentException re-throw; TransientDataAccessException → wrap TransientMessageException; RuntimeException fallback → AmqpRejectAndDontRequeueException tránh retry vô tận
+- 5 log path D-17: [MQ-CONSUME] received/done/skipped-duplicate + [MQ-DLQ] + [MQ-RETRY]
+- MDC traceId qua TraceIdConsumerInterceptor.enter/exit (utility helper KHÔNG phải Spring AOP); header X-Trace-Id binding qua @Header(required=false) default "no-trace"
+- KHÔNG re-declare RabbitMQConfig (đã có Plan 23-03); @RabbitListener dùng literal "inventory.order-events" (annotation cần compile-time constant)
+- KHÔNG Lombok — explicit constructor injection cho InventoryCrudService (2 deps) + OrderPlacedListener (2 deps)
+- Maven CLI vẫn defer trên Windows env này; compile + IT runtime verify ở Wave 3 plan hoặc /gsd-verify-work
 
 **Phase 23 Plan 03 decisions (2026-05-20):**
 
@@ -251,3 +267,4 @@ Không có blocker.
 - Phase 23 Plan 01: Bootstrap RabbitMQ + Schema notification_svc — **COMPLETED 2026-05-20** (MQ-01 hạ tầng container + REQUIREMENTS backfill MQ-01..MQ-05)
 - Phase 23 Plan 02: notification-service persistence bootstrap + spring.rabbitmq config 3 service — **COMPLETED 2026-05-20** (MQ-04 prep + V1 dispatch_log + processed_events)
 - Phase 23 Plan 03: Producer topology + OrderEventPublisher afterCommit + XÓA deductStock REST — **COMPLETED 2026-05-20** (MQ-02 producer done; Wave 2 consumer plans next)
+- Phase 23 Plan 04: Inventory consumer V2 migration + OrderPlacedListener idempotent + InventoryCrudService.decrementForOrder — **COMPLETED 2026-05-20** (MQ-03 done; 13 files, 2 commits)
