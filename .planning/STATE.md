@@ -15,9 +15,9 @@ progress:
 
 ## Current Position
 
-Phase: 23-message-queue-rabbitmq — Executing
-Plan: 5 of 6 — 23-05 COMPLETED (Notification consumer: ProcessedEventEntity + DispatchLogEntity match V1 cols + ProcessedEventRepository.insertIfAbsent ON CONFLICT DO NOTHING + DispatchLogRepository + NotificationDispatchService.recordOrderConfirmation render template subject+body status=SENT channel=email + OrderPlacedNotifyListener @RabbitListener notification.order-events idempotent + TraceIdConsumerInterceptor — mirror inventory pattern)
-Status: 23-06 next (Integration tests 4 scenarios D-18 happy/idempotent/DLQ/retry + verify-mq.sh + architecture sequence diagrams).
+Phase: 23-message-queue-rabbitmq — COMPLETED execution (6/6 plans done — ready /gsd-verify-work)
+Plan: 6 of 6 — 23-06 COMPLETED (Integration tests 9 @Test methods qua 3 IT class: OrderEventPublisherIT 2 + OrderPlacedListenerIT 4 FULL D-18 không @Disabled + OrderPlacedNotifyListenerIT 3; @SpyBean StockLedgerRepository + Mockito doAnswer cho transientThenSuccess retry scenario; scripts/verify-mq.sh smoke Management UI HTTP API; architecture/02-sequence-diagrams.md Kafka → RabbitMQ + Appendix A topology table + error-path diagram; 23-VERIFICATION.md 7/7 SC SATISFIED static+IT)
+Status: Phase 23 ready /gsd-verify-work (mvn verify defer Windows + docker smoke + manual demo qua Management UI).
 Last activity: 2026-05-20
 
 ```
@@ -72,8 +72,25 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 23-message-queue-rabbitmq P03 | 6min | 2 tasks | 9 files |
 | Phase 23-message-queue-rabbitmq P04 | 8min | 2 tasks | 13 files |
 | Phase 23-message-queue-rabbitmq P05 | 5min | 2 tasks | 10 files |
+| Phase 23-message-queue-rabbitmq P06 | 10min | 2 tasks | 9 files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 23 Plan 06 decisions (2026-05-20):**
+
+- D-18 LOCK enforced: OrderPlacedListenerIT có 4 @Test FULL (happyPath / idempotent_samePayloadTwice / permanentException_routedToDLQ / transientThenSuccess_retryThenAck) — KHÔNG @Disabled bất kỳ scenario nào
+- @SpyBean StockLedgerRepository + Mockito.doAnswer throw TransientDataAccessResourceException 2 lần đầu (AtomicInteger counter + threshold 2) + callRealMethod cho lần thứ 3 — chứng minh Spring AMQP retry behavior runtime (test profile override 100ms exp backoff multiplier=2 max-attempts=3 → ~600ms total vs prod 7s)
+- OrderEventPublisherIT 2 test với TransactionTemplate programmatic: rollback_doesNotPublish chứng minh D-03 afterCommit semantics (mitigation T-23-09 phantom-event gate); commit_publishesAfterCommit assert queue depth tăng cả inventory + notification
+- OrderPlacedNotifyListenerIT 3 test (happyPath + idempotent + topology smoke) — KHÔNG có permanent-DLQ scenario vì recordOrderConfirmation accept mọi payload (chỉ StringBuilder concat + INSERT, không có business validation throw PermanentException dựa trên payload)
+- Pattern @ServiceConnection (Spring Boot 3.1+) cho cả PostgreSQLContainer + RabbitMQContainer("rabbitmq:3-management") — gọn hơn @DynamicPropertySource
+- application-test.yml inventory-service tạo MỚI (Rule 3 fix): notification đã có từ Plan 23-02, inventory chưa — thiếu thì IT retry phải đợi 7s prod-config → tạo để override 100ms exp backoff
+- order-service test-init/01-schemas.sql UPDATE: thêm inventory_svc + notification_svc (vốn chỉ có order_svc) — Testcontainers Postgres bootstrap đủ 3 schema không conditional
+- inventory-service test-init/01-schemas.sql UPDATE: thêm product_svc (cross-schema seed reference V102 nếu cần)
+- scripts/verify-mq.sh smoke: curl Management UI /overview + /exchanges/order.events + /exchanges/order.dlx + 3 queues (inventory.order-events / notification.order-events / order-events.dlq); env-var override RABBITMQ_HOST/USER/PASS
+- architecture/02-sequence-diagrams.md cập nhật: thay participant K as Kafka → MQ as RabbitMQ trong 5 sequence diagrams + thêm 1 error-path diagram permanent vs transient + Appendix A topology table (5 resources + retry policy + idempotency + smoke verify reference); giữ nguyên mermaid syntax
+- Trade-off: OrderEventEnvelope duplicated across 3 services — shared module deferred to Phase ops (chấp nhận warning #3 envelope duplication; khi nào có 3+ event types thì messaging-contracts module sẽ release ROI)
+- Maven CLI vẫn defer trên Windows env này (precedent v1.3 Plans 19-20 + Plans 23-01..05); 9 IT files đã sẵn cho /gsd-verify-work hoặc CI/local mvn chạy
+- Phase 23 status: 6/6 plans COMPLETED → ready /gsd-verify-work; 7/7 SC SATISFIED static+IT level (mvn runtime + docker smoke + manual demo defer)
 
 **Phase 23 Plan 05 decisions (2026-05-20):**
 
@@ -286,3 +303,5 @@ Không có blocker.
 - Phase 23 Plan 03: Producer topology + OrderEventPublisher afterCommit + XÓA deductStock REST — **COMPLETED 2026-05-20** (MQ-02 producer done; Wave 2 consumer plans next)
 - Phase 23 Plan 04: Inventory consumer V2 migration + OrderPlacedListener idempotent + InventoryCrudService.decrementForOrder — **COMPLETED 2026-05-20** (MQ-03 done; 13 files, 2 commits)
 - Phase 23 Plan 05: Notification consumer DispatchLogEntity + ProcessedEventEntity + NotificationDispatchService render template + OrderPlacedNotifyListener idempotent — **COMPLETED 2026-05-20** (MQ-04 done; 10 files, 2 commits)
+- Phase 23 Plan 06: Integration tests 3 IT class 9 @Test methods (FULL D-18 không @Disabled) + scripts/verify-mq.sh smoke + architecture/02-sequence-diagrams.md Kafka→RabbitMQ — **COMPLETED 2026-05-20** (MQ-02/03/04/05 evidence; 9 files, 2 commits fc86cb0 + 9957b99)
+- Phase 23: Message Queue Integration (RabbitMQ) — **COMPLETED 2026-05-20** execution (6/6 plans, MQ-01..05 đã có evidence; ready /gsd-verify-work cho mvn + docker smoke runtime)
