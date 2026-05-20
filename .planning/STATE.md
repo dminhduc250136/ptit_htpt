@@ -9,15 +9,15 @@ progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 14
-  completed_plans: 16
+  completed_plans: 17
   percent: 57
 ---
 
 ## Current Position
 
-Phase: 23-message-queue-rabbitmq — Ready to execute
-Plan: 0 of 6 — 6 PLAN.md files đã verify (iteration 2, blockers fixed)
-Status: Plans ready for /gsd-execute-phase 23. Wave 0→1→2→3 (Bootstrap → Producer+Topology → Consumers parallel → IT tests). Covers MQ-01..MQ-05.
+Phase: 23-message-queue-rabbitmq — Executing
+Plan: 1 of 6 — 23-01 COMPLETED (bootstrap RabbitMQ + schema notification_svc + MQ-01..MQ-05 backfilled)
+Status: 23-02 next (notification-service persistence bootstrap). Wave 0 done, Wave 1 ready.
 Last activity: 2026-05-20
 
 ```
@@ -67,8 +67,20 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 19-ho-n-thi-n-admin-charts-low-stock P03 | 12min | 2 tasks | 10 files |
 | Phase 19-ho-n-thi-n-admin-charts-low-stock P04 | 18min | 3 tasks | 15 files |
 | Phase 20-coupons P03 | 12min | 2 tasks | 7 files |
+| Phase 23-message-queue-rabbitmq P01 | 4min | 2 tasks | 3 files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 23 Plan 01 decisions (2026-05-20):**
+
+- MQ-01 hạ tầng bootstrap: rabbitmq:3-management container + Management UI port 15672 + AMQP 5672, healthcheck rabbitmq-diagnostics ping (interval 10s retries 10), volume named tmdt-rabbitmqdata persist queue/exchange state
+- 3 backend service (order/inventory/notification): depends_on rabbitmq service_healthy + env SPRING_RABBITMQ_HOST/USER/PASS=rabbitmq/guest/guest
+- Rule 2 fix preventive: notification-service block trước đó chỉ có ports/build — hoàn thiện env DB đầy đủ (DB_HOST/PORT/NAME/USER/PASSWORD + SPRING_PROFILES_ACTIVE) để service không block khi Flyway bootstrap notification_svc trong Plan 23-02
+- db/init/01-schemas.sql: thêm CREATE SCHEMA IF NOT EXISTS notification_svc (idempotent, sau inventory_svc) — note dev cần docker volume rm tmdt-pgdata HOẶC manual psql tạo schema nếu volume cũ tồn tại
+- REQUIREMENTS.md backfilled: section MQ với MQ-01..MQ-05 + traceability 5 dòng + scope 7→8 trục + Total 27→32 (32/32 mapped 100%)
+- Threat register accept: guest/guest credential acceptable cho dev (port 5672 bind localhost, không expose firewall ngoài) — đổi password defer Phase ops
+
+
 
 **Phase 20 Plan 03 decisions (2026-05-03):**
 

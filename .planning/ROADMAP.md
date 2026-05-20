@@ -225,7 +225,7 @@ Plans:
 **Plans:** 6 plans
 
 Plans:
-- [ ] 23-01-PLAN.md — Bootstrap infra: docker-compose RabbitMQ service + db/init notification_svc schema + REQUIREMENTS.md backfill MQ-01..MQ-05
+- [x] 23-01-PLAN.md — Bootstrap infra: docker-compose RabbitMQ service + db/init notification_svc schema + REQUIREMENTS.md backfill MQ-01..MQ-05 ✅ 2026-05-20 (commits 7fff50f + ab4e5ca)
 - [ ] 23-02-PLAN.md — notification-service persistence bootstrap: pom JPA+Flyway+AMQP + application.yml datasource+rabbitmq + V1 init schema (dispatch_log + processed_events)
 - [ ] 23-03-PLAN.md — Producer: RabbitMQConfig topology 3 service + OrderEventPublisher afterCommit+CorrelationData + OrderCrudService chèn publish + XÓA deductStock REST legacy
 - [ ] 23-04-PLAN.md — Inventory consumer: V2 migration + V102 seed inventory + JPA entities + OrderPlacedListener idempotent + decrementForOrder
