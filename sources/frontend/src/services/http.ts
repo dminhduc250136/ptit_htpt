@@ -154,6 +154,11 @@ async function request<T>(
   // Exception: auth endpoints (login/register) intentionally return 401 for bad credentials —
   // their callers handle the ApiError to display an error banner. Redirecting here would
   // produce GET /login?returnTo=%2Flogin (infinite loop) because pathname IS /login.
+  //
+  // Phase 25 (gateway JWT edge auth): API Gateway nay tu verify JWT va tra 401 voi
+  // code AUTH_TOKEN_MISSING / AUTH_TOKEN_INVALID / AUTH_TOKEN_EXPIRED. Ca 3 deu duoc
+  // xu ly chung o nhanh nay — clearTokens + redirect /login. Token het han (AUTH_TOKEN_EXPIRED)
+  // khong can UX rieng o MVP: user dang nhap lai la co token moi.
   if (res.status === 401 && !AUTH_PATHS_NO_REDIRECT.includes(path)) {
     clearTokens();
     if (typeof window !== 'undefined') {

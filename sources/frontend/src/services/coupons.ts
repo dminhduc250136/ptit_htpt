@@ -1,7 +1,10 @@
 /**
  * Coupon service API — preview validate (D-13).
- * BE: POST /api/orders/coupons/validate body {code, cartTotal} header X-User-Id.
+ * BE: POST /api/orders/coupons/validate body {code, cartTotal}.
  * Read-only: KHÔNG mutate state, atomic redemption diễn ra ở POST /api/orders.
+ *
+ * Phase 25 (gateway JWT edge auth): FE KHÔNG còn gửi `X-User-Id` thủ công —
+ * API Gateway inject header tin cậy từ claim `sub` của Bearer JWT.
  *
  * Phase 20 / COUP-03 (D-13, D-18). Caller dùng useApplyCoupon hook (React Query
  * mutation) để wrap, hoặc gọi trực tiếp khi auto re-validate trong useEffect.
@@ -14,11 +17,6 @@ export interface CouponValidateBody {
   cartTotal: number;
 }
 
-export function validateCoupon(
-  body: CouponValidateBody,
-  userId?: string,
-): Promise<CouponPreview> {
-  const headers: Record<string, string> = {};
-  if (userId) headers['X-User-Id'] = userId;
-  return httpPost<CouponPreview>('/api/orders/coupons/validate', body, headers);
+export function validateCoupon(body: CouponValidateBody): Promise<CouponPreview> {
+  return httpPost<CouponPreview>('/api/orders/coupons/validate', body);
 }
