@@ -1,13 +1,12 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import styles from './page.module.css';
 import ProductCard from '@/components/ui/ProductCard/ProductCard';
 import Button from '@/components/ui/Button/Button';
-import Badge from '@/components/ui/Badge/Badge';
 import RetrySection from '@/components/ui/RetrySection/RetrySection';
+import HeroCarousel from '@/components/ui/HeroCarousel/HeroCarousel';
 import { listProducts, listCategories } from '@/services/products';
 import type { Product, Category } from '@/types';
 
@@ -56,47 +55,8 @@ export default function Home() {
 
   return (
     <>
-      {/* ===== HERO SECTION ===== */}
-      <section className={styles.hero}>
-        <div className={styles.heroContent}>
-          <Badge variant="new">Bộ sưu tập Thu Đông 2024</Badge>
-          <h1 className={styles.heroTitle}>
-            Nghệ thuật <br />
-            <span className={styles.heroAccent}>chế tác thủ công</span>
-          </h1>
-          <p className={styles.heroDescription}>
-            Khám phá bộ sưu tập thu đông mới nhất với chất liệu cao cấp và
-            thiết kế tinh xảo từ những nghệ nhân hàng đầu.
-          </p>
-          <div className={styles.heroActions}>
-            <Button href="/products" size="lg">Khám phá ngay</Button>
-            <Button href="/products" variant="secondary" size="lg">
-              Xem tất cả sản phẩm
-            </Button>
-          </div>
-        </div>
-        <div className={styles.heroVisual}>
-          <div className={styles.heroImagePrimary}>
-            <Image
-              src="/hero/hero-primary.webp"
-              alt="Sản phẩm nổi bật"
-              fill
-              sizes="(max-width: 1024px) 80vw, 45vw"
-              priority
-              className={styles.heroImg}
-            />
-          </div>
-          <div className={styles.heroImageSecondary}>
-            <Image
-              src="/hero/hero-secondary.webp"
-              alt="Phụ kiện cao cấp"
-              fill
-              sizes="(max-width: 1024px) 50vw, 25vw"
-              className={styles.heroImg}
-            />
-          </div>
-        </div>
-      </section>
+      {/* ===== HERO CAROUSEL ===== */}
+      <HeroCarousel />
 
       {/* ===== CATEGORIES SECTION ===== */}
       {categories.length > 0 && (

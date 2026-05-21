@@ -1,0 +1,206 @@
+/* HeroCarousel — banner trang chủ tự lướt. */
+
+.carousel {
+  position: relative;
+  width: 100%;
+  height: 520px;
+  max-height: 75vh;
+  overflow: hidden;
+  background: var(--surface-container-low);
+}
+
+/* Track chứa các slide xếp ngang */
+.track {
+  display: flex;
+  height: 100%;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slide {
+  position: relative;
+  flex: 0 0 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.slideImage {
+  object-fit: cover;
+}
+
+/* Lớp phủ tối để chữ trắng đọc rõ trên mọi ảnh */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.72) 0%,
+    rgba(0, 0, 0, 0.45) 45%,
+    rgba(0, 0, 0, 0.1) 100%
+  );
+}
+
+/* Nội dung slide — căn trái, giữa theo chiều dọc */
+.slideContent {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--space-3);
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-8);
+  color: #fff;
+}
+
+.badge {
+  align-self: flex-start;
+  padding: var(--space-1) var(--space-3);
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-full);
+  font-size: var(--text-label-md);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-wide);
+}
+
+.title {
+  font-family: var(--font-family-headline);
+  font-size: var(--text-display-md);
+  font-weight: var(--weight-bold);
+  line-height: 1.1;
+  letter-spacing: var(--tracking-tight);
+  max-width: 600px;
+}
+
+.highlight {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.description {
+  font-size: var(--text-body-lg);
+  line-height: var(--leading-relaxed);
+  max-width: 460px;
+  color: rgba(255, 255, 255, 0.88);
+}
+
+/* Nút CTA */
+.cta {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  background: var(--gradient-primary);
+  color: var(--on-primary);
+  font-family: var(--font-family-body);
+  font-size: var(--text-body-md);
+  font-weight: var(--weight-semibold);
+  text-decoration: none;
+  border-radius: var(--radius-full);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.cta:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+/* Nút mũi tên prev/next */
+.navArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  cursor: pointer;
+  transition: background-color var(--transition-fast);
+  z-index: 3;
+}
+
+.navArrow:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+.navPrev {
+  left: var(--space-4);
+}
+
+.navNext {
+  right: var(--space-4);
+}
+
+/* Dot indicator */
+.dots {
+  position: absolute;
+  bottom: var(--space-4);
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: var(--space-2);
+  z-index: 3;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.4);
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  transition: all var(--transition-fast);
+}
+
+.dot:hover {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.dotActive {
+  width: 28px;
+  background: #fff;
+}
+
+/* --- Responsive --- */
+@media (max-width: 768px) {
+  .carousel {
+    height: 440px;
+  }
+
+  .slideContent {
+    padding: 0 var(--space-4);
+  }
+
+  .title {
+    font-size: var(--text-headline-lg);
+  }
+
+  .description {
+    font-size: var(--text-body-md);
+  }
+
+  .navArrow {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* Tôn trọng prefers-reduced-motion — bỏ hiệu ứng trượt */
+@media (prefers-reduced-motion: reduce) {
+  .track {
+    transition: none;
+  }
+}

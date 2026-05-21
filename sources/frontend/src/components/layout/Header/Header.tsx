@@ -10,13 +10,21 @@ import { useCart } from '@/hooks/useCart';
 
 export default function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
   const { isAuthenticated, user, logout } = useAuth();
   const { data: cartItems = [] } = useCart();
   const cartCount = cartItems.reduce((sum, i) => sum + i.quantity, 0);
   const router = useRouter();
   const userMenuRef = useRef<HTMLDivElement>(null);
+
+  // Submit search → điều hướng tới /products?keyword=... (trang Sản phẩm tự lọc).
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchTerm.trim();
+    router.push(q ? `/products?keyword=${encodeURIComponent(q)}` : '/products');
+    setIsMobileMenuOpen(false);
+  };
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -43,9 +51,12 @@ export default function Header() {
     <header className={styles.header}>
       <div className={styles.container}>
         {/* Logo */}
-        <Link href="/" className={styles.logo}>
-          <span className={styles.logoText}>The Digital</span>
-          <span className={styles.logoAccent}>Atélier</span>
+        <Link href="/" className={styles.logo} aria-label="The Digital Atélier — Trang chủ">
+          <span className={styles.logoMark} aria-hidden="true">DA</span>
+          <span className={styles.logoWordmark}>
+            <span className={styles.logoText}>The Digital</span>
+            <span className={styles.logoAccent}>Atélier</span>
+          </span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -56,20 +67,27 @@ export default function Header() {
           <Link href="/about" className={styles.navLink}>Về chúng tôi</Link>
         </nav>
 
+        {/* Thanh tìm kiếm — luôn hiển thị giữa header */}
+        <form className={styles.search} onSubmit={handleSearch} role="search">
+          <svg className={styles.searchIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="search"
+            className={styles.searchInput}
+            placeholder="Tìm kiếm sản phẩm..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            aria-label="Tìm kiếm sản phẩm"
+          />
+          <button type="submit" className={styles.searchSubmit}>
+            Tìm
+          </button>
+        </form>
+
         {/* Actions */}
         <div className={styles.actions}>
-          {/* Search Toggle */}
-          <button
-            className={styles.actionBtn}
-            onClick={() => setIsSearchOpen(!isSearchOpen)}
-            aria-label="Tìm kiếm"
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-          </button>
-
           {/* Account / User Menu */}
           {isAuthenticated && user ? (
             <div className={styles.userMenu} ref={userMenuRef}>
@@ -134,33 +152,25 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Search Bar */}
-      {isSearchOpen && (
-        <div className={styles.searchOverlay}>
-          <div className={styles.searchContainer}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="11" cy="11" r="8" />
-              <line x1="21" y1="21" x2="16.65" y2="16.65" />
-            </svg>
-            <input
-              type="text"
-              placeholder="Tìm kiếm sản phẩm..."
-              className={styles.searchInput}
-              autoFocus
-            />
-            <button className={styles.searchClose} onClick={() => setIsSearchOpen(false)} aria-label="Đóng">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* Mobile Menu */}
       {isMobileMenuOpen && (
         <div className={styles.mobileOverlay} onClick={() => setIsMobileMenuOpen(false)}>
           <nav className={styles.mobileMenu} onClick={e => e.stopPropagation()}>
+            {/* Thanh tìm kiếm trong menu mobile */}
+            <form className={styles.mobileSearch} onSubmit={handleSearch} role="search">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input
+                type="search"
+                className={styles.searchInput}
+                placeholder="Tìm kiếm sản phẩm..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                aria-label="Tìm kiếm sản phẩm"
+              />
+            </form>
             <Link href="/products" className={styles.mobileLink} onClick={() => setIsMobileMenuOpen(false)}>Sản phẩm</Link>
             <Link href="/collections" className={styles.mobileLink} onClick={() => setIsMobileMenuOpen(false)}>Bộ sưu tập</Link>
             <Link href="/deals" className={styles.mobileLink} onClick={() => setIsMobileMenuOpen(false)}>Ưu đãi</Link>

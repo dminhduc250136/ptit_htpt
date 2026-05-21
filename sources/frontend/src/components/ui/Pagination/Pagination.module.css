@@ -1,0 +1,95 @@
+/* Pagination — thanh nút số. Căn giữa dưới grid sản phẩm. */
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+  margin-top: var(--space-6);
+}
+
+.pageList {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* Nút số trang */
+.pageBtn {
+  min-width: 40px;
+  height: 40px;
+  padding: 0 var(--space-2);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  background: var(--surface-container-lowest);
+  color: var(--on-surface);
+  font-size: var(--text-body-md);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.pageBtn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.pageBtnActive {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--on-primary);
+  font-weight: var(--weight-semibold);
+}
+
+.pageBtnActive:hover {
+  color: var(--on-primary);
+}
+
+/* Nút Trước / Sau */
+.navBtn {
+  height: 40px;
+  padding: 0 var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  background: var(--surface-container-lowest);
+  color: var(--on-surface);
+  font-size: var(--text-body-md);
+  font-weight: var(--weight-medium);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.navBtn:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.navBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Dấu "…" */
+.gap {
+  min-width: 32px;
+  text-align: center;
+  color: var(--on-surface-variant);
+  user-select: none;
+}
+
+/* Ẩn chữ "Trước"/"Sau" trên màn hình hẹp — chỉ còn mũi tên */
+@media (max-width: 480px) {
+  .navLabel {
+    display: none;
+  }
+}
