@@ -16,6 +16,14 @@ Bộ tài liệu cho dự án TMĐT theo kiến trúc FE + API Gateway + 6 backe
 - Postgres không expose host port nữa — truy vấn DB trong dev qua: `docker exec -it postgres-<svc> psql -U <svc>_svc -d <svc>_svc` (vd `postgres-product` / `product_svc`).
 - Demo failure isolation: xem [docs/db-isolation-demo.md](docs/db-isolation-demo.md).
 
+## 🔒 Security — Edge Authentication (Phase 25)
+
+Từ Phase 25, **API Gateway là trust boundary**: gateway verify JWT, strip mọi
+header `X-User-Id` do client gửi và inject lại danh tính tin cậy từ claim `sub`.
+6 backend service không còn expose port host — chỉ truy cập qua gateway cổng 8080.
+Chi tiết threat model + allow-list + cảnh báo `JWT_SECRET` production: xem
+[docs/security.md](docs/security.md).
+
 ## Cấu trúc tài liệu (Phân loại theo Service)
 ```
 .
