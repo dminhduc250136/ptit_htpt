@@ -9,6 +9,13 @@ Bộ tài liệu cho dự án TMĐT theo kiến trúc FE + API Gateway + 6 backe
 3. 🛠️ **Implement feature**: Chọn UC tương ứng trong [ba/](ba/) → [technical-spec/](technical-spec/)
 4. 📊 **Business context**: [strategy/](strategy/) → KPI, vision, rules
 
+## ⚙️ Local Dev — lưu ý Phase 24 (Database Per Service)
+
+- Từ Phase 24, mỗi service có **postgres container riêng** (6 container: user/product/order/inventory/payment/chat) thay cho 1 postgres shared.
+- **Upgrade từ branch cũ**: chạy `docker compose down -v` trước `docker compose up -d --build` để bỏ volume cũ `tmdt-pgdata` và tạo lại 6 DB từ Flyway migration.
+- Postgres không expose host port nữa — truy vấn DB trong dev qua: `docker exec -it postgres-<svc> psql -U <svc>_svc -d <svc>_svc` (vd `postgres-product` / `product_svc`).
+- Demo failure isolation: xem [docs/db-isolation-demo.md](docs/db-isolation-demo.md).
+
 ## Cấu trúc tài liệu (Phân loại theo Service)
 ```
 .

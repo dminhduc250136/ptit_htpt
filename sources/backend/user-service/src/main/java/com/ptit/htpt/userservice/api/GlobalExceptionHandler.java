@@ -138,6 +138,31 @@ public class GlobalExceptionHandler {
     ));
   }
 
+  /**
+   * Phase 24 (D-14): khi postgres-user down, Hibernate/Hikari nem
+   * CannotCreateTransactionException hoac JDBCConnectionException → tra 503
+   * DATABASE_UNAVAILABLE de phan biet voi 500 fallback.
+   */
+  @ExceptionHandler({
+      org.springframework.transaction.CannotCreateTransactionException.class,
+      org.hibernate.exception.JDBCConnectionException.class
+  })
+  public org.springframework.http.ResponseEntity<ApiErrorResponse> handleDatabaseUnavailable(
+      Exception ex,
+      HttpServletRequest request
+  ) {
+    HttpStatus status = HttpStatus.SERVICE_UNAVAILABLE;
+    return org.springframework.http.ResponseEntity.status(status).body(ApiErrorResponse.of(
+        status.value(),
+        status.getReasonPhrase(),
+        "User database is temporarily unavailable",
+        "DATABASE_UNAVAILABLE",
+        request.getRequestURI(),
+        getTraceId(request),
+        List.of()
+    ));
+  }
+
   @ExceptionHandler(Exception.class)
   public org.springframework.http.ResponseEntity<ApiErrorResponse> handleFallback(
       Exception ex,

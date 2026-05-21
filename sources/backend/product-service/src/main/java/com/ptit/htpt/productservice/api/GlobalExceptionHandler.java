@@ -98,6 +98,29 @@ public class GlobalExceptionHandler {
     ));
   }
 
+  /**
+   * Phase 24 (D-14): postgres-product down → 503 DATABASE_UNAVAILABLE.
+   */
+  @ExceptionHandler({
+      org.springframework.transaction.CannotCreateTransactionException.class,
+      org.hibernate.exception.JDBCConnectionException.class
+  })
+  public org.springframework.http.ResponseEntity<ApiErrorResponse> handleDatabaseUnavailable(
+      Exception ex,
+      HttpServletRequest request
+  ) {
+    HttpStatus status = HttpStatus.SERVICE_UNAVAILABLE;
+    return org.springframework.http.ResponseEntity.status(status).body(ApiErrorResponse.of(
+        status.value(),
+        status.getReasonPhrase(),
+        "Product database is temporarily unavailable",
+        "DATABASE_UNAVAILABLE",
+        request.getRequestURI(),
+        getTraceId(request),
+        List.of()
+    ));
+  }
+
   @ExceptionHandler(Exception.class)
   public org.springframework.http.ResponseEntity<ApiErrorResponse> handleFallback(
       Exception ex,
