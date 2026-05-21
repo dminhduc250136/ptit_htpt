@@ -24,7 +24,6 @@ import java.util.UUID;
 @Entity
 @Table(
     name = "coupon_redemptions",
-    schema = "order_svc",
     uniqueConstraints = @UniqueConstraint(columnNames = {"coupon_id", "user_id"}))
 public class CouponRedemptionEntity {
 
