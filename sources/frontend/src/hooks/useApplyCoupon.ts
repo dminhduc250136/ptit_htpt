@@ -12,8 +12,9 @@ import {
 } from '@/services/coupons';
 import type { CouponPreview } from '@/types';
 
-export function useApplyCoupon(userId?: string) {
+// Phase 25: bỏ tham số userId — gateway inject X-User-Id từ JWT claim.
+export function useApplyCoupon() {
   return useMutation<CouponPreview, Error, CouponValidateBody>({
-    mutationFn: (body: CouponValidateBody) => validateCoupon(body, userId),
+    mutationFn: (body: CouponValidateBody) => validateCoupon(body),
   });
 }

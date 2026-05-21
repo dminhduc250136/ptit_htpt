@@ -2,22 +2,22 @@ spring:
   application:
     name: notification-service
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:tmdt}?currentSchema=notification_svc
-    username: ${DB_USER:tmdt}
-    password: ${DB_PASSWORD:tmdt}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:notification_svc}
+    username: ${DB_USER:notification_svc}
+    password: ${DB_PASSWORD:notification_svc_pw}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      # Phase 24: cho phép start khi DB chưa healthy (lazy connection) — D-15
+      initialization-fail-timeout: -1
   jpa:
     hibernate:
       ddl-auto: validate
     properties:
       hibernate:
-        default_schema: notification_svc
         format_sql: true
     open-in-view: false
   flyway:
     enabled: true
-    schemas: notification_svc
-    default-schema: notification_svc
     baseline-on-migrate: false
     locations: classpath:db/migration
   rabbitmq:

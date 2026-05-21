@@ -15,7 +15,7 @@ import java.util.UUID;
  *   id, event_id, recipient_user_id, channel, subject, body, status, sent_at, created_at, updated_at.
  */
 @Entity
-@Table(name = "dispatch_log", schema = "notification_svc")
+@Table(name = "dispatch_log")
 public class DispatchLogEntity {
 
   @Id

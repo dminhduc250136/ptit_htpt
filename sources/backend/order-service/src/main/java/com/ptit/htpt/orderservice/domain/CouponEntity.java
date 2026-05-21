@@ -25,7 +25,7 @@ import java.util.UUID;
  * <p>KHÔNG soft-delete (D-07). Admin disable qua {@link #setActive(boolean)} (D-14).
  */
 @Entity
-@Table(name = "coupons", schema = "order_svc")
+@Table(name = "coupons")
 public class CouponEntity {
 
   @Id

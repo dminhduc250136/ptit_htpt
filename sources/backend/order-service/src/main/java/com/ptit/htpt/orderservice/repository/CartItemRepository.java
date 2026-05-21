@@ -16,20 +16,19 @@ public interface CartItemRepository extends JpaRepository<CartItemEntity, String
    * Idempotent ADD: INSERT new line, hoac neu (cart_id, product_id) da ton tai
    * thi cong don quantity. Native SQL atomic single-statement -> race-safe.
    *
-   * D-05 (CONTEXT): POST /cart/items semantics = ADD (cong don). Schema-qualified
-   * `order_svc.cart_items` bat buoc trong DO UPDATE clause vi self-reference
-   * (PostgreSQL syntax requirement).
+   * D-05 (CONTEXT): POST /cart/items semantics = ADD (cong don). Phase 24: DB tach
+   * rieng -> bo schema prefix, dung table name truc tiep.
    *
    * Caller PHAI flush + clear EntityManager sau khi upsert neu sau do query lai
    * cart vi native bypass JPA persistence context cache.
    */
   @Modifying
   @Query(value = """
-      INSERT INTO order_svc.cart_items (id, cart_id, product_id, quantity, created_at, updated_at)
+      INSERT INTO cart_items (id, cart_id, product_id, quantity, created_at, updated_at)
       VALUES (:id, :cartId, :productId, :quantity, now(), now())
       ON CONFLICT (cart_id, product_id)
       DO UPDATE SET
-        quantity = order_svc.cart_items.quantity + EXCLUDED.quantity,
+        quantity = cart_items.quantity + EXCLUDED.quantity,
         updated_at = now()
       """, nativeQuery = true)
   int upsertAddQuantity(@Param("id") String id,

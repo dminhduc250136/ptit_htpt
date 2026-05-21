@@ -53,8 +53,8 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 - [x] **Phase 21: Hoàn Thiện Reviews** ✅ 2026-05-02 — Author edit/delete + sort controls + admin moderation (4/4 plans complete)
 - [ ] **Phase 22: AI Chatbot Claude API MVP** — Customer FAQ + product Q&A + recommendation, streaming, history persist
 - [ ] **Phase 23: Message Queue Integration (RabbitMQ)** — Đáp ứng yêu cầu BẮT BUỘC 3.3 của đề chủ đề 4: giao tiếp bất đồng bộ giữa các microservice qua RabbitMQ; luồng OrderPlaced → inventory + notification với retry + DLQ
-- [ ] **Phase 24: Database Per Service (tách CSDL hạ tầng)** — Củng cố yêu cầu 3.4 + tính chịu lỗi độc lập (mục 4): chuyển từ "shared postgres / separate schema" sang "mỗi service một postgres container + credential riêng". Demo được failure isolation (1 DB chết → các service khác vẫn chạy)
-- [ ] **Phase 25: Gateway JWT Edge Authentication (vá lỗ hổng X-User-Id)** — Củng cố yêu cầu 4 (JWT): gateway verify JWT + strip X-User-Id từ client + inject trusted X-User-Id sau khi verify. Bỏ port mapping của các service nội bộ trong docker-compose. Đóng lỗ hổng `orders-cross-user-leak` ở tầng kiến trúc
+- [x] **Phase 24: Database Per Service (tách CSDL hạ tầng)** ✅ 2026-05-21 — Củng cố yêu cầu 3.4 + tính chịu lỗi độc lập (mục 4): chuyển từ "shared postgres / separate schema" sang "mỗi service một postgres container + credential riêng". Demo được failure isolation (1 DB chết → các service khác vẫn chạy). 4/4 plans
+- [x] **Phase 25: Gateway JWT Edge Authentication (vá lỗ hổng X-User-Id)** ✅ 2026-05-21 — Củng cố yêu cầu 4 (JWT): gateway verify JWT + strip X-User-Id từ client + inject trusted X-User-Id sau khi verify. Bỏ port mapping của các service nội bộ trong docker-compose. Đóng lỗ hổng `orders-cross-user-leak` ở tầng kiến trúc. 5/5 plans
 
 ---
 

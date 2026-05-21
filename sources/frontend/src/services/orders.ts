@@ -19,27 +19,11 @@ import { httpGet, httpPost, httpPatch } from './http';
 export type _PathsSurface = _OrdersPaths;
 
 /**
- * Đọc userId từ localStorage (AuthProvider ghi vào sau login).
- * BUG-FIX (orders-cross-user-leak): listMyOrders/getOrderById trước đây không gửi
- * X-User-Id → backend không filter theo user → mọi tài khoản thấy cùng orders.
+ * Phase 25 (gateway JWT edge auth): FE KHÔNG còn tự gửi `X-User-Id`.
+ * API Gateway verify Bearer JWT và inject `X-User-Id` tin cậy từ claim `sub`.
+ * Đây là tầng vá thứ 2 cho lỗ hổng `orders-cross-user-leak` — client không thể
+ * giả mạo userId nữa vì gateway strip mọi header tin cậy do client gửi.
  */
-function getCurrentUserId(): string | null {
-  if (typeof window === 'undefined') return null;
-  try {
-    const raw = window.localStorage.getItem('userProfile');
-    if (!raw) return null;
-    const parsed = JSON.parse(raw) as { id?: string } | null;
-    return parsed?.id ?? null;
-  } catch {
-    return null;
-  }
-}
-
-function _userHeaders(): Record<string, string> | undefined {
-  const userId = getCurrentUserId();
-  return userId ? { 'X-User-Id': userId } : undefined;
-}
-
 export interface ListOrdersParams {
   page?: number;
   size?: number;
@@ -56,20 +40,16 @@ export interface ListOrdersParams {
 }
 
 /**
- * Create an order. Per backend CreateOrderCommand (04-05): userId is derived
- * server-side from the X-User-Id header (Phase 5 will move to JWT-claim
- * verification at the gateway). Each item carries its unitPrice snapshot
- * from the cart so the backend can compute totalAmount.
+ * Tạo đơn hàng. userId được derive server-side từ header `X-User-Id` mà
+ * API Gateway inject từ claim `sub` của JWT (Phase 25 — gateway JWT edge auth).
+ * Mỗi item mang unitPrice snapshot từ cart để backend tính totalAmount.
  *
  * Phase 20 / COUP-03: body có thể có optional couponCode — BE atomic redeem
  * trong cùng transaction (Plan 20-03). Nếu BE atomic fail → throw ApiError
  * với code = COUPON_* (xem couponErrorMessages.ts).
  */
-export function createOrder(body: CreateOrderRequest, userId?: string): Promise<Order> {
-  const headers: Record<string, string> = {};
-  const effectiveUserId = userId ?? getCurrentUserId() ?? undefined;
-  if (effectiveUserId) headers['X-User-Id'] = effectiveUserId;
-  return httpPost<Order>(`/api/orders`, body, headers);
+export function createOrder(body: CreateOrderRequest): Promise<Order> {
+  return httpPost<Order>(`/api/orders`, body);
 }
 
 export function listMyOrders(params?: ListOrdersParams): Promise<PaginatedResponse<Order>> {
@@ -83,11 +63,11 @@ export function listMyOrders(params?: ListOrdersParams): Promise<PaginatedRespon
   if (params?.to)    qs.set('to',   params.to);
   if (params?.q)     qs.set('q',    params.q);
   const suffix = qs.toString() ? `?${qs}` : '';
-  return httpGet<PaginatedResponse<Order>>(`/api/orders${suffix}`, _userHeaders());
+  return httpGet<PaginatedResponse<Order>>(`/api/orders${suffix}`);
 }
 
 export function getOrderById(id: string): Promise<Order> {
-  return httpGet<Order>(`/api/orders/${encodeURIComponent(id)}`, _userHeaders());
+  return httpGet<Order>(`/api/orders/${encodeURIComponent(id)}`);
 }
 
 // Admin order functions — gateway: /api/orders/admin → /admin/orders

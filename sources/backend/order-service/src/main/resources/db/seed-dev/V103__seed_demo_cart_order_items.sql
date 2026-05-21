@@ -10,11 +10,11 @@
 -- Idempotent: ON CONFLICT DO NOTHING để re-run không lỗi.
 
 -- ── 1. Giỏ hàng cho user demo ──────────────────────────────────────
-INSERT INTO order_svc.carts (id, user_id, created_at, updated_at)
+INSERT INTO carts (id, user_id, created_at, updated_at)
 VALUES ('cart-demo-001', '00000000-0000-0000-0000-000000000002', NOW(), NOW())
 ON CONFLICT (user_id) DO NOTHING;
 
-INSERT INTO order_svc.cart_items (id, cart_id, product_id, quantity, created_at, updated_at)
+INSERT INTO cart_items (id, cart_id, product_id, quantity, created_at, updated_at)
 VALUES
   ('citem-demo-001', 'cart-demo-001', 'prod-pho-001', 1, NOW(), NOW()),
   ('citem-demo-002', 'cart-demo-001', 'prod-lap-001', 2, NOW(), NOW())
@@ -22,7 +22,7 @@ ON CONFLICT (cart_id, product_id) DO NOTHING;
 
 -- ── 2. order_items cho 2 đơn demo có sẵn ───────────────────────────
 -- Đơn ord-demo-001 (DELIVERED, total 8.489.000) — dùng cho ORD-04 + reviews verified-buyer
-INSERT INTO order_svc.order_items (id, order_id, product_id, product_name, quantity, unit_price, line_total)
+INSERT INTO order_items (id, order_id, product_id, product_name, quantity, unit_price, line_total)
 VALUES
   ('oitem-demo-001', 'ord-demo-001', 'prod-pho-001', 'Apple iPhone 15 Pro Max 256GB', 1, 34990000.00, 34990000.00),
   ('oitem-demo-002', 'ord-demo-002', 'prod-lap-001', 'Apple MacBook Pro 16 M3 Max 1TB', 1, 58990000.00, 58990000.00)

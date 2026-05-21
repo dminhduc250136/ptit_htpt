@@ -19,9 +19,9 @@ import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.type.SqlTypes;
 
 @Entity
-@Table(name = "orders", schema = "order_svc")
+@Table(name = "orders")
 @SQLRestriction("deleted = false")
-@SQLDelete(sql = "UPDATE order_svc.orders SET deleted = true, updated_at = NOW() WHERE id = ?")
+@SQLDelete(sql = "UPDATE orders SET deleted = true, updated_at = NOW() WHERE id = ?")
 public class OrderEntity {
 
   @Id

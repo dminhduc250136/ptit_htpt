@@ -9,7 +9,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 @Entity
-@Table(name = "reviews", schema = "product_svc")
+@Table(name = "reviews")
 public class ReviewEntity {
 
   @Id

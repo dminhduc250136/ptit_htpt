@@ -9,14 +9,14 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * JPA entity cho inventory_svc.inventory_items. Renamed từ record cũ {@code InventoryItem}
+ * JPA entity cho bảng inventory_items. Renamed từ record cũ {@code InventoryItem}
  * theo PATTERNS.md cross-cutting note #1 (symmetry với UserEntity/ProductEntity).
  *
  * <p>Phase 5 scope-cut: KHÔNG có soft-delete (record cũ có cờ {@code deleted} nhưng plan V1 DDL
  * loại bỏ vì inventory không cần audit ẩn). Phase 8 sẽ thêm reservation flow + stock decrement.
  */
 @Entity
-@Table(name = "inventory_items", schema = "inventory_svc")
+@Table(name = "inventory_items")
 public class InventoryEntity {
 
   @Id

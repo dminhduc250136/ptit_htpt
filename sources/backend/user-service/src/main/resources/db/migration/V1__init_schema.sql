@@ -1,6 +1,6 @@
 -- Phase 5 / Plan 04 (DB-02): user-service initial schema.
--- Schema `user_svc` đã được pre-created bởi db/init/01-schemas.sql (Plan 02).
-CREATE TABLE user_svc.users (
+-- Phase 24: DB tách riêng — không dùng schema prefix nữa.
+CREATE TABLE users (
   id VARCHAR(36) PRIMARY KEY,
   username VARCHAR(80) NOT NULL,
   email VARCHAR(200) NOT NULL,

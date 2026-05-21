@@ -24,7 +24,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Inventory CRUD service — JPA-backed, schema {@code inventory_svc}.
+ * Inventory CRUD service — JPA-backed.
  *
  * <p>Phase 5 scope-cut: reservation flow removed (record cũ có {@link
  * com.ptit.htpt.inventoryservice.domain InventoryReservation} + reservation paths trong

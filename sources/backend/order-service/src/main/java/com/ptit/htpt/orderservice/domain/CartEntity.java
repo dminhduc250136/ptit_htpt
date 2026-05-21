@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "carts", schema = "order_svc")
+@Table(name = "carts")
 public class CartEntity {
   @Id @Column(length = 36, nullable = false, updatable = false) private String id;
   @Column(name = "user_id", length = 36, nullable = false, unique = true) private String userId;

@@ -11,7 +11,7 @@ import java.time.Instant;
  * Insert bằng native ON CONFLICT DO NOTHING (xem {@link com.ptit.htpt.inventoryservice.repository.ProcessedEventRepository}).
  */
 @Entity
-@Table(name = "processed_events", schema = "inventory_svc")
+@Table(name = "processed_events")
 public class ProcessedEventEntity {
 
   @Id

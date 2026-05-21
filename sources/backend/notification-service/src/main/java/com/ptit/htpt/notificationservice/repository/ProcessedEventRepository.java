@@ -19,7 +19,7 @@ public interface ProcessedEventRepository extends JpaRepository<ProcessedEventEn
 
   @Modifying
   @Transactional
-  @Query(value = "INSERT INTO notification_svc.processed_events(event_id, event_type) "
+  @Query(value = "INSERT INTO processed_events(event_id, event_type) "
                + "VALUES (:id, :type) ON CONFLICT (event_id) DO NOTHING",
          nativeQuery = true)
   int insertNative(@Param("id") String eventId, @Param("type") String eventType);

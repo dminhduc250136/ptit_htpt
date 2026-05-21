@@ -13,7 +13,7 @@ import java.time.Instant;
  * quantityChange âm khi trừ kho (order.placed); dương khi nhập kho (chưa hiện thực hoá ở Phase 23).
  */
 @Entity
-@Table(name = "stock_ledger", schema = "inventory_svc")
+@Table(name = "stock_ledger")
 public class StockLedgerEntity {
 
   @Id

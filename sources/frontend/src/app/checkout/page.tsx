@@ -114,7 +114,7 @@ export default function CheckoutPage() {
   // === COUPON STATE (D-17, D-18) ===
   const [couponInput, setCouponInput] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState<CouponPreview | null>(null);
-  const applyCouponMutation = useApplyCoupon(user?.id);
+  const applyCouponMutation = useApplyCoupon();
 
   const handleApplyCoupon = async () => {
     const code = couponInput.trim().toUpperCase();
@@ -147,7 +147,7 @@ export default function CheckoutPage() {
   useEffect(() => {
     if (!appliedCoupon || cartItems.length === 0) return;
     let alive = true;
-    validateCoupon({ code: appliedCoupon.code, cartTotal: subtotal }, user?.id)
+    validateCoupon({ code: appliedCoupon.code, cartTotal: subtotal })
       .then((preview) => {
         if (!alive) return;
         setAppliedCoupon(preview);
@@ -184,7 +184,7 @@ export default function CheckoutPage() {
         paymentMethod: form.paymentMethod,
         note: form.note || undefined,
         couponCode: appliedCoupon?.code,   // D-19: undefined nếu chưa apply coupon
-      }, user?.id);                     // Phase 4-06: userId → X-User-Id header (Phase 5: JWT-claim derivation)
+      });                                // Phase 25: userId derive từ JWT claim ở gateway, FE không truyền
 
       // Phase 18: clear cart qua mutation (cả guest localStorage + user DB)
       try {

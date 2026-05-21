@@ -2,7 +2,7 @@
 -- Tạo bảng order_items, thêm shipping_address + payment_method vào orders.
 
 -- Bảng order_items: per-item breakdown (D-06)
-CREATE TABLE IF NOT EXISTS order_svc.order_items (
+CREATE TABLE IF NOT EXISTS order_items (
   id            VARCHAR(36)    PRIMARY KEY,
   order_id      VARCHAR(36)    NOT NULL,
   product_id    VARCHAR(36)    NOT NULL,
@@ -12,8 +12,8 @@ CREATE TABLE IF NOT EXISTS order_svc.order_items (
   line_total    DECIMAL(12,2)  NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_svc.order_items(order_id);
+CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
 
 -- Mở rộng orders table: shipping_address JSONB (D-08) + payment_method VARCHAR (D-09)
-ALTER TABLE order_svc.orders ADD COLUMN IF NOT EXISTS shipping_address JSONB;
-ALTER TABLE order_svc.orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30);
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_address JSONB;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30);

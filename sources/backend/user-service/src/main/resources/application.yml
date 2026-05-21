@@ -2,22 +2,22 @@ spring:
   application:
     name: user-service
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:tmdt}?currentSchema=user_svc
-    username: ${DB_USER:tmdt}
-    password: ${DB_PASSWORD:tmdt}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:user_svc}
+    username: ${DB_USER:user_svc}
+    password: ${DB_PASSWORD:user_svc_pw}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      # Phase 24: cho phép start khi DB chưa healthy (lazy connection) — D-15
+      initialization-fail-timeout: -1
   jpa:
     hibernate:
       ddl-auto: validate
     properties:
       hibernate:
-        default_schema: user_svc
         format_sql: true
     open-in-view: false
   flyway:
     enabled: true
-    schemas: user_svc
-    default-schema: user_svc
     baseline-on-migrate: false
     locations: classpath:db/migration
 

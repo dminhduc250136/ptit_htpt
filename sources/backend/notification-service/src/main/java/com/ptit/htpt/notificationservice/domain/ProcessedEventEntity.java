@@ -11,7 +11,7 @@ import java.time.Instant;
  * PK event_id đảm bảo INSERT ... ON CONFLICT DO NOTHING atomic — duplicate sẽ bị bỏ qua.
  */
 @Entity
-@Table(name = "processed_events", schema = "notification_svc")
+@Table(name = "processed_events")
 public class ProcessedEventEntity {
 
   @Id

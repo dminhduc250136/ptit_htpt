@@ -12,9 +12,9 @@ import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
 @Entity
-@Table(name = "payments", schema = "payment_svc")
+@Table(name = "payments")
 @SQLRestriction("deleted = false")
-@SQLDelete(sql = "UPDATE payment_svc.payments SET deleted = true, updated_at = NOW() WHERE id = ?")
+@SQLDelete(sql = "UPDATE payments SET deleted = true, updated_at = NOW() WHERE id = ?")
 public class PaymentTransactionEntity {
 
   @Id
