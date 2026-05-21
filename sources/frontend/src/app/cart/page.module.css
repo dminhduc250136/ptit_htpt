@@ -68,15 +68,46 @@
 
 .cartItem {
   display: flex;
+  align-items: center;
   gap: var(--space-4);
   padding: var(--space-4);
   background: var(--surface-container-lowest);
+  border: 1px solid transparent;
   border-radius: var(--radius-xl);
-  transition: background-color var(--transition-fast);
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
 }
 
 .cartItem:hover {
   background: var(--surface-container-low);
+}
+
+/* Mục đang được chọn — viền nhấn để dễ phân biệt */
+.cartItemSelected {
+  border-color: var(--primary);
+}
+
+/* Checkbox chọn mục / chọn tất cả */
+.checkbox {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+/* Thanh "Chọn tất cả" trên đầu danh sách */
+.selectAllBar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-container-lowest);
+  border-radius: var(--radius-lg);
+  font-size: var(--text-body-md);
+  font-weight: var(--weight-medium);
+  color: var(--on-surface);
+  cursor: pointer;
+  user-select: none;
 }
 
 .itemImage {

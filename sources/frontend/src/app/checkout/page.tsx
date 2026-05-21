@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button/Button';
 import Input from '@/components/ui/Input/Input';
@@ -34,18 +34,35 @@ interface StockConflictItem {
   requestedQuantity: number;
 }
 
-export default function CheckoutPage() {
+function CheckoutPageContent() {
   const { showToast } = useToast();
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Phase 18: fetch cart async qua React Query (cả guest localStorage + user DB)
-  const { data: cartItems = [], isLoading: cartLoading } = useCart();
+  const { data: allCartItems = [], isLoading: cartLoading } = useCart();
   const updateMutation = useUpdateCartItem();
   const removeMutation = useRemoveCartItem();
   const clearMutation = useClearCart();
 
   const hydrated = !cartLoading;
+
+  // Các sản phẩm cần thanh toán = mục được chọn ở trang giỏ hàng (?items=id1,id2).
+  // Nếu không có param (vào /checkout trực tiếp) → thanh toán toàn bộ giỏ.
+  const selectedProductIds = useMemo(() => {
+    const raw = searchParams.get('items');
+    if (!raw) return null; // null = thanh toán tất cả
+    return new Set(raw.split(',').filter(Boolean));
+  }, [searchParams]);
+
+  const cartItems = useMemo(
+    () =>
+      selectedProductIds
+        ? allCartItems.filter((i) => selectedProductIds.has(i.productId))
+        : allCartItems,
+    [allCartItems, selectedProductIds]
+  );
 
   const [form, setForm] = useState({
     fullName: '',
@@ -186,11 +203,19 @@ export default function CheckoutPage() {
         couponCode: appliedCoupon?.code,   // D-19: undefined nếu chưa apply coupon
       });                                // Phase 25: userId derive từ JWT claim ở gateway, FE không truyền
 
-      // Phase 18: clear cart qua mutation (cả guest localStorage + user DB)
+      // Dọn giỏ hàng sau khi đặt thành công:
+      // - Thanh toán TẤT CẢ (không có ?items=) → clear toàn bộ giỏ.
+      // - Thanh toán MỘT PHẦN → chỉ xóa các mục vừa đặt, giữ lại phần còn lại.
       try {
-        await clearMutation.mutateAsync();
+        if (selectedProductIds) {
+          await Promise.all(
+            cartItems.map((i) => removeMutation.mutateAsync(i.productId))
+          );
+        } else {
+          await clearMutation.mutateAsync();
+        }
       } catch (clearErr) {
-        console.error('[checkout] cart clear failed (non-blocking):', clearErr);
+        console.error('[checkout] cart cleanup failed (non-blocking):', clearErr);
       }
       router.push('/profile/orders/' + order.id);
     } catch (err) {
@@ -499,5 +524,14 @@ export default function CheckoutPage() {
         Giao dịch không thành công. Bạn có thể thử lại hoặc chọn phương thức thanh toán khác.
       </Modal>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  // useSearchParams cần bọc Suspense (Next.js App Router).
+  return (
+    <Suspense fallback={<div className={styles.page} />}>
+      <CheckoutPageContent />
+    </Suspense>
   );
 }
