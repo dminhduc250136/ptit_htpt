@@ -17,10 +17,12 @@ type SortOption = 'newest' | 'price_asc' | 'price_desc' | 'popular' | 'rating';
 function ProductsPageContent() {
   const searchParams = useSearchParams();
   const initialCategorySlug = searchParams.get('category');
+  // Từ khóa tìm kiếm đến từ Header (?keyword=...) — khởi tạo state từ URL.
+  const initialKeyword = searchParams.get('keyword') ?? '';
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialKeyword);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [filterBrands, setFilterBrands] = useState<string[]>([]);
   const [filterPriceMin, setFilterPriceMin] = useState<number | undefined>(undefined);
@@ -38,6 +40,12 @@ function ProductsPageContent() {
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [totalElements, setTotalElements] = useState(0);
+
+  // Đồng bộ khi user search lại từ Header trong lúc đang Ở trang /products:
+  // router.push đổi ?keyword=... nhưng component không remount → cập nhật state thủ công.
+  useEffect(() => {
+    setSearchQuery(searchParams.get('keyword') ?? '');
+  }, [searchParams]);
 
   // Load categories once (best-effort; failure here does NOT block the grid).
   useEffect(() => {
