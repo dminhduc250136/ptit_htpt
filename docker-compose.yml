@@ -94,10 +94,14 @@ services:
   # ---------------------------------------------------------------------------
   # Application services
   # ---------------------------------------------------------------------------
+  # Phase 25: api-gateway là DUY NHẤT backend service expose port ra host.
+  # Gateway verify JWT ở edge — cần JWT_SECRET trùng user-service.
   api-gateway:
     build: ./sources/backend/api-gateway
     ports:
       - "8080:8080"
+    environment:
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-key-minimum-32-characters-for-hs256-ok}
     depends_on:
       - user-service
       - product-service
@@ -106,6 +110,8 @@ services:
       - inventory-service
       - notification-service
 
+  # Phase 25: user-service issue JWT, api-gateway verify — phải chung JWT_SECRET.
+  # Bỏ port mapping: chỉ truy cập được qua api-gateway (không expose ra host).
   user-service:
     build: ./sources/backend/user-service
     depends_on:
@@ -118,8 +124,7 @@ services:
       DB_NAME: user_svc
       DB_USER: user_svc
       DB_PASSWORD: user_svc_pw
-    ports:
-      - "8081:8080"
+      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-key-minimum-32-characters-for-hs256-ok}
 
   product-service:
     build: ./sources/backend/product-service
@@ -133,8 +138,6 @@ services:
       DB_NAME: product_svc
       DB_USER: product_svc
       DB_PASSWORD: product_svc_pw
-    ports:
-      - "8082:8080"
 
   order-service:
     build: ./sources/backend/order-service
@@ -148,8 +151,6 @@ services:
       DB_NAME: order_svc
       DB_USER: order_svc
       DB_PASSWORD: order_svc_pw
-    ports:
-      - "8083:8080"
 
   payment-service:
     build: ./sources/backend/payment-service
@@ -163,8 +164,6 @@ services:
       DB_NAME: payment_svc
       DB_USER: payment_svc
       DB_PASSWORD: payment_svc_pw
-    ports:
-      - "8084:8080"
 
   inventory-service:
     build: ./sources/backend/inventory-service
@@ -178,13 +177,9 @@ services:
       DB_NAME: inventory_svc
       DB_USER: inventory_svc
       DB_PASSWORD: inventory_svc_pw
-    ports:
-      - "8085:8080"
 
   notification-service:
     build: ./sources/backend/notification-service
-    ports:
-      - "8086:8080"
 
   frontend:
     build: ./sources/frontend

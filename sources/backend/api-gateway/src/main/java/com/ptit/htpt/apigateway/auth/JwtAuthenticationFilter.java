@@ -1,10 +1,6 @@
 package com.ptit.htpt.apigateway.auth;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ptit.htpt.apigateway.auth.JwtVerifier.VerifiedClaims;
-import com.ptit.htpt.apigateway.gateway.ApiErrorResponse;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
@@ -12,9 +8,7 @@ import org.springframework.core.Ordered;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.server.reactive.ServerHttpRequest;
-import org.springframework.http.server.reactive.ServerHttpResponse;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.server.ServerWebExchange;
@@ -47,14 +41,14 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
 
   private final JwtVerifier verifier;
   private final AuthProperties props;
-  private final ObjectMapper objectMapper;
+  private final AuthErrorResponseWriter errorWriter;
   private final AntPathMatcher matcher = new AntPathMatcher();
 
   public JwtAuthenticationFilter(
-      JwtVerifier verifier, AuthProperties props, ObjectMapper objectMapper) {
+      JwtVerifier verifier, AuthProperties props, AuthErrorResponseWriter errorWriter) {
     this.verifier = verifier;
     this.props = props;
-    this.objectMapper = objectMapper;
+    this.errorWriter = errorWriter;
   }
 
   @Override
@@ -141,35 +135,9 @@ public class JwtAuthenticationFilter implements GlobalFilter, Ordered {
     return false;
   }
 
-  /**
-   * Ghi response lỗi auth theo contract {@link ApiErrorResponse} chuẩn của gateway.
-   * Reuse pattern từ {@code GlobalGatewayErrorHandler}.
-   */
+  /** Reject request: delegate sang {@link AuthErrorResponseWriter}. */
   private Mono<Void> reject(
       ServerWebExchange exchange, HttpStatus status, String code, String message) {
-    ServerHttpResponse response = exchange.getResponse();
-    String traceId = exchange.getRequest().getHeaders().getFirst("X-Request-Id");
-    String path = exchange.getRequest().getURI().getPath();
-
-    ApiErrorResponse body =
-        ApiErrorResponse.of(
-            status.value(),
-            status.getReasonPhrase(),
-            message,
-            code,
-            path,
-            traceId,
-            List.of());
-
-    byte[] json;
-    try {
-      json = objectMapper.writeValueAsBytes(body);
-    } catch (JsonProcessingException e) {
-      json = "{\"message\":\"Auth error\"}".getBytes(StandardCharsets.UTF_8);
-    }
-
-    response.setStatusCode(status);
-    response.getHeaders().setContentType(MediaType.APPLICATION_JSON);
-    return response.writeWith(Mono.just(response.bufferFactory().wrap(json)));
+    return errorWriter.write(exchange, status, code, message);
   }
 }
