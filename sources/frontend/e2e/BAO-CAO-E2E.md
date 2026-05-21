@@ -38,10 +38,16 @@
 | 08 — Quản trị | `08-admin.spec.ts` | 14/14 | Dashboard, CRUD sản phẩm/đơn/người dùng/coupon, kiểm duyệt review |
 | 09 — Trợ lý AI | `09-chatbot.spec.ts` | 6/6 | Chat khách hàng, AI suggest reply, edge cases |
 | 10 — Hành trình E2E | `10-journey.spec.ts` | 2/2 | Luồng mua hàng + luồng quản trị đầu-cuối |
+| 11 — Message Queue | `11-message-queue.spec.ts` | 6 (*) | Topology RabbitMQ, consumer gắn queue, đặt hàng → message drain, DLQ |
 | Seed catalog | `seed-catalog.spec.ts` | 8/8 | Verify dữ liệu seed catalog |
-| **TỔNG** | **11 file** | **77/77** | |
+| **TỔNG** | **12 file** | **77/77 + 6 (*)** | |
 
----
+> (*) Module 11 (Phase 23 — Message Queue) là spec mới thêm sau ngày chạy 2026-05-19.
+> Kiểm chứng luồng RabbitMQ black-box qua Management HTTP API (port 15672) song song
+> thao tác UI đặt hàng. Cần `docker compose up` đủ FE + 7 service + RabbitMQ; mỗi test
+> có Strategy A skip khi broker chưa lên. Chạy lại bộ E2E để cập nhật con số tổng.
+
+---k
 
 ## 3. Chi tiết toàn bộ 77 test ĐẠT
 
