@@ -1,4 +1,4 @@
--- V2: Add messaging tables cho Phase 23 (D-06 idempotency + D-10 stock ledger).
+-- V3: Add messaging tables cho Phase 23 (D-06 idempotency + D-10 stock ledger).
 -- Bảng processed_events đóng vai trò idempotency key store cho consumer OrderPlacedListener:
 -- INSERT ... ON CONFLICT (event_id) DO NOTHING đảm bảo duplicate eventId chỉ trừ kho 1 lần.
 -- Bảng stock_ledger ghi audit từng lần đổi quantity (per-item, per-eventId).
