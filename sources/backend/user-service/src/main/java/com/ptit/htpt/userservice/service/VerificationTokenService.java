@@ -2,13 +2,13 @@ package com.ptit.htpt.userservice.service;
 
 import com.ptit.htpt.userservice.domain.VerificationTokenEntity;
 import com.ptit.htpt.userservice.repository.VerificationTokenRepository;
-import jakarta.transaction.Transactional;
 import java.security.SecureRandom;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 /**

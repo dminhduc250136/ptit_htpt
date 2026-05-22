@@ -62,7 +62,7 @@ public enum MailTemplate {
                       </table>
                     </body>
                     </html>
-                    """.formatted(vars.get("fullName"), vars.get("verifyUrl"));
+                    """.formatted(esc(vars, "fullName"), esc(vars, "verifyUrl"));
         }
     },
 
@@ -109,7 +109,7 @@ public enum MailTemplate {
                       </table>
                     </body>
                     </html>
-                    """.formatted(vars.get("fullName"), vars.get("resetUrl"));
+                    """.formatted(esc(vars, "fullName"), esc(vars, "resetUrl"));
         }
     },
 
@@ -175,7 +175,7 @@ public enum MailTemplate {
                       </table>
                     </body>
                     </html>
-                    """.formatted(vars.get("orderId"), vars.get("itemCount"), vars.get("totalAmount"), vars.get("currency"));
+                    """.formatted(esc(vars, "orderId"), esc(vars, "itemCount"), esc(vars, "totalAmount"), esc(vars, "currency"));
         }
     },
 
@@ -215,7 +215,7 @@ public enum MailTemplate {
                       </table>
                     </body>
                     </html>
-                    """.formatted(vars.get("orderId"));
+                    """.formatted(esc(vars, "orderId"));
         }
     },
 
@@ -255,7 +255,7 @@ public enum MailTemplate {
                       </table>
                     </body>
                     </html>
-                    """.formatted(vars.get("orderId"));
+                    """.formatted(esc(vars, "orderId"));
         }
     },
 
@@ -295,11 +295,29 @@ public enum MailTemplate {
                       </table>
                     </body>
                     </html>
-                    """.formatted(vars.get("orderId"));
+                    """.formatted(esc(vars, "orderId"));
         }
     };
 
     public abstract String subject();
 
     public abstract String render(Map<String, String> vars);
+
+    /**
+     * CR-01: HTML-escape giá trị user-supplied trước khi chèn vào template.
+     * Chống HTML/script injection khi fullName (hoặc field khác) chứa ký tự đặc biệt.
+     * Trả "" nếu key không tồn tại — tránh in chuỗi "null" vào email.
+     */
+    protected static String esc(Map<String, String> vars, String key) {
+        String value = vars.get(key);
+        if (value == null) {
+            return "";
+        }
+        return value
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
+    }
 }
