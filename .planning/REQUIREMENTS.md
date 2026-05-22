@@ -110,10 +110,13 @@
 
 ### MAIL — Real Email Delivery (SMTP)
 
-- [ ] **MAIL-01** — Cấu hình SMTP qua biến môi trường: host, port, username, password/app-password, from-address đọc hoàn toàn từ env (KHÔNG hardcode credential trong source). Thiếu env → service vẫn khởi động được và log cảnh báo (graceful degradation, không crash). SMTP Gmail (App Password) — account do user cấp qua env.
+- [x] **MAIL-01
+** — Cấu hình SMTP qua biến môi trường: host, port, username, password/app-password, from-address đọc hoàn toàn từ env (KHÔNG hardcode credential trong source). Thiếu env → service vẫn khởi động được và log cảnh báo (graceful degradation, không crash). SMTP Gmail (App Password) — account do user cấp qua env.
 - [ ] **MAIL-02** — Email xác thực tài khoản: đăng ký tài khoản mới → gửi email xác minh tới hộp thư thật, link/token xác minh → tài khoản chuyển trạng thái verified. Yêu cầu reset mật khẩu → gửi email chứa link/token reset. Gắn vào user-service/auth flow.
-- [ ] **MAIL-03** — Email xác nhận đơn hàng: khi đặt hàng thành công, notification-service consume event `OrderPlaced` (từ RabbitMQ Phase 23) → gửi email xác nhận (mã đơn, danh sách sản phẩm, tổng tiền) tới email khách. Render bằng template tiếng Việt.
-- [ ] **MAIL-04** — Email cập nhật trạng thái đơn: khi trạng thái đơn thay đổi (shipped / delivered / cancelled) → gửi email cập nhật tương ứng tới khách. Gửi bất đồng bộ (không chặn request chính).
+- [x] **MAIL-03
+** — Email xác nhận đơn hàng: khi đặt hàng thành công, notification-service consume event `OrderPlaced` (từ RabbitMQ Phase 23) → gửi email xác nhận (mã đơn, danh sách sản phẩm, tổng tiền) tới email khách. Render bằng template tiếng Việt.
+- [x] **MAIL-04
+** — Email cập nhật trạng thái đơn: khi trạng thái đơn thay đổi (shipped / delivered / cancelled) → gửi email cập nhật tương ứng tới khách. Gửi bất đồng bộ (không chặn request chính).
 
 ---
 
