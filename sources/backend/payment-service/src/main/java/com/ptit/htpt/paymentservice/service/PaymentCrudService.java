@@ -4,6 +4,7 @@ import com.ptit.htpt.paymentservice.domain.PaymentSessionEntity;
 import com.ptit.htpt.paymentservice.domain.PaymentTransactionEntity;
 import com.ptit.htpt.paymentservice.repository.PaymentSessionRepository;
 import com.ptit.htpt.paymentservice.repository.PaymentTransactionRepository;
+import com.ptit.htpt.paymentservice.vnpay.VNPaySignature;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;
@@ -20,10 +21,14 @@ import org.springframework.web.server.ResponseStatusException;
 public class PaymentCrudService {
   private final PaymentSessionRepository sessionRepo;
   private final PaymentTransactionRepository transactionRepo;
+  private final VNPaySignature vnPaySignature;
 
-  public PaymentCrudService(PaymentSessionRepository sessionRepo, PaymentTransactionRepository transactionRepo) {
+  public PaymentCrudService(PaymentSessionRepository sessionRepo,
+                             PaymentTransactionRepository transactionRepo,
+                             VNPaySignature vnPaySignature) {
     this.sessionRepo = sessionRepo;
     this.transactionRepo = transactionRepo;
+    this.vnPaySignature = vnPaySignature;
   }
 
   public Map<String, Object> listSessions(int page, int size, String sort, boolean includeDeleted) {
@@ -40,19 +45,40 @@ public class PaymentCrudService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment session not found"));
   }
 
-  public PaymentSessionEntity createSession(SessionUpsertRequest request) {
+  /**
+   * Tạo payment session. Nếu provider=VNPAY, build paymentUrl và trả về SessionCreateResult.
+   * vnp_TxnRef = sessionId (UUID mới mỗi session — cho phép retry, RESEARCH §Pitfall 6).
+   * orderInfo chứa mã đơn để hiển thị trên cổng VNPay.
+   */
+  public SessionCreateResult createSession(SessionUpsertRequest request) {
+    // Status mặc định PENDING nếu không truyền
+    String status = request.status() != null && !request.status().isBlank() ? request.status() : "PENDING";
     PaymentSessionEntity session = PaymentSessionEntity.create(
         request.orderId(),
         request.provider(),
         request.amount(),
-        request.status()
+        status
     );
-    return sessionRepo.save(session);
+    PaymentSessionEntity saved = sessionRepo.save(session);
+
+    String paymentUrl = null;
+    if ("VNPAY".equalsIgnoreCase(request.provider())) {
+      // vnp_TxnRef = sessionId, amountVnd = amount (VND), clientIp = "127.0.0.1" fallback
+      long amountVnd = saved.amount().longValue();
+      String orderInfo = "Thanh toan don " + saved.orderId();
+      String clientIp = request.clientIp() != null ? request.clientIp() : "127.0.0.1";
+      paymentUrl = vnPaySignature.buildPaymentUrl(saved.id(), amountVnd, orderInfo, clientIp);
+    }
+    return new SessionCreateResult(saved, paymentUrl);
   }
+
+  /** DTO kết quả tạo session — paymentUrl chỉ non-null khi provider=VNPAY. */
+  public record SessionCreateResult(PaymentSessionEntity session, String paymentUrl) {}
 
   public PaymentSessionEntity updateSession(String id, SessionUpsertRequest request) {
     PaymentSessionEntity current = getSession(id, true);
-    current.update(request.orderId(), request.provider(), request.amount(), request.status());
+    String status = request.status() != null && !request.status().isBlank() ? request.status() : current.status();
+    current.update(request.orderId(), request.provider(), request.amount(), status);
     return sessionRepo.save(current);
   }
 
@@ -156,7 +182,8 @@ public class PaymentCrudService {
       @NotBlank String orderId,
       @NotBlank String provider,
       @DecimalMin("0.0") BigDecimal amount,
-      @NotBlank String status
+      String status,  // nullable — default PENDING
+      String clientIp // nullable — IP khách để truyền vào vnp_IpAddr
   ) {}
 
   public record SessionStatusRequest(@NotBlank String status) {}

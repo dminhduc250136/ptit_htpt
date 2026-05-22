@@ -1,0 +1,42 @@
+# Phase 26: payment-service test config cho Testcontainers
+# Pattern copy từ order-service (analog) — @ServiceConnection override datasource/rabbitmq tự động.
+spring:
+  datasource:
+    # @ServiceConnection sẽ override url/username/password bằng Testcontainers Postgres
+    # Giữ placeholder để Spring không fail khi chạy test không có @ServiceConnection
+    url: jdbc:postgresql://localhost:5432/payment_svc
+    username: payment_svc
+    password: payment_svc_pw
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: false
+    locations: classpath:db/migration
+  rabbitmq:
+    # @ServiceConnection sẽ override host/port bằng Testcontainers RabbitMQ
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 1000ms
+          max-interval: 10000ms
+          multiplier: 2.0
+          max-attempts: 3
+
+# VNPay config cố định cho test — KHÔNG dùng real credentials
+vnpay:
+  tmn-code: TESTCODE
+  hash-secret: SANDBOXSECRETKEY
+  pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+  return-url: http://localhost:3000/checkout/result
+  ipn-url:

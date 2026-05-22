@@ -36,6 +36,15 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
+spring:
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: 5672
+    username: ${SPRING_RABBITMQ_USER:guest}
+    password: ${SPRING_RABBITMQ_PASS:guest}
+    publisher-confirm-type: correlated
+    publisher-returns: true
+
 vnpay:
   tmn-code: ${VNP_TMN_CODE:}
   hash-secret: ${VNP_HASH_SECRET:}

@@ -43,8 +43,21 @@ public class PaymentController {
 
   @PostMapping("/sessions")
   @ResponseStatus(HttpStatus.CREATED)
-  public ApiResponse<Object> createSession(@Valid @RequestBody SessionUpsertRequest request) {
-    return ApiResponse.of(201, "Payment session created", paymentCrudService.createSession(request));
+  public ApiResponse<Object> createSession(@Valid @RequestBody SessionUpsertRequest request,
+                                            jakarta.servlet.http.HttpServletRequest httpRequest) {
+    // Lấy client IP để truyền vào vnp_IpAddr nếu không được truyền trong request body
+    if (request.clientIp() == null) {
+      String remoteAddr = httpRequest.getRemoteAddr();
+      // Tạo request mới với clientIp nếu chưa có
+      request = new SessionUpsertRequest(
+          request.orderId(), request.provider(), request.amount(), request.status(), remoteAddr);
+    }
+    PaymentCrudService.SessionCreateResult result = paymentCrudService.createSession(request);
+    // Trả về session + paymentUrl (paymentUrl null cho non-VNPAY)
+    java.util.Map<String, Object> body = new java.util.LinkedHashMap<>();
+    body.put("session", result.session());
+    body.put("paymentUrl", result.paymentUrl());
+    return ApiResponse.of(201, "Payment session created", body);
   }
 
   @PutMapping("/sessions/{id}")

@@ -200,6 +200,8 @@ services:
     depends_on:
       postgres-payment:
         condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: dev
       DB_HOST: postgres-payment
@@ -207,6 +209,16 @@ services:
       DB_NAME: payment_svc
       DB_USER: payment_svc
       DB_PASSWORD: payment_svc_pw
+      # Phase 26: RabbitMQ — payment-service là producer payment.events
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USER: guest
+      SPRING_RABBITMQ_PASS: guest
+      # Phase 26: VNPay sandbox credentials — user cần đăng ký tại sandbox.vnpayment.vn
+      VNP_TMN_CODE: ${VNP_TMN_CODE}
+      VNP_HASH_SECRET: ${VNP_HASH_SECRET}
+      VNP_PAY_URL: ${VNP_PAY_URL:-https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+      VNP_RETURN_URL: ${VNP_RETURN_URL:-http://localhost:3000/checkout/result}
+      VNP_IPN_URL: ${VNP_IPN_URL:-}
 
   inventory-service:
     build: ./sources/backend/inventory-service
