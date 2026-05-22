@@ -39,7 +39,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class OrderPlacedNotifyListener {
   private static final Logger log = LoggerFactory.getLogger(OrderPlacedNotifyListener.class);
   private static final String QUEUE = "notification.order-events";
-  private static final String EVENT_TYPE = "OrderPlaced";
 
   private final ProcessedEventRepository processedEventRepository;
   private final NotificationDispatchService notificationDispatchService;
@@ -60,7 +59,8 @@ public class OrderPlacedNotifyListener {
       log.info("[MQ-CONSUME] queue={} eventId={} status=received", QUEUE, eventId);
 
       // D-06 + Pitfall 8: INSERT processed_events ĐẦU TIÊN trong cùng transaction.
-      boolean inserted = processedEventRepository.insertIfAbsent(eventId, EVENT_TYPE);
+      // Dùng envelope.eventType() thay vì hằng EVENT_TYPE để phân biệt OrderPlaced vs OrderStatusChanged.
+      boolean inserted = processedEventRepository.insertIfAbsent(eventId, envelope.eventType());
       if (!inserted) {
         log.info("[MQ-CONSUME] queue={} eventId={} status=skipped-duplicate", QUEUE, eventId);
         return;

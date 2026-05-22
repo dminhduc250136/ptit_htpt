@@ -89,21 +89,23 @@ class OrderStatusChangedListenerIT {
   /**
    * Test 2: OrderStatusChanged newStatus="confirmed" → KHÔNG ghi dispatch_log (bỏ qua).
    * processed_events vẫn ghi (idempotency marker) nhưng dispatch_log không có bản ghi mới.
+   * Dùng Awaitility để chờ processed_events được ghi (chứng tỏ consumer đã xử lý) rồi assert empty log.
    */
   @Test
-  void orderStatusChanged_confirmed_noDispatchLog() throws InterruptedException {
+  void orderStatusChanged_confirmed_noDispatchLog() {
     String eventId = UUID.randomUUID().toString();
     OrderEventEnvelope envelope = buildStatusChangedEnvelope(eventId, "trace-s2", "confirmed");
 
     rabbitTemplate.convertAndSend(
         RabbitMQConfig.EXCHANGE, "order.status-changed", envelope);
 
-    // Chờ đủ để consumer xử lý nếu có
-    Thread.sleep(3000);
+    // Chờ consumer xử lý (processed_events xuất hiện = consumer đã chạy xong)
+    Awaitility.await().atMost(Duration.ofSeconds(10)).until(() ->
+        processedEventRepository.findById(eventId).isPresent());
+
+    // Sau khi consumer xong, dispatch_log phải trống (confirmed → không gửi email)
     var logs = dispatchLogRepository.findByEventId(eventId);
     assertThat(logs).isEmpty();
-    // processed_events ghi để idempotent
-    assertThat(processedEventRepository.findById(eventId)).isPresent();
   }
 
   /**
