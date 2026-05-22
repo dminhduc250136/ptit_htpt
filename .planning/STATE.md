@@ -2,26 +2,26 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: verifying
-last_updated: "2026-05-22T15:32:49.782Z"
-last_activity: 2026-05-20
+status: executing
+last_updated: "2026-05-22T17:00:00.000Z"
+last_activity: 2026-05-22 -- Phase 27 Plan 01 COMPLETED
 progress:
   total_phases: 12
   completed_phases: 8
-  total_plans: 49
-  completed_plans: 42
-  percent: 86
+  total_plans: 54
+  completed_plans: 43
+  percent: 80
 ---
 
 ## Current Position
 
-Phase: 23-message-queue-rabbitmq — COMPLETED execution (6/6 plans done — ready /gsd-verify-work)
-Plan: 6 of 6 — 23-06 COMPLETED (Integration tests 9 @Test methods qua 3 IT class: OrderEventPublisherIT 2 + OrderPlacedListenerIT 4 FULL D-18 không @Disabled + OrderPlacedNotifyListenerIT 3; @SpyBean StockLedgerRepository + Mockito doAnswer cho transientThenSuccess retry scenario; scripts/verify-mq.sh smoke Management UI HTTP API; architecture/02-sequence-diagrams.md Kafka → RabbitMQ + Appendix A topology table + error-path diagram; 23-VERIFICATION.md 7/7 SC SATISFIED static+IT)
-Status: Phase 23 ready /gsd-verify-work (mvn verify defer Windows + docker smoke + manual demo qua Management UI).
-Last activity: 2026-05-20
+Phase: 27 (real-email-smtp) — EXECUTING
+Plan: 2 of 5
+Status: Executing Phase 27
+Last activity: 2026-05-22 -- Phase 27 Plan 01 COMPLETED (27-01-SUMMARY.md)
 
 ```
-Progress: [█████░░░░░] 57% (4/7 phases complete)
+Progress: [████████░░] 80% (43/54 plans complete)
 ```
 
 ## Project Reference
@@ -30,7 +30,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 
 **Core value:** Demo end-to-end shopping experience hoạt động với real data ở mọi điểm user nhìn thấy, đồng thời rèn quy trình GSD từ planning → execute → verify → archive.
 
-**Current focus:** Phase 19 next — Hoàn Thiện Admin Charts + Low-Stock (ADMIN-01..05)
+**Current focus:** Phase 27 — real-email-smtp
 
 ## Resume Cheat-Sheet
 
@@ -73,8 +73,16 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 23-message-queue-rabbitmq P04 | 8min | 2 tasks | 13 files |
 | Phase 23-message-queue-rabbitmq P05 | 5min | 2 tasks | 10 files |
 | Phase 23-message-queue-rabbitmq P06 | 10min | 2 tasks | 9 files |
+| Phase 27-real-email-smtp P01 | 15min | 3 tasks | 4 files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 27 Plan 01 decisions (2026-05-22):**
+
+- OrderEventEnvelope: giữ 1 record, đổi payload sang Object + Jackson @JsonTypeInfo/@JsonSubTypes (discriminator = eventType "OrderPlaced"/"OrderStatusChanged") — tránh refactor publisher generic + 2 listener sides (Pitfall 3)
+- ROUTING_KEY_ORDER_STATUS_CHANGED = "order.status-changed" — queue notification.order-events bind "order.#" nên tự route (KHÔNG cần exchange/queue mới)
+- resolveCustomerEmail(): GET /api/users/{userId} qua api-gateway; fallback "" + log WARN nếu fail — notification-service ghi SKIPPED, KHÔNG crash
+- doPublish() refactor: thêm routingKey param để dùng chung cho OrderPlaced và OrderStatusChanged
 
 **Phase 23 Plan 06 decisions (2026-05-20):**
 
@@ -306,3 +314,4 @@ Không có blocker.
 - Phase 23 Plan 05: Notification consumer DispatchLogEntity + ProcessedEventEntity + NotificationDispatchService render template + OrderPlacedNotifyListener idempotent — **COMPLETED 2026-05-20** (MQ-04 done; 10 files, 2 commits)
 - Phase 23 Plan 06: Integration tests 3 IT class 9 @Test methods (FULL D-18 không @Disabled) + scripts/verify-mq.sh smoke + architecture/02-sequence-diagrams.md Kafka→RabbitMQ — **COMPLETED 2026-05-20** (MQ-02/03/04/05 evidence; 9 files, 2 commits fc86cb0 + 9957b99)
 - Phase 23: Message Queue Integration (RabbitMQ) — **COMPLETED 2026-05-20** execution (6/6 plans, MQ-01..05 đã có evidence; ready /gsd-verify-work cho mvn + docker smoke runtime)
+- Phase 27 Plan 01: Mở rộng order-service producer — **COMPLETED 2026-05-22** (OrderEventEnvelope mở rộng + publishOrderStatusChanged + resolveCustomerEmail; 4 files, 3 commits)
