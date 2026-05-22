@@ -3,25 +3,25 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-22T16:36:28.044Z"
+last_updated: "2026-05-22T16:43:18.464Z"
 last_activity: 2026-05-22
 progress:
   total_phases: 12
   completed_phases: 8
   total_plans: 54
-  completed_plans: 45
-  percent: 83
+  completed_plans: 46
+  percent: 85
 ---
 
 ## Current Position
 
 Phase: 27 (real-email-smtp) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-05-22
 
 ```
-Progress: [████████░░] 83%
+Progress: [█████████░] 85%
 ```
 
 ## Project Reference
@@ -76,8 +76,17 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 27-real-email-smtp P01 | 15min | 3 tasks | 4 files |
 | Phase 27-real-email-smtp P02 | 4min | 3 tasks | 13 files |
 | Phase 27 P03 | 8min | 3 tasks | 10 files |
+| Phase 27 P04 | 10min | 2 tasks | 5 files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 27 Plan 04 decisions (2026-05-22):**
+
+- AuthService.resetPassword dùng changePasswordHash() (tên method thực tế UserEntity) — KHÔNG setPasswordHash (không tồn tại)
+- forgotPassword ifPresent pattern không throw — anti-enumeration (D-08, T-27-10)
+- 3 endpoint verify-email/forgot/reset PUBLIC — user-service không có Spring Security filter (auth do API Gateway handle)
+- AuthControllerIT exclude RabbitAutoConfiguration — test IT không cần RabbitMQ broker thật
+- D-07 LOCK confirmed: register phát JWT ngay, email_verified KHÔNG hard-gate login
 
 **Phase 27 Plan 02 decisions (2026-05-22):**
 
@@ -326,3 +335,5 @@ Không có blocker.
 - Phase 23: Message Queue Integration (RabbitMQ) — **COMPLETED 2026-05-20** execution (6/6 plans, MQ-01..05 đã có evidence; ready /gsd-verify-work cho mvn + docker smoke runtime)
 - Phase 27 Plan 01: Mở rộng order-service producer — **COMPLETED 2026-05-22** (OrderEventEnvelope mở rộng + publishOrderStatusChanged + resolveCustomerEmail; 4 files, 3 commits)
 - Phase 27 Plan 02: Nền tảng token + RabbitMQ Producer user-service — **COMPLETED 2026-05-22** (Flyway V102+V103 + VerificationTokenService single-use + AccountEventPublisher afterCommit; 13 files, 4 commits)
+- Phase 27 Plan 03: notification-service consumer user events + EmailSender SMTP + FE 3 trang — **COMPLETED 2026-05-22** (UserEventListener + EmailSender + MailTemplate + FE verify-email/forgot-password/reset-password; 10 files, 3 commits)
+- Phase 27 Plan 04: AuthService register hook + 3 endpoint verify-email/forgot/reset — **COMPLETED 2026-05-22** (AuthService 4 method + AuthController 3 endpoint + 2 DTO + AuthControllerIT 5 tests; 5 files, 3 commits)
