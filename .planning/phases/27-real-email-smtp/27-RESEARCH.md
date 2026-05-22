@@ -718,22 +718,16 @@ notification-service:
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Cách lấy customerEmail cho OrderPlacedPayload**
-   - What we know: `OrderPlacedPayload` chỉ có `userId`, không có `customerEmail`. notification-service KHÔNG gọi REST (D-11).
-   - What's unclear: order-service cần gọi REST tới user-service để lấy email, hoặc client truyền `customerEmail` lên trong order request, hoặc gán vào payload lúc createOrder từ JWT claims.
-   - Recommendation: Lấy từ JWT claims — order-service đã nhận `X-User-Id` header từ gateway; nếu gateway cũng inject `X-User-Email` thì không cần REST call. Nếu không, fetch từ user-service với RestTemplate (đã có) rồi gắn vào payload.
+1. **Cách lấy customerEmail cho OrderPlacedPayload** — RESOLVED
+   - Resolution: order-service tự fetch email (producer side — KHÔNG vi phạm D-11 vì notification-service vẫn không gọi REST). Plan 27-01-T3: order-service gắn `customerEmail` vào payload lúc publish; nếu không lấy được → fallback `customerEmail=""` → notification-service ghi `dispatch_log` status=SKIPPED. Executor xác nhận nguồn email (OrderEntity field, request body, hoặc RestTemplate tới user-service) khi đọc code.
 
-2. **Tách hay gộp OrderPlacedNotifyListener cho OrderStatusChanged**
-   - What we know: D-13 nói "mỗi queue một @RabbitListener method". Queue `notification.order-events` nhận cả `OrderPlaced` và `OrderStatusChanged`.
-   - What's unclear: Nên branch trong cùng method hay tách class listener.
-   - Recommendation: Giữ 1 listener method `notification.order-events`, branch theo `envelope.eventType()` bên trong — đơn giản hơn, không tạo thêm file. [Claude's discretion]
+2. **Tách hay gộp OrderPlacedNotifyListener cho OrderStatusChanged** — RESOLVED
+   - Resolution: Giữ 1 listener method trên queue `notification.order-events`, branch theo `envelope.eventType()` bên trong (Plan 27-05-T1). Không tạo class listener mới.
 
-3. **APP_BASE_URL cho link verify/reset**
-   - What we know: D-19: user-service cần `APP_BASE_URL` để dựng link đầy đủ.
-   - What's unclear: URL phải khác nhau khi dev local (`http://localhost:3000`) vs. production; docker-compose hardcode localhost nhưng user mở browser từ host machine.
-   - Recommendation: `APP_BASE_URL=http://localhost:3000` trong docker-compose cho dev — FE chạy port 3000 trên host, user nhận email và click link từ browser → đúng.
+3. **APP_BASE_URL cho link verify/reset** — RESOLVED
+   - Resolution: `APP_BASE_URL=http://localhost:3000` trong docker-compose cho dev (D-19, Plan 27-05-T2). FE chạy port 3000 trên host — user nhận email và click link từ browser host → đúng.
 
 ---
 
