@@ -66,6 +66,12 @@
       <artifactId>spring-boot-starter-amqp</artifactId>
     </dependency>
 
+    <!-- Phase 27 / Plan 27-03: SMTP email sender (graceful degradation khi thiếu env — MAIL-01) -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-mail</artifactId>
+    </dependency>
+
     <!-- Phase 23 / Plan 23-02: test scope (Testcontainers + spring-rabbit-test cho Wave 3 IT) -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
