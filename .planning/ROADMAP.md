@@ -301,10 +301,14 @@ Plans:
   2. Người dùng đăng ký tài khoản mới → nhận email xác minh tới hộp thư thật; bấm link xác minh → tài khoản chuyển trạng thái verified. Yêu cầu reset mật khẩu → nhận email chứa link/token reset
   3. Khi đặt hàng thành công, notification-service consume event `OrderPlaced` → gửi email xác nhận đơn hàng (mã đơn, danh sách sản phẩm, tổng tiền) tới email khách
   4. Khi trạng thái đơn thay đổi (shipped / delivered / cancelled), khách nhận email cập nhật tương ứng; email render bằng template tiếng Việt và gửi bất đồng bộ (không chặn request chính)
-**Plans:** chưa lập (chạy /gsd-discuss-phase 27 → /gsd-plan-phase 27)
+**Plans:** 5 plans
 
 Plans:
-- [ ] (sẽ tạo bởi /gsd-plan-phase 27)
+- [ ] 27-01-PLAN.md — order-service producer: mở rộng OrderEventEnvelope (customerEmail + productName + OrderStatusChangedPayload) + publishOrderStatusChanged afterCommit
+- [ ] 27-02-PLAN.md — user-service nền tảng: Flyway V102/V103 + VerificationTokenService + topology user.events + AccountEventPublisher
+- [ ] 27-03-PLAN.md — notification-service SMTP: spring-boot-starter-mail + EmailSender graceful degradation + 6 template HTML + NotificationDispatchService
+- [ ] 27-04-PLAN.md — user-service auth: 3 endpoint verify-email/forgot/reset + register hook publish event
+- [ ] 27-05-PLAN.md — notification consumer (UserEventListener + nhánh OrderStatusChanged) + docker-compose env + 3 trang FE auth
 **UI hint**: yes nhẹ (trang xác minh email + trang reset mật khẩu); phần gửi mail là backend
 
 ---
@@ -324,7 +328,7 @@ Plans:
 | 24. Database Per Service (tách CSDL hạ tầng) | 0/? | Not planned | - |
 | 25. Gateway JWT Edge Authentication | 0/? | Not planned | - |
 | 26. Tích Hợp Thanh Toán VNPay Sandbox | 0/? | Not planned | - |
-| 27. Gửi Email Thật (SMTP) | 0/? | Not planned | - |
+| 27. Gửi Email Thật (SMTP) | 0/5 | Planned | - |
 
 ---
 
