@@ -60,6 +60,14 @@ public class OrderEntity {
   @Column(name = "coupon_code", length = 64)
   private String couponCode;
 
+  // Phase 26 / PAY-04 (D-02): VNPay payment fields.
+  // payment_status default PENDING — backward compatible với COD orders cũ.
+  @Column(name = "payment_status", nullable = false, length = 20)
+  private String paymentStatus = "PENDING";
+
+  @Column(name = "vnp_transaction_no", length = 50)
+  private String vnpTransactionNo;
+
   @Column(nullable = false)
   private boolean deleted = false;
 
@@ -125,6 +133,18 @@ public class OrderEntity {
   public String couponCode() { return couponCode; }
   public void setDiscountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount; }
   public void setCouponCode(String couponCode) { this.couponCode = couponCode; }
+
+  // Phase 26 / PAY-04 (D-02): VNPay payment field accessors.
+  public String paymentStatus() { return paymentStatus; }
+  public String vnpTransactionNo() { return vnpTransactionNo; }
+  public void setPaymentStatus(String paymentStatus) {
+    this.paymentStatus = paymentStatus;
+    this.updatedAt = Instant.now();
+  }
+  public void setVnpTransactionNo(String vnpTransactionNo) {
+    this.vnpTransactionNo = vnpTransactionNo;
+    this.updatedAt = Instant.now();
+  }
 
   public void addItem(OrderItemEntity item) {
     this.items.add(item);

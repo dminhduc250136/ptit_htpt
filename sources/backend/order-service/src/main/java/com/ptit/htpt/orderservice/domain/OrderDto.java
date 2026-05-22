@@ -18,6 +18,12 @@ import java.util.Map;
  * {@code couponCode} cho FE display ở /profile/orders/[id] và /admin/orders/[id].
  * {@code discountAmount} mặc định BigDecimal.ZERO (DB column NOT NULL DEFAULT 0).
  * {@code couponCode} nullable cho order chưa áp coupon (backward compat).
+ *
+ * <p>Phase 26 Plan 02 (PAY-04, D-02): thêm 3 field VNPay.
+ * {@code paymentStatus} — PENDING/PAID/FAILED, map từ entity.
+ * {@code vnpTransactionNo} — nullable, map từ entity.
+ * {@code paymentUrl} — nullable, transient (KHÔNG map từ entity); set thủ công trong
+ * OrderCrudService nhánh VNPAY (Plan 03).
  */
 public record OrderDto(
     String id,
@@ -30,6 +36,9 @@ public record OrderDto(
     String paymentMethod,
     BigDecimal discountAmount,
     String couponCode,
+    String paymentStatus,
+    String vnpTransactionNo,
+    String paymentUrl,
     Instant createdAt,
     Instant updatedAt
 ) {
