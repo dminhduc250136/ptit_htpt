@@ -283,10 +283,13 @@ Plans:
   2. Sau khi thanh toán trên VNPay sandbox, khách quay lại return URL của ứng dụng và thấy trang kết quả rõ ràng (thành công / thất bại / huỷ) — KHÔNG dựa vào return URL để cập nhật DB
   3. Backend nhận IPN callback từ VNPay (server-to-server), verify chữ ký HMAC SHA512 (`vnp_SecureHash`), so khớp số tiền, cập nhật `payment_status` của đơn (PAID / FAILED) — idempotent khi VNPay gửi lại cùng giao dịch
   4. Đơn hàng tại `/account/orders/[id]` và `/admin/orders/[id]` hiển thị đúng trạng thái thanh toán + phương thức + mã giao dịch VNPay; chữ ký sai hoặc số tiền lệch → giao dịch bị từ chối và ghi log
-**Plans:** chưa lập (chạy /gsd-discuss-phase 26 → /gsd-plan-phase 26)
+**Plans:** 4 plans
 
 Plans:
-- [ ] (sẽ tạo bởi /gsd-plan-phase 26)
+- [ ] 26-01-PLAN.md — payment-service VNPay core: HMAC SHA512 ký/verify + messaging payment.events + IPN/return controller + gateway whitelist
+- [ ] 26-02-PLAN.md — order-service nền tảng dữ liệu: Flyway V6 (payment_status + vnp_transaction_no + processed_events) + entity/dto/mapper + port idempotency infra
+- [ ] 26-03-PLAN.md — order-service tích hợp: PaymentSessionClient + nhánh VNPAY OrderCrudService + PaymentEventListener consume PaymentSucceeded/Failed
+- [ ] 26-04-PLAN.md — FE: checkout selector VNPay + redirect + trang kết quả /checkout/result polling + order display
 **UI hint**: yes (checkout payment method selector + trang kết quả thanh toán)
 
 ---
