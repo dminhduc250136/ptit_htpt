@@ -44,19 +44,22 @@ public class OrderCrudService {
   private final RestTemplate restTemplate;
   private final CouponRedemptionService couponRedemptionService;
   private final OrderEventPublisher orderEventPublisher;
+  private final PaymentSessionClient paymentSessionClient;
 
   public OrderCrudService(OrderRepository orderRepository,
                           OrderItemRepository orderItemRepository,
                           ObjectMapper objectMapper,
                           RestTemplate restTemplate,
                           CouponRedemptionService couponRedemptionService,
-                          OrderEventPublisher orderEventPublisher) {
+                          OrderEventPublisher orderEventPublisher,
+                          PaymentSessionClient paymentSessionClient) {
     this.orderRepository = orderRepository;
     this.orderItemRepository = orderItemRepository;
     this.objectMapper = objectMapper;
     this.restTemplate = restTemplate;
     this.couponRedemptionService = couponRedemptionService;
     this.orderEventPublisher = orderEventPublisher;
+    this.paymentSessionClient = paymentSessionClient;
   }
 
   /**
@@ -120,8 +123,21 @@ public class OrderCrudService {
    * mapper iterate items → có thể trigger lazy proxy. items vừa được addItem() trong cùng
    * scope nên hiện tại an toàn, nhưng @Transactional là defense-in-depth.
    */
+  /**
+   * Backward-compat overload cho code cũ và test không truyền authHeader (COD path).
+   */
   @Transactional
   public OrderDto createOrderFromCommand(String userId, CreateOrderCommand command) {
+    return createOrderFromCommand(userId, command, null);
+  }
+
+  /**
+   * Phase 26 / Plan 26-03 (D-04, D-09, D-10): thêm authHeader để forward Bearer JWT
+   * cho PaymentSessionClient khi tạo đơn VNPAY (T-26-10).
+   */
+  @Transactional
+  public OrderDto createOrderFromCommand(String userId, CreateOrderCommand command,
+                                         String authHeader) {
     if (userId == null || userId.isBlank()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing X-User-Id session header");
     }
@@ -178,23 +194,57 @@ public class OrderCrudService {
 
     OrderEntity saved = orderRepository.save(order);
 
-    // Phase 23 D-03/D-12: thay vì gọi REST deductStock đồng bộ (đã XÓA), publish event
-    // OrderPlaced SAU khi DB commit. inventory-service consumer trừ kho async (Wave 2).
-    // OrderEventPublisher tự defer publish qua TransactionSynchronizationManager.afterCommit;
-    // capture MDC traceId NGAY tại thread này (Pitfall 1 — afterCommit có thể MDC empty).
-    List<OrderEventEnvelope.Item> payloadItems = saved.items().stream()
+    // Phase 26 / Plan 26-03 (D-09, D-10): rẽ nhánh theo paymentMethod.
+    // VNPAY → gọi payment-service tạo session, KHÔNG publish OrderPlaced ngay (D-09).
+    // non-VNPAY (COD...) → publish OrderPlaced ngay như cũ (D-10).
+    if ("VNPAY".equalsIgnoreCase(command.paymentMethod())) {
+      // D-09: set PENDING + gọi payment-service lấy paymentUrl. KHÔNG publish OrderPlaced.
+      // amountVnd = total (đã trừ discount) — payment-service sẽ nhân ×100 để ra vnp_Amount
+      saved.setPaymentStatus("PENDING");
+      String paymentUrl = paymentSessionClient.createVNPaySession(
+          saved.id(),
+          saved.total().longValue(),
+          saved.id(),   // orderInfo = mã đơn (vnp_OrderInfo)
+          authHeader
+      );
+      // Build DTO thủ công với paymentUrl (transient field KHÔNG trong entity)
+      OrderDto baseDto = OrderMapper.toDto(saved);
+      return new OrderDto(
+          baseDto.id(), baseDto.userId(), baseDto.total(), baseDto.status(), baseDto.note(),
+          baseDto.items(), baseDto.shippingAddress(), baseDto.paymentMethod(),
+          baseDto.discountAmount(), baseDto.couponCode(),
+          baseDto.paymentStatus(), baseDto.vnpTransactionNo(), paymentUrl,
+          baseDto.createdAt(), baseDto.updatedAt()
+      );
+    } else {
+      // D-10: COD và non-VNPAY → publish OrderPlaced ngay (inventory trừ kho async).
+      // Phase 23 D-03/D-12: thay vì gọi REST deductStock đồng bộ (đã XÓA), publish event
+      // OrderPlaced SAU khi DB commit. inventory-service consumer trừ kho async (Wave 2).
+      // OrderEventPublisher tự defer publish qua TransactionSynchronizationManager.afterCommit;
+      // capture MDC traceId NGAY tại thread này (Pitfall 1 — afterCommit có thể MDC empty).
+      publishOrderPlacedForOrder(saved);
+      return OrderMapper.toDto(saved);
+    }
+  }
+
+  /**
+   * Phase 26 / Plan 26-03 (D-09): helper DRY publish OrderPlaced cho 1 OrderEntity.
+   * Dùng chung bởi:
+   *   - createOrderFromCommand nhánh non-VNPAY (COD) ngay sau save
+   *   - PaymentEventListener nhánh PaymentSucceeded (trừ kho khi IPN xác nhận PAID)
+   */
+  public void publishOrderPlacedForOrder(OrderEntity order) {
+    List<OrderEventEnvelope.Item> payloadItems = order.items().stream()
         .map(it -> new OrderEventEnvelope.Item(it.productId(), it.quantity(), it.unitPrice()))
         .toList();
     OrderEventEnvelope.OrderPlacedPayload payload = new OrderEventEnvelope.OrderPlacedPayload(
-        saved.id(),
-        saved.userId(),
+        order.id(),
+        order.userId(),
         payloadItems,
-        saved.total(),
+        order.total(),
         "VND"
     );
     orderEventPublisher.publishOrderPlaced(payload);
-
-    return OrderMapper.toDto(saved);
   }
 
   public OrderDto updateOrder(String id, OrderUpsertRequest request) {

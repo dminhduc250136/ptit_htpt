@@ -70,10 +70,12 @@ public class OrderController {
   @ResponseStatus(HttpStatus.CREATED)
   public ApiResponse<Object> createOrder(
       @Valid @RequestBody CreateOrderCommand command,
-      @RequestHeader(value = "X-User-Id", required = false) String userId
+      @RequestHeader(value = "X-User-Id", required = false) String userId,
+      // Phase 26 / Plan 26-03 (T-26-10): forward Bearer JWT cho PaymentSessionClient khi VNPAY
+      @RequestHeader(value = "Authorization", required = false) String authHeader
   ) {
     return ApiResponse.of(201, "Order created",
-        orderCrudService.createOrderFromCommand(userId, command));
+        orderCrudService.createOrderFromCommand(userId, command, authHeader));
   }
 
   @PutMapping("/{id}")
