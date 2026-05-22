@@ -36,6 +36,13 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
+vnpay:
+  tmn-code: ${VNP_TMN_CODE:}
+  hash-secret: ${VNP_HASH_SECRET:}
+  pay-url: ${VNP_PAY_URL:https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
+  return-url: ${VNP_RETURN_URL:http://localhost:3000/checkout/result}
+  ipn-url: ${VNP_IPN_URL:}
+
 ---
 spring:
   config:
