@@ -59,16 +59,53 @@ public class OrderEventPublisher {
       TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
         @Override
         public void afterCommit() {
-          doPublish(envelope, safeTraceId);
+          doPublish(envelope, RabbitMQConfig.ROUTING_KEY_ORDER_PLACED, safeTraceId);
         }
       });
     } else {
       // Fallback: caller không trong transaction (vd: test unit) → publish ngay
-      doPublish(envelope, safeTraceId);
+      doPublish(envelope, RabbitMQConfig.ROUTING_KEY_ORDER_PLACED, safeTraceId);
     }
   }
 
-  private void doPublish(OrderEventEnvelope envelope, String traceId) {
+  /**
+   * Publish event OrderStatusChanged SAU khi DB transaction commit (afterCommit).
+   * Gọi từ OrderCrudService.updateOrderState sau khi orderRepository.save().
+   *
+   * Phase 27 D-12: phát event khi admin đổi trạng thái đơn → notification-service gửi email.
+   * routing key "order.status-changed" bind vào queue "notification.order-events" qua "order.#".
+   *
+   * @param payload OrderStatusChangedPayload đã build từ saved OrderEntity
+   */
+  public void publishOrderStatusChanged(OrderEventEnvelope.OrderStatusChangedPayload payload) {
+    // Pitfall 1: capture MDC traceId NGAY (afterCommit callback có thể chạy sau MDC cleanup)
+    String traceId = MDC.get("traceId");
+    final String safeTraceId = traceId != null ? traceId : "no-trace";
+    final OrderEventEnvelope envelope = OrderEventEnvelope.createOrderStatusChanged(safeTraceId, payload);
+
+    if (TransactionSynchronizationManager.isSynchronizationActive()) {
+      TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+        @Override
+        public void afterCommit() {
+          doPublish(envelope, RabbitMQConfig.ROUTING_KEY_ORDER_STATUS_CHANGED, safeTraceId);
+        }
+      });
+    } else {
+      // Fallback: caller không trong transaction (vd: test unit) → publish ngay
+      doPublish(envelope, RabbitMQConfig.ROUTING_KEY_ORDER_STATUS_CHANGED, safeTraceId);
+    }
+  }
+
+  /**
+   * Thực thi publish lên RabbitMQ với Publisher Confirms (D-04).
+   * Refactor Task 2 Phase 27: thêm tham số routingKey để dùng chung cho
+   * cả OrderPlaced và OrderStatusChanged.
+   *
+   * @param envelope  envelope đã build (bao gồm eventId, eventType, payload)
+   * @param routingKey routing key gửi lên exchange (vd: "order.placed", "order.status-changed")
+   * @param traceId   đã capture tại caller thread (Pitfall 1)
+   */
+  private void doPublish(OrderEventEnvelope envelope, String routingKey, String traceId) {
     String eventId = envelope.eventId();
     CorrelationData correlation = new CorrelationData(eventId);
     TraceIdMessagePostProcessor traceProcessor = new TraceIdMessagePostProcessor(traceId);
@@ -76,7 +113,7 @@ public class OrderEventPublisher {
     try {
       rabbitTemplate.convertAndSend(
           RabbitMQConfig.EXCHANGE,
-          RabbitMQConfig.ROUTING_KEY_ORDER_PLACED,
+          routingKey,
           envelope,
           msg -> {
             msg.getMessageProperties().setMessageId(eventId);
@@ -92,8 +129,8 @@ public class OrderEventPublisher {
         String reason = confirm == null ? "null" : confirm.getReason();
         log.error("[MQ-PUB-NACK] eventId={} traceId={} reason={}", eventId, traceId, reason);
       } else {
-        log.info("[MQ-PUB] event=OrderPlaced routingKey={} eventId={} traceId={}",
-            RabbitMQConfig.ROUTING_KEY_ORDER_PLACED, eventId, traceId);
+        log.info("[MQ-PUB] event={} routingKey={} eventId={} traceId={}",
+            envelope.eventType(), routingKey, eventId, traceId);
       }
     } catch (TimeoutException e) {
       log.error("[MQ-PUB-TIMEOUT] eventId={} traceId={}", eventId, traceId);
