@@ -34,6 +34,7 @@ public final class OrderMapper {
         e.id(), e.userId(), e.total(), e.status(), e.note(),
         items, shippingAddress, e.paymentMethod(),
         e.discountAmount(), e.couponCode(),
+        e.paymentStatus(), e.vnpTransactionNo(), null,  // paymentUrl — transient, set thủ công Plan 03
         e.createdAt(), e.updatedAt()
     );
   }
