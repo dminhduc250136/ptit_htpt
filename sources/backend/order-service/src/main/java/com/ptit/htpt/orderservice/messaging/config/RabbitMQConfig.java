@@ -21,17 +21,24 @@ import org.springframework.context.annotation.Configuration;
  * idempotent với matching arguments (RESEARCH §Open Q #3). Trùng declare KHÔNG gây
  * PRECONDITION_FAILED khi args identical.
  *
- * Topology:
+ * Topology order.events (Phase 23, GIỮ NGUYÊN):
  *   - Exchange `order.events` (topic, durable)
  *   - DLX `order.dlx` (direct, durable) + DLQ `order-events.dlq`
  *   - Queue `inventory.order-events` + `notification.order-events` bind key `order.#`
  *   - Both queues route to DLX khi reject/retry-exhaust
+ *
+ * Topology payment.events (Phase 26, MỚI — KHÔNG đụng order.events):
+ *   - Exchange `payment.events` (topic, durable) — RIÊNG (T-26-12 anti RESEARCH anti-pattern)
+ *   - DLX `payment.dlx` (direct, durable) + DLQ `payment-events.dlq`
+ *   - Queue `order.payment-events` bind key `payment.#` tới exchange `payment.events`
+ *   AmqpAdmin idempotent — cùng exchange với payment-service OK (args identical).
  *
  * RabbitTemplate setMandatory(true) để bật publisher-returns (D-04).
  */
 @Configuration
 public class RabbitMQConfig {
 
+  // ---- order.events topology (Phase 23 — KHÔNG thay đổi) ----
   public static final String EXCHANGE = "order.events";
   public static final String DLX = "order.dlx";
   public static final String DLQ = "order-events.dlq";
@@ -40,6 +47,14 @@ public class RabbitMQConfig {
   public static final String NOTIFICATION_QUEUE = "notification.order-events";
   public static final String BINDING_KEY = "order.#";
   public static final String ROUTING_KEY_ORDER_PLACED = "order.placed";
+
+  // ---- payment.events topology (Phase 26 — consumer side order-service) ----
+  public static final String PAYMENT_EXCHANGE = "payment.events";
+  public static final String PAYMENT_DLX = "payment.dlx";
+  public static final String PAYMENT_DLQ = "payment-events.dlq";
+  public static final String PAYMENT_DLQ_ROUTING = "payment-events";
+  public static final String ORDER_PAYMENT_QUEUE = "order.payment-events";
+  public static final String PAYMENT_BINDING_KEY = "payment.#";
 
   @Bean
   public TopicExchange orderEventsExchange() {
@@ -85,6 +100,43 @@ public class RabbitMQConfig {
   @Bean
   public Binding notificationBinding() {
     return BindingBuilder.bind(notificationQueue()).to(orderEventsExchange()).with(BINDING_KEY);
+  }
+
+  // ---- payment.events beans (Phase 26 — thêm mới, KHÔNG đụng order.events topology) ----
+
+  @Bean
+  public TopicExchange paymentEventsExchange() {
+    return ExchangeBuilder.topicExchange(PAYMENT_EXCHANGE).durable(true).build();
+  }
+
+  @Bean
+  public DirectExchange paymentDeadLetterExchange() {
+    return ExchangeBuilder.directExchange(PAYMENT_DLX).durable(true).build();
+  }
+
+  @Bean
+  public Queue paymentDeadLetterQueue() {
+    return QueueBuilder.durable(PAYMENT_DLQ).build();
+  }
+
+  @Bean
+  public Binding paymentDlqBinding() {
+    return BindingBuilder.bind(paymentDeadLetterQueue()).to(paymentDeadLetterExchange())
+        .with(PAYMENT_DLQ_ROUTING);
+  }
+
+  @Bean
+  public Queue orderPaymentEventsQueue() {
+    return QueueBuilder.durable(ORDER_PAYMENT_QUEUE)
+        .withArgument("x-dead-letter-exchange", PAYMENT_DLX)
+        .withArgument("x-dead-letter-routing-key", PAYMENT_DLQ_ROUTING)
+        .build();
+  }
+
+  @Bean
+  public Binding orderPaymentEventsBinding() {
+    return BindingBuilder.bind(orderPaymentEventsQueue()).to(paymentEventsExchange())
+        .with(PAYMENT_BINDING_KEY);
   }
 
   @Bean
