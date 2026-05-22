@@ -6,7 +6,7 @@ status: executing
 last_updated: "2026-05-20T00:00:00Z"
 last_activity: 2026-05-20
 progress:
-  total_phases: 7
+  total_phases: 9
   completed_phases: 4
   total_plans: 14
   completed_plans: 20
@@ -274,6 +274,8 @@ Không có blocker.
 - 2026-05-20 — Phase 23 CONTEXT captured: 18 decisions (D-01 đến D-18) qua 4 gray areas. Quyết định chính: 1 event OrderPlaced (topic exchange `order.events`); publish-after-commit; idempotency qua processed_events table; retry 3 lần exp backoff + DLQ qua x-dead-letter-exchange; GIỮ REST stock validate đồng bộ + BỎ REST stock deduct (thay bằng inventory consumer); notification ghi dispatch_log (defer SMTP). 8 deferred ideas (Saga đầy đủ, SMTP, observability, tách DB, X-User-Id...).
 - 2026-05-20 — Phase 24 added: Database Per Service (tách CSDL hạ tầng) — củng cố 3.4 + failure isolation. 5 postgres container riêng (user/product/order/payment/inventory). Demo: tắt 1 DB → service khác vẫn chạy.
 - 2026-05-20 — Phase 25 added: Gateway JWT Edge Authentication — vá lỗ hổng X-User-Id. Gateway verify JWT + strip + inject trusted header. Bỏ port expose của service nội bộ. Đóng bug orders-cross-user-leak ở tầng kiến trúc.
+- 2026-05-22 — Phase 26 added: Tích Hợp Thanh Toán VNPay Sandbox — khách chọn VNPay tại checkout → redirect cổng VNPay sandbox → backend xử lý IPN callback (verify HMAC SHA512, so khớp số tiền, cập nhật payment_status idempotent). Depends on Phase 20 (cần discountAmount để số tiền gửi VNPay là final). Cổng chọn: VNPay sandbox (user quyết định — phổ biến nhất, sandbox miễn phí). REQ PAY-01..04.
+- 2026-05-22 — Phase 27 added: Gửi Email Thật (SMTP) — email thật qua SMTP Gmail (credential qua env, user cấp account riêng) cho 3 luồng: xác thực tài khoản (verify đăng ký + reset mật khẩu), xác nhận đơn hàng, cập nhật trạng thái đơn. Tái dụng notification-service + consumer RabbitMQ OrderPlaced (Phase 23). Depends on Phase 23. REQ MAIL-01..04.
 
 - Project: tmdt-use-gsd — dự án thử nghiệm GSD workflow (Spring Boot microservices + Next.js + API gateway + Docker Compose).
 - Foundation v1.0 + v1.1 + v1.2 reuse được: ApiErrorResponse + traceId envelope; Swagger/OpenAPI codegen; Postgres + JPA + Flyway 5 services; auth thật JWT HS256; admin CRUD qua gateway; FE typed services; rhf+zod pattern; Playwright E2E suite (14 baseline + 4 smoke); reviews verified-buyer cross-service; FilterSidebar pattern; M3 design tokens.

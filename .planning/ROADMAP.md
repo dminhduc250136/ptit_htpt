@@ -12,7 +12,7 @@
 | v1.0 — MVP Stabilization | API surface nhất quán + Swagger/OpenAPI + contract alignment | Phase 1-4 | SHIPPED 2026-04-25 |
 | v1.1 — Real End-User Experience | DB foundation + auth thật + admin CRUD + cart→order persistence | Phase 5-8 | SHIPPED 2026-04-26 |
 | v1.2 — UI/UX Completion | Residual closure + profile + address book + reviews + search + public polish | Phase 9-15 | SHIPPED 2026-05-02 |
-| v1.3 — Catalog Realism & Commerce Intelligence | Seed catalog đầy đủ, cart→DB, admin analytics, review polish, AI chatbot, coupon, message queue, microservice hardening (DB tách hạ tầng + bảo mật gateway) | Phase 16-25 | ACTIVE |
+| v1.3 — Catalog Realism & Commerce Intelligence | Seed catalog đầy đủ, cart→DB, admin analytics, review polish, AI chatbot, coupon, message queue, microservice hardening (DB tách hạ tầng + bảo mật gateway), thanh toán VNPay + email thật | Phase 16-27 | ACTIVE |
 
 ---
 
@@ -55,6 +55,8 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 - [ ] **Phase 23: Message Queue Integration (RabbitMQ)** — Đáp ứng yêu cầu BẮT BUỘC 3.3 của đề chủ đề 4: giao tiếp bất đồng bộ giữa các microservice qua RabbitMQ; luồng OrderPlaced → inventory + notification với retry + DLQ
 - [x] **Phase 24: Database Per Service (tách CSDL hạ tầng)** ✅ 2026-05-21 — Củng cố yêu cầu 3.4 + tính chịu lỗi độc lập (mục 4): chuyển từ "shared postgres / separate schema" sang "mỗi service một postgres container + credential riêng". Demo được failure isolation (1 DB chết → các service khác vẫn chạy). 4/4 plans
 - [x] **Phase 25: Gateway JWT Edge Authentication (vá lỗ hổng X-User-Id)** ✅ 2026-05-21 — Củng cố yêu cầu 4 (JWT): gateway verify JWT + strip X-User-Id từ client + inject trusted X-User-Id sau khi verify. Bỏ port mapping của các service nội bộ trong docker-compose. Đóng lỗ hổng `orders-cross-user-leak` ở tầng kiến trúc. 5/5 plans
+- [ ] **Phase 26: Tích Hợp Thanh Toán VNPay Sandbox** — Khách chọn VNPay tại checkout → redirect cổng VNPay sandbox → IPN callback verify chữ ký HMAC SHA512 + cập nhật trạng thái thanh toán đơn hàng (idempotent)
+- [ ] **Phase 27: Gửi Email Thật (SMTP)** — Email thật qua SMTP cho 3 luồng: xác thực tài khoản (verify đăng ký + reset mật khẩu), xác nhận đơn hàng, cập nhật trạng thái đơn — tái dụng notification-service consumer RabbitMQ (Phase 23)
 
 ---
 
@@ -271,6 +273,42 @@ Plans:
 
 ---
 
+### Phase 26: Tích Hợp Thanh Toán VNPay Sandbox
+
+**Goal:** Khách hàng tại checkout chọn phương thức "Thanh toán qua VNPay", được redirect sang cổng VNPay sandbox để thanh toán, quay lại return URL với kết quả; backend xác nhận giao dịch qua IPN callback (server-to-server) và cập nhật trạng thái thanh toán của đơn hàng một cách đáng tin cậy.
+**Depends on:** Phase 20 (Coupon — order workflow phải có discountAmount để số tiền gửi VNPay là final amount đúng)
+**Requirements:** PAY-01, PAY-02, PAY-03, PAY-04
+**Success Criteria** (what must be TRUE):
+  1. Khách hàng tại `/checkout` chọn phương thức "VNPay" → bấm đặt hàng → được redirect sang trang VNPay sandbox với đúng số tiền (đã trừ coupon nếu có) và mã đơn hàng
+  2. Sau khi thanh toán trên VNPay sandbox, khách quay lại return URL của ứng dụng và thấy trang kết quả rõ ràng (thành công / thất bại / huỷ) — KHÔNG dựa vào return URL để cập nhật DB
+  3. Backend nhận IPN callback từ VNPay (server-to-server), verify chữ ký HMAC SHA512 (`vnp_SecureHash`), so khớp số tiền, cập nhật `payment_status` của đơn (PAID / FAILED) — idempotent khi VNPay gửi lại cùng giao dịch
+  4. Đơn hàng tại `/account/orders/[id]` và `/admin/orders/[id]` hiển thị đúng trạng thái thanh toán + phương thức + mã giao dịch VNPay; chữ ký sai hoặc số tiền lệch → giao dịch bị từ chối và ghi log
+**Plans:** chưa lập (chạy /gsd-discuss-phase 26 → /gsd-plan-phase 26)
+
+Plans:
+- [ ] (sẽ tạo bởi /gsd-plan-phase 26)
+**UI hint**: yes (checkout payment method selector + trang kết quả thanh toán)
+
+---
+
+### Phase 27: Gửi Email Thật (SMTP)
+
+**Goal:** Ứng dụng gửi email thật tới hộp thư người dùng qua SMTP cho ba luồng: xác thực tài khoản (xác minh email khi đăng ký + reset mật khẩu), xác nhận đơn hàng, và cập nhật trạng thái đơn. Tái dụng notification-service đã có consumer RabbitMQ từ Phase 23.
+**Depends on:** Phase 23 (notification-service + RabbitMQ consumer `OrderPlaced` đã sẵn sàng để gắn email xác nhận đơn)
+**Requirements:** MAIL-01, MAIL-02, MAIL-03, MAIL-04
+**Success Criteria** (what must be TRUE):
+  1. Cấu hình SMTP (host, port, username, password/app-password, from-address) đọc hoàn toàn từ biến môi trường — KHÔNG hardcode credential trong source; thiếu env thì service vẫn khởi động được và log cảnh báo (graceful degradation)
+  2. Người dùng đăng ký tài khoản mới → nhận email xác minh tới hộp thư thật; bấm link xác minh → tài khoản chuyển trạng thái verified. Yêu cầu reset mật khẩu → nhận email chứa link/token reset
+  3. Khi đặt hàng thành công, notification-service consume event `OrderPlaced` → gửi email xác nhận đơn hàng (mã đơn, danh sách sản phẩm, tổng tiền) tới email khách
+  4. Khi trạng thái đơn thay đổi (shipped / delivered / cancelled), khách nhận email cập nhật tương ứng; email render bằng template tiếng Việt và gửi bất đồng bộ (không chặn request chính)
+**Plans:** chưa lập (chạy /gsd-discuss-phase 27 → /gsd-plan-phase 27)
+
+Plans:
+- [ ] (sẽ tạo bởi /gsd-plan-phase 27)
+**UI hint**: yes nhẹ (trang xác minh email + trang reset mật khẩu); phần gửi mail là backend
+
+---
+
 ## Progress Table
 
 | Phase | Plans Complete | Status | Completed |
@@ -285,6 +323,8 @@ Plans:
 | 23. Message Queue Integration (RabbitMQ) | 2/6 | In progress | - |
 | 24. Database Per Service (tách CSDL hạ tầng) | 0/? | Not planned | - |
 | 25. Gateway JWT Edge Authentication | 0/? | Not planned | - |
+| 26. Tích Hợp Thanh Toán VNPay Sandbox | 0/? | Not planned | - |
+| 27. Gửi Email Thật (SMTP) | 0/? | Not planned | - |
 
 ---
 
@@ -332,8 +372,19 @@ Plans:
 | SEC-02 | Phase 25 |
 | SEC-03 | Phase 25 |
 | SEC-04 | Phase 25 |
+| PAY-01 | Phase 26 |
+| PAY-02 | Phase 26 |
+| PAY-03 | Phase 26 |
+| PAY-04 | Phase 26 |
+| MAIL-01 | Phase 27 |
+| MAIL-02 | Phase 27 |
+| MAIL-03 | Phase 27 |
+| MAIL-04 | Phase 27 |
 
-**Mapped: 40/40 REQs** (SEED 4 + ORDER 1 + ADMIN-06 1 + STORE 3 + ADMIN-01-05 5 + COUP 5 + REV 3 + AI 5 + MQ 5 + DB 4 + SEC 4)
+**Mapped: 48/48 REQs** (SEED 4 + ORDER 1 + ADMIN-06 1 + STORE 3 + ADMIN-01-05 5 + COUP 5 + REV 3 + AI 5 + MQ 5 + DB 4 + SEC 4 + PAY 4 + MAIL 4)
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 26 to break down)
 
 ---
 
