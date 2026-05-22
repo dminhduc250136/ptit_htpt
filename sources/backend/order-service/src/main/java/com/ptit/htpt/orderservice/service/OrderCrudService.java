@@ -183,11 +183,14 @@ public class OrderCrudService {
     // OrderEventPublisher tự defer publish qua TransactionSynchronizationManager.afterCommit;
     // capture MDC traceId NGAY tại thread này (Pitfall 1 — afterCommit có thể MDC empty).
     List<OrderEventEnvelope.Item> payloadItems = saved.items().stream()
-        .map(it -> new OrderEventEnvelope.Item(it.productId(), it.quantity(), it.unitPrice()))
+        .map(it -> new OrderEventEnvelope.Item(it.productId(), it.productName(), it.quantity(), it.unitPrice()))
         .toList();
+    // Phase 27: customerEmail thêm vào payload — Task 3 sẽ wire resolveCustomerEmail()
+    // Fallback tạm: "" → notification-service ghi SKIPPED (per PATTERNS.md D-11)
     OrderEventEnvelope.OrderPlacedPayload payload = new OrderEventEnvelope.OrderPlacedPayload(
         saved.id(),
         saved.userId(),
+        "",  // TODO Task 3: thay bằng resolveCustomerEmail(saved)
         payloadItems,
         saved.total(),
         "VND"
