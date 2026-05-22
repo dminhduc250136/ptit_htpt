@@ -2,26 +2,27 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-05-22T16:43:18.464Z"
+status: verifying
+last_updated: "2026-05-22T16:56:27.951Z"
 last_activity: 2026-05-22
 progress:
   total_phases: 12
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 54
-  completed_plans: 46
-  percent: 85
+  completed_plans: 47
+  percent: 87
 ---
 
 ## Current Position
 
-Phase: 27 (real-email-smtp) — EXECUTING
-Plan: 5 of 5
-Status: Ready to execute
+Phase: 27 (real-email-smtp) — COMPLETED
+Plan: 5 of 5 (DONE)
+Status: Phase 27 complete — all 5 plans executed — ready for /gsd-verify-work
 Last activity: 2026-05-22
+Stopped at: Completed 27-05-PLAN.md (Wave 3 — final plan)
 
 ```
-Progress: [█████████░] 85%
+Progress: [█████████░] 87%
 ```
 
 ## Project Reference
@@ -77,8 +78,18 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 27-real-email-smtp P02 | 4min | 3 tasks | 13 files |
 | Phase 27 P03 | 8min | 3 tasks | 10 files |
 | Phase 27 P04 | 10min | 2 tasks | 5 files |
+| Phase 27 P05 | 20min | 3 tasks | 12 files |
+| Phase 27 P05 | 20min | - tasks | - files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 27 Plan 05 decisions (2026-05-22):**
+
+- UserEventListener idempotent consume notification.user-events — branch UserRegistered→ACCOUNT_VERIFICATION / PasswordResetRequested→PASSWORD_RESET — topology user.events khai báo trong RabbitMQConfig notification-service (6 bean mới)
+- [Rule 1 Bug fix] OrderPlacedNotifyListener: EVENT_TYPE hardcode "OrderPlaced" → envelope.eventType() dynamic — ghi đúng eventType vào processed_events cho cả 2 event
+- docker-compose user-service: thêm depends_on rabbitmq service_healthy + SPRING_RABBITMQ_* + APP_BASE_URL; notification-service: MAIL_SMTP_* env với ${VAR:-} pattern (KHÔNG hardcode credential)
+- 3 trang FE (forgot-password/verify-email/reset-password): npm run build exit 0; verify-email state machine 4 trạng thái; reset-password token invalid → status card thay form
+- CTA "Gửi lại email xác minh" → /register (endpoint resend chưa có — UI-SPEC A3)
 
 **Phase 27 Plan 04 decisions (2026-05-22):**
 
@@ -337,3 +348,5 @@ Không có blocker.
 - Phase 27 Plan 02: Nền tảng token + RabbitMQ Producer user-service — **COMPLETED 2026-05-22** (Flyway V102+V103 + VerificationTokenService single-use + AccountEventPublisher afterCommit; 13 files, 4 commits)
 - Phase 27 Plan 03: notification-service consumer user events + EmailSender SMTP + FE 3 trang — **COMPLETED 2026-05-22** (UserEventListener + EmailSender + MailTemplate + FE verify-email/forgot-password/reset-password; 10 files, 3 commits)
 - Phase 27 Plan 04: AuthService register hook + 3 endpoint verify-email/forgot/reset — **COMPLETED 2026-05-22** (AuthService 4 method + AuthController 3 endpoint + 2 DTO + AuthControllerIT 5 tests; 5 files, 3 commits)
+- Phase 27 Plan 05: Wave 3 — UserEventListener + docker-compose env + 3 trang FE auth — **COMPLETED 2026-05-22** (topology user.events + UserEventEnvelope + UserEventListener + OrderPlacedNotifyListener fix + docker-compose SMTP env + forgot-password/verify-email/reset-password pages; 12 files, 4 commits)
+- Phase 27: Gửi Email Thật (SMTP) — **COMPLETED 2026-05-22** (5/5 plans, MAIL-01..04 evidence: EmailSender SMTP graceful degradation + 6 template HTML + OrderPlaced/OrderStatusChanged consumer + UserEventListener + 3 auth pages; ready /gsd-verify-work)

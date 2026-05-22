@@ -198,10 +198,10 @@
 | PAY-02 | Phase 26 | — | Active |
 | PAY-03 | Phase 26 | — | Active |
 | PAY-04 | Phase 26 | — | Active |
-| MAIL-01 | Phase 27 | — | Active |
-| MAIL-02 | Phase 27 | — | Active |
-| MAIL-03 | Phase 27 | — | Active |
-| MAIL-04 | Phase 27 | — | Active |
+| MAIL-01 | Phase 27 | 27-05 | Satisfied |
+| MAIL-02 | Phase 27 | 27-05 | Satisfied |
+| MAIL-03 | Phase 27 | 27-05 | Satisfied |
+| MAIL-04 | Phase 27 | 27-05 | Satisfied |
 
 **Total active REQs: 40** (SEED 4 + ORDER 1 + ADMIN-06 1 + STORE 3 + ADMIN-01-05 5 + COUP 5 + REV 3 + AI 5 + MQ 5 + PAY 4 + MAIL 4)
 **Mapped: 40/40** (100% coverage)
