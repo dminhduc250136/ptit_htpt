@@ -66,8 +66,26 @@ public class OrderPlacedNotifyListener {
         return;
       }
 
-      // Business logic (D-14): render template order-confirmation + insert dispatch_log status=SENT.
-      notificationDispatchService.recordOrderConfirmation(eventId, envelope.payload());
+      // Business logic (D-14/Phase 27): branch theo eventType, gọi đúng method service.
+      switch (envelope.eventType()) {
+        case "OrderPlaced" ->
+            notificationDispatchService.sendOrderConfirmation(eventId, envelope.orderPlacedPayload());
+        case "OrderStatusChanged" -> {
+          // Chỉ shipped/delivered/cancelled gửi email — bỏ qua pending/confirmed
+          String status = envelope.orderStatusChangedPayload().newStatus();
+          com.ptit.htpt.notificationservice.service.email.MailTemplate template = switch (status) {
+            case "shipped"   -> com.ptit.htpt.notificationservice.service.email.MailTemplate.ORDER_SHIPPED;
+            case "delivered" -> com.ptit.htpt.notificationservice.service.email.MailTemplate.ORDER_DELIVERED;
+            case "cancelled" -> com.ptit.htpt.notificationservice.service.email.MailTemplate.ORDER_CANCELLED;
+            default          -> null;
+          };
+          if (template != null) {
+            notificationDispatchService.sendOrderStatusChanged(
+                eventId, envelope.orderStatusChangedPayload(), template);
+          }
+        }
+        default -> throw new PermanentMessageException("Unknown order event: " + envelope.eventType());
+      }
 
       log.info("[MQ-CONSUME] queue={} eventId={} status=done", QUEUE, eventId);
     } catch (PermanentMessageException e) {
