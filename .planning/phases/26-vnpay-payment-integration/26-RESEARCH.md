@@ -398,24 +398,28 @@ ALTER TABLE orders ADD COLUMN vnp_transaction_no VARCHAR(50);
 | A5 | order-service forward Bearer JWT khi gọi payment-service tạo session (qua gateway) | §Pattern 2 | Nếu gọi service-to-service trực tiếp thì không cần JWT — planner chốt |
 | A6 | payment-service dùng status terminal của `PaymentTransactionEntity` làm idempotency key (không cần bảng processed_events riêng) | §Pattern 4 | Nếu chọn bảng processed_events cần thêm migration payment-svc |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **IPN trong môi trường demo local — VNPay gọi tới được không?**
+1. **IPN trong môi trường demo local — VNPay gọi tới được không? (RESOLVED)**
    - What we know: VNPay IPN là server-to-server từ internet; demo chạy docker-compose localhost.
    - What's unclear: User demo qua tunnel (ngrok/cloudflared) hay chấp nhận gọi IPN thủ công?
    - Recommendation: Planner làm rõ với user. Mặc định: hỗ trợ cả hai — code IPN endpoint chuẩn (chạy được khi có tunnel) + cung cấp script curl mô phỏng IPN cho demo offline.
+   - **RESOLVED:** Hỗ trợ cả hai — endpoint IPN code chuẩn (chạy khi có tunnel), demo offline dùng curl mô phỏng IPN payload có chữ ký hợp lệ. Ghi nhận trong `26-VALIDATION.md` §Manual-Only Verifications. Không thay đổi plan.
 
-2. **`vnp_TxnRef` = order id hay payment session id?**
+2. **`vnp_TxnRef` = order id hay payment session id? (RESOLVED)**
    - What we know: VNPay yêu cầu unique theo ngày; retry thanh toán cùng đơn cần txnRef mới.
    - Recommendation: Dùng `paymentSessionId` (UUID mới mỗi session) — cho phép retry. `vnp_OrderInfo` mang mã đơn.
+   - **RESOLVED:** `vnp_TxnRef = paymentSessionId` (UUID mới mỗi session, cho phép retry). `vnp_OrderInfo` mang mã đơn. Áp dụng tại Plan 01 Task 3 (`buildPaymentUrl(sessionId, ...)`) và Plan 01 Task 2 (`processIpn` load session theo `vnp_TxnRef`).
 
-3. **`paymentUrl` trả về FE như thế nào?**
+3. **`paymentUrl` trả về FE như thế nào? (RESOLVED)**
    - What we know: D-04 — order-service gọi payment-service nhận paymentUrl.
    - What's unclear: `paymentUrl` nằm trong response của `POST /api/orders` (mở rộng `OrderDto`) hay FE gọi endpoint riêng sau khi tạo đơn?
    - Recommendation: Thêm field `paymentUrl` (nullable) vào `OrderDto` — chỉ có giá trị khi `payment_method=VNPAY`. FE đọc `order.paymentUrl` → `window.location`. Đơn giản nhất, 1 round-trip.
+   - **RESOLVED:** Thêm field `paymentUrl` (nullable, transient) vào `OrderDto` — chỉ có giá trị khi `payment_method=VNPAY`. Áp dụng tại Plan 02 Task 2 (`OrderDto.paymentUrl`) + Plan 03 Task 1 (set giá trị nhánh VNPAY) + Plan 04 Task 1 (FE đọc `order.paymentUrl`).
 
-4. **Backfill `payment_status` cho order COD cũ?**
+4. **Backfill `payment_status` cho order COD cũ? (RESOLVED)**
    - Recommendation: COD cũ giữ `payment_status=PENDING` (default migration) hoặc set theo `order.status` (DELIVERED → PAID). Planner chốt — không ảnh hưởng VNPay scope.
+   - **RESOLVED:** Order COD cũ giữ `payment_status=PENDING` (default của V6 migration), KHÔNG backfill theo `order.status`. Áp dụng tại Plan 02 Task 1 (`V6__add_payment_status.sql` với `DEFAULT 'PENDING'`).
 
 ## Environment Availability
 

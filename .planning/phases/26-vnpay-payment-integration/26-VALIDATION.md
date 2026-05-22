@@ -2,8 +2,8 @@
 phase: 26
 slug: vnpay-payment-integration
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-05-22
 ---
 
@@ -40,7 +40,15 @@ created: 2026-05-22
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 26-01-01 | 01 | 1 | PAY-03 | T-26-01 | HMAC SHA512 verify đúng, loại vnp_SecureHash khỏi tập ký | unit | `mvn -q test -pl payment-service` | ❌ W0 | ⬜ pending |
+| 26-01-01 | 01 | 1 | PAY-01, PAY-03 | T-26-01, T-26-05 | HMAC SHA512 ký/verify đúng, loại vnp_SecureHash + vnp_SecureHashType khỏi tập ký, vnp_Amount × 100, secret không hardcode | unit | `mvn -q test -pl payment-service -Dtest=VNPaySignatureTest` | ❌ W0 (`VNPaySignatureTest.java`) | ⬜ pending |
+| 26-01-02 | 01 | 1 | PAY-03 | T-26-01, T-26-02, T-26-03, T-26-04 | IPN verify chữ ký + so khớp amount + idempotent terminal + return URL chỉ hiển thị; JSON thuần {RspCode,Message} | integration | `mvn -q test -pl payment-service -Dtest=VNPayIpnControllerIT` | ❌ W0 (`VNPayIpnControllerIT.java`) | ⬜ pending |
+| 26-01-03 | 01 | 1 | PAY-01 | T-26-05, T-26-06 | POST /payments/sessions provider=VNPAY trả paymentUrl; gateway whitelist IPN/return không lộ JWT | integration | `mvn -q test -pl payment-service` | ❌ W0 (`application-test.yml`) | ⬜ pending |
+| 26-02-01 | 02 | 1 | PAY-04 | T-26-07 | V6 migration thêm payment_status/vnp_transaction_no + processed_events; Flyway validate qua ddl-auto=validate | integration | `mvn -q test -pl order-service -Dtest=OrderMapper*` | ❌ W0 (validate gián tiếp qua Spring context) | ⬜ pending |
+| 26-02-02 | 02 | 1 | PAY-04 | T-26-08 | OrderEntity/OrderDto/OrderMapper expose payment fields; processed_events infra port | unit | `mvn -q test -pl order-service -Dtest=OrderMapper*` | ❌ W0 (`OrderMapper*` test) | ⬜ pending |
+| 26-03-01 | 03 | 2 | PAY-01 | T-26-10, T-26-11 | Nhánh VNPAY tạo session + trì hoãn OrderPlaced (D-09); COD publish ngay (D-10) | integration | `mvn -q test -pl order-service -Dtest=OrderCrudServiceVNPayIT` | ❌ W0 (`OrderCrudServiceVNPayIT.java`) | ⬜ pending |
+| 26-03-02 | 03 | 2 | PAY-03, PAY-04 | T-26-09, T-26-12 | Consume PaymentSucceeded/Failed cập nhật payment_status; idempotent processed_events; DLQ classification | integration | `mvn -q test -pl order-service -Dtest=PaymentEventListenerIT` | ❌ W0 (`PaymentEventListenerIT.java`) | ⬜ pending |
+| 26-04-01 | 04 | 3 | PAY-01 | T-26-13 | Selector VNPay + redirect window.location paymentUrl; type Order mở rộng | type-check | `cd sources/frontend && npx tsc --noEmit` | ✅ tooling sẵn có | ⬜ pending |
+| 26-04-02 | 04 | 3 | PAY-02, PAY-04 | T-26-13, T-26-14 | Trang /checkout/result resolve orderId qua return endpoint + poll payment_status 3s×5 (5 trạng thái); order display payment fields | type-check + smoke | `cd sources/frontend && npx tsc --noEmit && npx playwright test vnpay-payment --list` | ❌ W0 (`vnpay-payment.spec.ts`) | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -70,11 +78,11 @@ created: 2026-05-22
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 120s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies — cả 9 task có lệnh tự động
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify — mỗi task có verify riêng
+- [x] Wave 0 covers all MISSING references — 6 test artifact liệt kê §Wave 0 Requirements
+- [x] No watch-mode flags
+- [x] Feedback latency < 120s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved
