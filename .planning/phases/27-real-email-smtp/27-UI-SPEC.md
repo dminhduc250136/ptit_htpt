@@ -1,10 +1,11 @@
 ---
 phase: 27
 slug: real-email-smtp
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-22
+reviewed_at: 2026-05-22
 ---
 
 # Phase 27 — UI Design Contract
@@ -68,14 +69,18 @@ Exceptions: touch target tối thiểu 44px cho các nút submit — đã đảm
 
 Tái dụng các token đã có — không khai báo font mới.
 
+**Weights dùng trong phase này: chỉ 2.**
+
 | Role | CSS Token | Value px | Weight Token | Line Height |
 |------|-----------|----------|--------------|-------------|
 | Heading (h1 trang) | `--text-headline-md` | 28px | `--weight-bold` (700) | `--leading-tight` (1.2) |
 | Body / subtitle | `--text-body-md` | 14px | `--weight-regular` (400) | `--leading-relaxed` (1.6) |
 | Label / helper | `--text-body-sm` | 12px | `--weight-regular` (400) | `--leading-relaxed` (1.6) |
-| Link / action | `--text-body-sm` | 12px | `--weight-medium` (500) | `--leading-normal` (1.5) |
+| Link / action | `--text-body-sm` | 12px | `--weight-regular` (400) + `text-decoration: underline` | `--leading-normal` (1.5) |
 
-> Chỉ 4 kích thước. Không dùng display-size cho form auth nhẹ.
+> Chỉ 4 kích thước, **2 weights** (`--weight-regular` 400 + `--weight-bold` 700).
+> Link phân biệt thị giác bằng `color: var(--primary)` + `text-decoration: underline` — không dùng weight riêng.
+> `--weight-medium` (500) KHÔNG được dùng trong phase này.
 > Vietnamese diacritics: dùng `--leading-relaxed: 1.6` cho body text — đã optimize trong globals.css.
 
 ---
@@ -88,16 +93,18 @@ Tái dụng palette "The Digital Atélier" — không khai báo màu mới.
 |------|-----------|----------------|-------|
 | Dominant (60%) | `--surface` / `--background` | #f7f9fb | Nền trang, background page |
 | Secondary (30%) | `--surface-container-lowest` | #ffffff | Card form container (max-w 440px) |
-| Accent (10%) | `--primary` | #0040a1 | Link "Quên mật khẩu?", link "Quay lại đăng nhập", nút submit primary, icon check mark trạng thái success |
-| Success | `--primary` + green tint | #16a34a inline | Icon check circle trên trang verify-email success state |
+| Accent (10%) | `--primary` | #0040a1 | Link "Quên mật khẩu?", link "Quay lại đăng nhập", nút submit primary |
+| Success (one-off) | inline `#16a34a` | #16a34a | Icon check circle + circle background trên trang verify-email success state — one-off exception, không có token `--success` trong globals.css |
 | Error / Destructive | `--error` | #ba1a1a | Banner lỗi, field validation error (tái dụng `--error-container` #ffdad6 cho background banner) |
 
 **Accent reserved for:**
 - Nút submit chính (Button variant="primary")
-- Các link điều hướng auth (forgotLink, switchLink)
-- Icon trạng thái thành công trên `/verify-email`
+- Các link điều hướng auth (forgotLink, switchLink) — kết hợp với `text-decoration: underline` thay vì `--weight-medium`
 
 **Không dùng accent cho:** label thông thường, placeholder, helper text, border form.
+
+> **One-off color note:** `#16a34a` (success green) dùng cho icon check circle trên `/verify-email` success state.
+> globals.css không có token `--success` hay `--color-success`. Đây là exception có chủ đích — executor ghi inline color value này trực tiếp vào CSS Module của verify-email, không tạo token mới.
 
 ---
 
@@ -165,13 +172,13 @@ Tạo `verify-email/page.module.css` riêng vì trang này không có form — c
 
 **States:**
 - Loading: spinner nhỏ (24px) giữa trang — dùng CSS animation `pulse` đã có
-- Success: icon check circle (#16a34a), tiêu đề xanh, CTA "Đến trang đăng nhập"
-- Expired: icon clock (#ba1a1a), tiêu đề đỏ, CTA "Gửi lại email xác minh"
-- Invalid: icon X circle (#ba1a1a), tiêu đề đỏ, CTA "Quay lại trang chủ"
+- Success: icon check circle (inline `#16a34a` — one-off exception), tiêu đề xanh, CTA "Đến trang đăng nhập"
+- Expired: icon clock (`var(--error)` = #ba1a1a), tiêu đề đỏ, CTA "Gửi lại email xác minh"
+- Invalid: icon X circle (`var(--error)` = #ba1a1a), tiêu đề đỏ, CTA "Quay lại trang chủ"
 
 Icon states dùng inline SVG (24x24px) trong circle container 64x64px:
-- Success: `color: #16a34a`, background `rgba(22, 163, 74, 0.1)`
-- Error/Expired: `color: var(--error)` (#ba1a1a), background `var(--error-container)` (#ffdad6)
+- Success: `color: #16a34a` (one-off — không có token), background `rgba(22, 163, 74, 0.1)`
+- Error/Expired: `color: var(--error)`, background `var(--error-container)`
 
 ### `/reset-password` — Form mật khẩu mới
 
@@ -374,4 +381,5 @@ Không có third-party registry hay block nào. Phase này chỉ dùng component
 
 *Phase: 27-real-email-smtp*
 *UI-SPEC authored: 2026-05-22*
+*UI-SPEC revised: 2026-05-22 — fix D4 blocking (loại --weight-medium, giữ 2 weights), note D3 one-off color exception*
 *Source: CONTEXT.md D-18, RESEARCH.md §Architecture Patterns, existing login/register page patterns*
