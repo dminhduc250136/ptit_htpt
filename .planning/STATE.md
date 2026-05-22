@@ -1,16 +1,16 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
-milestone_name: Catalog Realism & Commerce Intelligence
-status: executing
-last_updated: "2026-05-20T00:00:00Z"
+milestone: v1.0
+milestone_name: milestone
+status: verifying
+last_updated: "2026-05-22T15:32:49.782Z"
 last_activity: 2026-05-20
 progress:
-  total_phases: 9
-  completed_phases: 4
-  total_plans: 14
-  completed_plans: 20
-  percent: 57
+  total_phases: 12
+  completed_phases: 8
+  total_plans: 49
+  completed_plans: 42
+  percent: 86
 ---
 
 ## Current Position
@@ -157,8 +157,6 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 - REQUIREMENTS.md backfilled: section MQ với MQ-01..MQ-05 + traceability 5 dòng + scope 7→8 trục + Total 27→32 (32/32 mapped 100%)
 - Threat register accept: guest/guest credential acceptable cho dev (port 5672 bind localhost, không expose firewall ngoài) — đổi password defer Phase ops
 
-
-
 **Phase 20 Plan 03 decisions (2026-05-03):**
 
 - COUP-04 BE order integration hoàn tất: OrderCrudService.createOrderFromCommand inject CouponRedemptionService, gọi atomicRedeem trong cùng @Transactional cha (D-08, D-12). Server compute discountAmount từ subtotal qua CouponPreviewService.computeDiscount (D-10, KHÔNG tin client). Snapshot 2 field discountAmount + couponCode lên OrderEntity → cuối cùng saved
@@ -292,6 +290,7 @@ Không có blocker.
 4. `/gsd-ai-integration-phase 22` → Execute Phase 22: AI Chatbot Claude API MVP (dùng AI integration workflow thay plan-phase chuẩn)
 
 **Completed:**
+
 - Phase 16: Seed Catalog Hiện Thực — **COMPLETED 2026-05-02** (3/3 plans, SEED-01..04)
 - Phase 17: Sửa Order Detail Items — **COMPLETED 2026-05-02** (4/4 plans, ORDER-01 + ADMIN-06)
 - Phase 18: Kiểm Toán Storage + Cart→DB — **COMPLETED 2026-05-02** (6/6 plans, STORE-01/02/03 closed)
