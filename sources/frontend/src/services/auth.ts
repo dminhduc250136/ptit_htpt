@@ -70,3 +70,24 @@ export function logout(): void {
 // expose a refresh endpoint (Q2 from RESEARCH). D-08 fallback (silent redirect on 401)
 // covers the missing refresh flow. Re-enable here when the backend ships POST
 // /api/users/auth/refresh.
+
+/**
+ * Phase 27 / Plan 27-05: 2 hàm cho luồng forgot/reset password.
+ * verify-email gọi fetch trực tiếp trong page.tsx (GET không cần wrapper).
+ */
+
+/**
+ * Gửi yêu cầu đặt lại mật khẩu — luôn 200 (anti-enumeration T-27-10).
+ * Không throw khi email không tồn tại — caller chỉ hiện success state.
+ */
+export async function forgotPassword(email: string): Promise<void> {
+  await httpPost('/api/users/auth/password/forgot', { email });
+}
+
+/**
+ * Đặt lại mật khẩu với token từ email.
+ * Throw ApiError với status 400/410 khi token hết hạn hoặc không hợp lệ.
+ */
+export async function resetPassword(token: string, newPassword: string): Promise<void> {
+  await httpPost('/api/users/auth/password/reset', { token, newPassword });
+}
