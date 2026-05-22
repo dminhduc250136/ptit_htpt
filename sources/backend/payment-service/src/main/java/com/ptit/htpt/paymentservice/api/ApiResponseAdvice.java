@@ -21,7 +21,8 @@ public class ApiResponseAdvice implements ResponseBodyAdvice<Object> {
       "/actuator",
       "/v3/api-docs",
       "/swagger-ui",
-      "/swagger-resources"
+      "/swagger-resources",
+      "/payments/vnpay"  // Phase 26: VNPay IPN/return cần JSON thuần, không envelope
   );
   private static final Set<String> SKIP_EXACT = Set.of("/swagger-ui.html");
 
