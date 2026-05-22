@@ -192,7 +192,8 @@ export interface Order {
   items: OrderItem[];
   shippingAddress: Address;
   paymentMethod: 'COD' | 'BANK_TRANSFER' | 'E_WALLET' | string;
-  paymentStatus?: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
+  /** Trạng thái thanh toán. Phase 26: widened to string để nhận mọi value từ backend. */
+  paymentStatus?: string;
   orderStatus?: string;    // optional — backend trả 'status' không phải 'orderStatus'
   status?: string;         // D-10: backend field name
   subtotal?: number;
@@ -206,6 +207,11 @@ export interface Order {
   discountAmount?: number;
   /** Mã coupon đã áp dụng (snapshot). null/undefined nếu không có coupon. */
   couponCode?: string | null;
+  // ===== Phase 26 / PAY-01..PAY-04 (Plan 26-04 OrderDto extension) =====
+  /** Mã giao dịch VNPay (vnp_TransactionNo từ IPN). null nếu chưa thanh toán hoặc không phải VNPay. */
+  vnpTransactionNo?: string;
+  /** URL redirect sang cổng VNPay. Chỉ có giá trị khi paymentMethod=VNPAY và vừa tạo đơn. */
+  paymentUrl?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -228,7 +234,7 @@ export interface CreateOrderRequest {
   // so the backend can compute totalAmount server-side.
   items: { productId: string; productName: string; quantity: number; unitPrice: number }[];   // D-06: productName snapshot
   shippingAddress: Address;
-  paymentMethod: 'COD' | 'BANK_TRANSFER' | 'E_WALLET';
+  paymentMethod: 'COD' | 'BANK_TRANSFER' | 'E_WALLET' | 'VNPAY';
   note?: string;
   // Phase 20 / COUP-03 (D-19): optional coupon code applied at checkout.
   // BE atomic redeem step (Plan 20-03) trong cùng order transaction.
