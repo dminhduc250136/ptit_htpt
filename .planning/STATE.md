@@ -3,25 +3,25 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-22T16:37:39.413Z"
+last_updated: "2026-05-22T16:46:58.532Z"
 last_activity: 2026-05-22
 progress:
   total_phases: 12
-  completed_phases: 8
+  completed_phases: 9
   total_plans: 53
-  completed_plans: 45
-  percent: 85
+  completed_plans: 46
+  percent: 87
 ---
 
 ## Current Position
 
-Phase: 26 (vnpay-payment-integration) — EXECUTING
-Plan: 3 of 4
-Status: Executing Phase 26
-Last activity: 2026-05-22 -- Completed 26-03: PaymentSessionClient + PaymentEventListener
+Phase: 26 (vnpay-payment-integration) — COMPLETED
+Plan: 4 of 4 (DONE)
+Status: Phase 26 complete — ready for Phase 27
+Last activity: 2026-05-22 -- Completed 26-04: FE VNPay checkout + result page + order display
 
 ```
-Progress: [█████████░] 85% (45/53 plans complete)
+Progress: [█████████░] 87% (46/53 plans complete)
 ```
 
 ## Project Reference
@@ -75,6 +75,13 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 23-message-queue-rabbitmq P06 | 10min | 2 tasks | 9 files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 26 Plan 04 decisions (2026-05-22):**
+
+- paymentStatus widened từ 'PENDING'|'PAID'|'FAILED'|'REFUNDED' → string (loại bỏ duplicate field; backward compat với paymentStatusMap lookup)
+- getVNPayReturn forward window.location.search đầy đủ sang GET /api/payments/vnpay/return (public, whitelist Plan 26-01)
+- checkout/result Playwright spec đặt trong e2e/ (testDir config) thay vì tests/ — 4 smoke tests với page.route() mock
+- Inline Spinner (không tạo CSS module mới) + inline keyframe — UI-SPEC §Component reuse
 
 **Phase 26 Plan 03 decisions (2026-05-22):**
 
