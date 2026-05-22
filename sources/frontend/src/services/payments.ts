@@ -22,4 +22,27 @@ export function listMyPaymentSessions(): Promise<unknown> {
   return httpGet<unknown>(`/api/payments/payments/sessions`);
 }
 
-/** Reserved — payment flow currently runs via order-service.createOrder. */
+// ===== Phase 26 / PAY-02: VNPay return page resolve orderId =====
+
+/** Shape trả về từ GET /api/payments/vnpay/return (Plan 26-01 Task 2 buildReturnView). */
+export interface VNPayReturnResult {
+  valid: boolean;
+  orderId: string | null;
+  responseCode: string | null;
+  vnpTransactionNo: string | null;
+}
+
+/**
+ * Resolve orderId từ VNPay redirect query string.
+ *
+ * Gọi `GET /api/payments/vnpay/return?{searchParams}` — forward TOÀN BỘ query string
+ * VNPay redirect về. Endpoint public (gateway whitelist Plan 26-01 Task 3, không cần JWT).
+ * Nguồn sự thật vẫn là IPN (D-06); endpoint này CHỈ xác minh chữ ký để lấy orderId
+ * cho polling — KHÔNG cập nhật DB.
+ *
+ * @param searchParams — URLSearchParams từ window.location.search khi VNPay redirect về
+ */
+export function getVNPayReturn(searchParams: URLSearchParams): Promise<VNPayReturnResult> {
+  const qs = searchParams.toString();
+  return httpGet<VNPayReturnResult>(`/api/payments/vnpay/return${qs ? `?${qs}` : ''}`);
+}

@@ -9,7 +9,7 @@ import RetrySection from '@/components/ui/RetrySection/RetrySection';
 import { useToast } from '@/components/ui/Toast/Toast';
 import { getAdminOrderById, updateOrderState } from '@/services/orders';
 import type { Order } from '@/types';
-import { paymentMethodMap, statusMap } from '@/lib/orderLabels';
+import { paymentMethodMap, paymentStatusMap, statusMap } from '@/lib/orderLabels';
 import { useEnrichedItems } from '@/lib/useEnrichedItems';
 import SuggestReplyModal from '@/components/chat/SuggestReplyModal/SuggestReplyModal';
 import { fetchSuggestReply } from '@/services/admin-chat';
@@ -158,6 +158,29 @@ export default function AdminOrderDetailPage() {
             Thanh toán:{' '}
             <strong>{paymentMethodMap[order.paymentMethod] ?? order.paymentMethod ?? '—'}</strong>
           </p>
+          {/* Phase 26 / PAY-04: payment status badge + mã giao dịch VNPay (UI-SPEC §Order display + §Color) */}
+          {order.paymentStatus && (
+            <p style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              Trạng thái TT:{' '}
+              <Badge
+                variant={
+                  order.paymentStatus === 'PAID'
+                    ? 'sale'
+                    : order.paymentStatus === 'FAILED'
+                    ? 'out-of-stock'
+                    : 'default'
+                }
+              >
+                {paymentStatusMap[order.paymentStatus] ?? order.paymentStatus}
+              </Badge>
+            </p>
+          )}
+          {/* Mã giao dịch VNPay — ẩn dòng nếu rỗng (UI-SPEC §Order display) */}
+          {order.vnpTransactionNo && (
+            <p style={labelStyle}>
+              Mã GD VNPay: <strong>{order.vnpTransactionNo}</strong>
+            </p>
+          )}
           {order.note && <p style={labelStyle}>Ghi chú: <strong>{order.note}</strong></p>}
         </div>
       </div>
