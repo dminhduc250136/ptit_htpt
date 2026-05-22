@@ -1,10 +1,11 @@
 ---
 phase: 26
 slug: vnpay-payment-integration
-status: draft
+status: approved
 shadcn_initialized: false
 preset: none
 created: 2026-05-22
+reviewed_at: 2026-05-22
 ---
 
 # Phase 26 — UI Design Contract
