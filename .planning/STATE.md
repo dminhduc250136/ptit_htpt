@@ -3,25 +3,25 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-22T17:00:00.000Z"
-last_activity: 2026-05-22 -- Phase 27 Plan 01 COMPLETED
+last_updated: "2026-05-22T16:23:00.000Z"
+last_activity: 2026-05-22 -- Phase 27 Plan 02 COMPLETED
 progress:
   total_phases: 12
   completed_phases: 8
   total_plans: 54
-  completed_plans: 43
-  percent: 80
+  completed_plans: 44
+  percent: 81
 ---
 
 ## Current Position
 
 Phase: 27 (real-email-smtp) — EXECUTING
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Executing Phase 27
-Last activity: 2026-05-22 -- Phase 27 Plan 01 COMPLETED (27-01-SUMMARY.md)
+Last activity: 2026-05-22 -- Phase 27 Plan 02 COMPLETED (27-02-SUMMARY.md)
 
 ```
-Progress: [████████░░] 80% (43/54 plans complete)
+Progress: [████████░░] 81% (44/54 plans complete)
 ```
 
 ## Project Reference
@@ -74,8 +74,17 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 23-message-queue-rabbitmq P05 | 5min | 2 tasks | 10 files |
 | Phase 23-message-queue-rabbitmq P06 | 10min | 2 tasks | 9 files |
 | Phase 27-real-email-smtp P01 | 15min | 3 tasks | 4 files |
+| Phase 27-real-email-smtp P02 | 4min | 3 tasks | 13 files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 27 Plan 02 decisions (2026-05-22):**
+
+- VerificationTokenEntity dùng record-style accessors (KHÔNG Lombok) — nhất quán UserEntity convention
+- verifyAndConsume kiểm tra usedAt TRƯỚC expiresAt — đã dùng ưu tiên báo 410 GONE
+- UserRabbitMQConfig khai báo cả DLX + DLQ + notification.user-events queue — Wave 3 consumer có thể dùng ngay
+- user-service Producer only → KHÔNG có listener.simple.retry block trong application.yml
+- AccountEventPublisher.publishUserRegistered/publishPasswordReset tạo sẵn nhưng chưa wire vào AuthService — Plan 27-03 sẽ wire
 
 **Phase 27 Plan 01 decisions (2026-05-22):**
 
@@ -315,3 +324,4 @@ Không có blocker.
 - Phase 23 Plan 06: Integration tests 3 IT class 9 @Test methods (FULL D-18 không @Disabled) + scripts/verify-mq.sh smoke + architecture/02-sequence-diagrams.md Kafka→RabbitMQ — **COMPLETED 2026-05-20** (MQ-02/03/04/05 evidence; 9 files, 2 commits fc86cb0 + 9957b99)
 - Phase 23: Message Queue Integration (RabbitMQ) — **COMPLETED 2026-05-20** execution (6/6 plans, MQ-01..05 đã có evidence; ready /gsd-verify-work cho mvn + docker smoke runtime)
 - Phase 27 Plan 01: Mở rộng order-service producer — **COMPLETED 2026-05-22** (OrderEventEnvelope mở rộng + publishOrderStatusChanged + resolveCustomerEmail; 4 files, 3 commits)
+- Phase 27 Plan 02: Nền tảng token + RabbitMQ Producer user-service — **COMPLETED 2026-05-22** (Flyway V102+V103 + VerificationTokenService single-use + AccountEventPublisher afterCommit; 13 files, 4 commits)
