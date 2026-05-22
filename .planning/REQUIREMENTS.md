@@ -103,10 +103,10 @@
 
 ### PAY — VNPay Sandbox Payment Integration
 
-- [ ] **PAY-01** — Checkout payment method: tại `/checkout` thêm lựa chọn phương thức "Thanh toán qua VNPay" (bên cạnh COD nếu có). Khi chọn VNPay + đặt hàng → order tạo với `payment_method=VNPAY` + `payment_status=PENDING`, BE build URL thanh toán VNPay sandbox (params `vnp_Amount`, `vnp_TxnRef`, `vnp_OrderInfo`, `vnp_ReturnUrl`, ... + `vnp_SecureHash` HMAC SHA512) và FE redirect khách sang cổng VNPay.
+- [x] **PAY-01** — Checkout payment method: tại `/checkout` thêm lựa chọn phương thức "Thanh toán qua VNPay" (bên cạnh COD nếu có). Khi chọn VNPay + đặt hàng → order tạo với `payment_method=VNPAY` + `payment_status=PENDING`, BE build URL thanh toán VNPay sandbox (params `vnp_Amount`, `vnp_TxnRef`, `vnp_OrderInfo`, `vnp_ReturnUrl`, ... + `vnp_SecureHash` HMAC SHA512) và FE redirect khách sang cổng VNPay.
 - [ ] **PAY-02** — Return URL: VNPay redirect khách về `vnp_ReturnUrl` của ứng dụng sau thanh toán. FE render trang kết quả rõ ràng (thành công / thất bại / huỷ) dựa trên `vnp_ResponseCode`. KHÔNG cập nhật trạng thái đơn dựa trên return URL (return URL chỉ để hiển thị — nguồn sự thật là IPN).
-- [ ] **PAY-03** — IPN callback (server-to-server): BE expose endpoint nhận IPN từ VNPay, verify `vnp_SecureHash` (HMAC SHA512 với secret), so khớp `vnp_Amount` với số tiền đơn, so khớp `vnp_TxnRef` với order. Hợp lệ + `vnp_ResponseCode=00` → cập nhật `payment_status=PAID` + lưu `vnp_TransactionNo`; thất bại → `payment_status=FAILED`. Idempotent khi VNPay gửi lại cùng giao dịch. Trả response đúng format VNPay yêu cầu.
-- [ ] **PAY-04** — Order display: `/account/orders/[id]` + `/admin/orders/[id]` hiển thị phương thức thanh toán + trạng thái thanh toán (PENDING/PAID/FAILED) + mã giao dịch VNPay nếu có. Chữ ký sai hoặc số tiền lệch → giao dịch bị từ chối và ghi log audit.
+- [x] **PAY-03** — IPN callback (server-to-server): BE expose endpoint nhận IPN từ VNPay, verify `vnp_SecureHash` (HMAC SHA512 với secret), so khớp `vnp_Amount` với số tiền đơn, so khớp `vnp_TxnRef` với order. Hợp lệ + `vnp_ResponseCode=00` → cập nhật `payment_status=PAID` + lưu `vnp_TransactionNo`; thất bại → `payment_status=FAILED`. Idempotent khi VNPay gửi lại cùng giao dịch. Trả response đúng format VNPay yêu cầu.
+- [x] **PAY-04** — Order display: `/account/orders/[id]` + `/admin/orders/[id]` hiển thị phương thức thanh toán + trạng thái thanh toán (PENDING/PAID/FAILED) + mã giao dịch VNPay nếu có. Chữ ký sai hoặc số tiền lệch → giao dịch bị từ chối và ghi log audit.
 
 ### MAIL — Real Email Delivery (SMTP)
 

@@ -3,25 +3,25 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-22T16:10:49.743Z"
-last_activity: 2026-05-22 -- Phase 26 execution started
+last_updated: "2026-05-22T16:37:39.413Z"
+last_activity: 2026-05-22
 progress:
   total_phases: 12
   completed_phases: 8
   total_plans: 53
-  completed_plans: 42
-  percent: 79
+  completed_plans: 45
+  percent: 85
 ---
 
 ## Current Position
 
 Phase: 26 (vnpay-payment-integration) — EXECUTING
-Plan: 1 of 4
+Plan: 3 of 4
 Status: Executing Phase 26
-Last activity: 2026-05-22 -- Phase 26 execution started
+Last activity: 2026-05-22 -- Completed 26-03: PaymentSessionClient + PaymentEventListener
 
 ```
-Progress: [█████░░░░░] 57% (4/7 phases complete)
+Progress: [█████████░] 85% (45/53 plans complete)
 ```
 
 ## Project Reference
@@ -75,6 +75,16 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 23-message-queue-rabbitmq P06 | 10min | 2 tasks | 9 files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 26 Plan 03 decisions (2026-05-22):**
+
+- PaymentSessionClient throw 502 BAD_GATEWAY khi fail (KHÔNG fallback empty như ProductBatchClient) — paymentUrl bắt buộc cho đơn VNPAY (đơn không có paymentUrl là lỗi cứng)
+- createOrderFromCommand overload 2-arg (backward compat) + 3-arg (với authHeader) — OrderController forward `Authorization` header xuống service
+- publishOrderPlacedForOrder helper public trong OrderCrudService (DRY) — dùng bởi COD path và PaymentEventListener
+- PaymentEventListener inject OrderCrudService (KHÔNG OrderEventPublisher trực tiếp) để gọi helper DRY
+- PermanentMessageException order-service extends RuntimeException → listener wrap thành AmqpRejectAndDontRequeueException trước throw (KHÁC inventory-service extends ARDQE)
+- PaymentEventEnvelope record trong order-service có shape IDENTICAL payment-service — đủ để Jackson2JsonMessageConverter deserialize qua field name matching
+- Unit tests dùng Mockito (KHÔNG Testcontainers) — env Windows không Docker; pattern đồng nhất Plan 26-01
 
 **Phase 23 Plan 06 decisions (2026-05-20):**
 

@@ -283,12 +283,12 @@ Plans:
   2. Sau khi thanh toán trên VNPay sandbox, khách quay lại return URL của ứng dụng và thấy trang kết quả rõ ràng (thành công / thất bại / huỷ) — KHÔNG dựa vào return URL để cập nhật DB
   3. Backend nhận IPN callback từ VNPay (server-to-server), verify chữ ký HMAC SHA512 (`vnp_SecureHash`), so khớp số tiền, cập nhật `payment_status` của đơn (PAID / FAILED) — idempotent khi VNPay gửi lại cùng giao dịch
   4. Đơn hàng tại `/account/orders/[id]` và `/admin/orders/[id]` hiển thị đúng trạng thái thanh toán + phương thức + mã giao dịch VNPay; chữ ký sai hoặc số tiền lệch → giao dịch bị từ chối và ghi log
-**Plans:** 2/4 plans executed
+**Plans:** 3/4 plans executed
 
 Plans:
 - [x] 26-01-PLAN.md — payment-service VNPay core: HMAC SHA512 ký/verify + messaging payment.events + IPN/return controller + gateway whitelist
 - [x] 26-02-PLAN.md — order-service nền tảng dữ liệu: Flyway V6 (payment_status + vnp_transaction_no + processed_events) + entity/dto/mapper + port idempotency infra
-- [ ] 26-03-PLAN.md — order-service tích hợp: PaymentSessionClient + nhánh VNPAY OrderCrudService + PaymentEventListener consume PaymentSucceeded/Failed
+- [x] 26-03-PLAN.md — order-service tích hợp: PaymentSessionClient + nhánh VNPAY OrderCrudService + PaymentEventListener consume PaymentSucceeded/Failed
 - [ ] 26-04-PLAN.md — FE: checkout selector VNPay + redirect + trang kết quả /checkout/result polling + order display
 **UI hint**: yes (checkout payment method selector + trang kết quả thanh toán)
 
@@ -326,7 +326,7 @@ Plans:
 | 23. Message Queue Integration (RabbitMQ) | 2/6 | In progress | - |
 | 24. Database Per Service (tách CSDL hạ tầng) | 0/? | Not planned | - |
 | 25. Gateway JWT Edge Authentication | 0/? | Not planned | - |
-| 26. Tích Hợp Thanh Toán VNPay Sandbox | 2/4 | In Progress|  |
+| 26. Tích Hợp Thanh Toán VNPay Sandbox | 3/4 | In Progress|  |
 | 27. Gửi Email Thật (SMTP) | 0/? | Not planned | - |
 
 ---
