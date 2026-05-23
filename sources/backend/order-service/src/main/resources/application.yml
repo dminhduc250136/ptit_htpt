@@ -19,6 +19,8 @@ spring:
   flyway:
     enabled: true
     baseline-on-migrate: false
+    # Phase 26.1: cho phép apply V6 + V7 sau V100/V103 đã có (seed-dev chạy trước core migration)
+    out-of-order: true
     locations: classpath:db/migration
   # Phase 23 / Plan 23-02: messaging — producer OrderPlaced (D-02..D-07)
   rabbitmq:
