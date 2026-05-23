@@ -234,6 +234,9 @@ public class MomoService {
   public Map<String, Object> buildReturnView(Map<String, String> params) {
     // Convert Map<String,String> to Map<String,Object> cho verifyIpn
     Map<String, Object> paramsAsObject = new HashMap<>(params);
+    // FIX 26.1: MoMo return URL KHÔNG kèm accessKey trong query string (đó là secret merchant-side).
+    // Inject từ config để verifyIpn tính HMAC SHA256 đúng (dùng chung sign data format với IPN).
+    paramsAsObject.putIfAbsent("accessKey", config.accessKey());
     boolean valid = momoSignature.verifyIpn(paramsAsObject);
 
     String requestId = params.get("requestId");
