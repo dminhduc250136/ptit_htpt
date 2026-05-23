@@ -3,25 +3,25 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-23T03:19:50.235Z"
+last_updated: "2026-05-23T03:26:40.163Z"
 last_activity: 2026-05-23
 progress:
   total_phases: 13
   completed_phases: 9
   total_plans: 57
-  completed_plans: 48
-  percent: 84
+  completed_plans: 49
+  percent: 86
 ---
 
 ## Current Position
 
 Phase: 26.1 (migrate-payment-gateway-vnpay-to-momo) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-05-23
 
 ```
-Progress: [█████████░] 87% (46/53 plans complete)
+Progress: [█████████░] 86% (49/57 plans complete)
 ```
 
 ## Project Reference
@@ -52,6 +52,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | v1.1 | 4 | 22 | 15/19 SATISFIED + 4 PARTIAL | PASSED (gaps deferred) |
 | v1.2 | 6 (+1 SKIP) | 24 | 17/17 | PASSED |
 | v1.3 | 7 planned | TBD | 0/27 | In progress |
+| Phase 26.1-migrate-payment-gateway P03 | 15min | 2 tasks | 9 files |
 | Phase 17-s-a-order-detail-items P01 | 5min | 2 tasks | 2 files |
 | Phase 17-s-a-order-detail-items P02 | 3min | 2 tasks | 1 file |
 | Phase 17-s-a-order-detail-items P03 | 2min | 2 tasks | 2 files |
@@ -76,6 +77,12 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 26.1-migrate-payment-gateway P01 | 10min | 3 tasks | 16 files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 26.1 Plan 03 decisions (2026-05-23):**
+
+- MoMo resultCode=0 và =9000 đều map sang trạng thái 'polling' (pending authorized cũng cần poll IPN — T-26.1-12 mitigate)
+- Playwright spec mở rộng 4→5 tests: thêm test "thiếu orderId param" vì MoMo dùng orderId thay vnp_TxnRef (empty state coverage đầy đủ)
+- Zero VNPay references verified: grep toàn bộ frontend/src + frontend/e2e — zero matches sau khi xóa comment cũ
 
 **Phase 26.1 Plan 01 decisions (2026-05-23):**
 

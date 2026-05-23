@@ -306,12 +306,12 @@ Plans:
   3. Backend nhận IPN callback từ MoMo (server-to-server POST JSON), verify chữ ký HMAC SHA256, so khớp số tiền, cập nhật `payment_status` của đơn (PAID / FAILED) — idempotent khi MoMo gửi lại cùng giao dịch
   4. Đơn hàng tại `/account/orders/[id]` và `/admin/orders/[id]` hiển thị đúng trạng thái thanh toán + phương thức (MOMO) + mã giao dịch MoMo
   5. Code VNPay (`paymentservice/vnpay/` + test) bị xóa sạch; không còn reference `VNPAY` / `vnp_*` trong codebase
-**Plans:** 2/4 plans executed
+**Plans:** 3/4 plans executed
 
 Plans:
 - [x] 26.1-01-PLAN.md — payment-service: xóa vnpay/ + 2 test; tạo package momo/ (MomoConfig + MomoSignature HMAC SHA256 + MomoService buildPaymentUrl POST MoMo create + processIpn idempotent 204 + MomoController) + ApiResponseAdvice bypass + PaymentEventEnvelope rename field + gateway whitelist 2 endpoint MoMo + docker-compose env MOMO_*
 - [x] 26.1-02-PLAN.md — order-service: Flyway V7 RENAME COLUMN vnp_transaction_no → payment_transaction_no; OrderEntity/OrderDto/OrderMapper field rename; OrderCrudService switch case MOMO; PaymentSessionClient.createMomoSession (provider=MOMO); PaymentEventListener setPaymentTransactionNo; XÓA OrderCrudServiceVNPayIT, tạo OrderCrudServiceMomoIT
-- [ ] 26.1-03-PLAN.md — frontend: type Order rename paymentTransactionNo; orderLabels MOMO; services/payments.ts getMomoReturn; checkout selector option MoMo + redirect; /checkout/result đọc MoMo query (resultCode/orderId/transId) giữ poll 3s×5 + 5 trạng thái UI-SPEC; order display "Mã giao dịch MoMo"; XÓA e2e/12-vnpay-payment.spec.ts, tạo 12-momo-payment.spec.ts
+- [x] 26.1-03-PLAN.md — frontend: type Order rename paymentTransactionNo; orderLabels MOMO; services/payments.ts getMomoReturn; checkout selector option MoMo + redirect; /checkout/result đọc MoMo query (resultCode/orderId/transId) giữ poll 3s×5 + 5 trạng thái UI-SPEC; order display "Mã giao dịch MoMo"; XÓA e2e/12-vnpay-payment.spec.ts, tạo 12-momo-payment.spec.ts
 - [ ] 26.1-04-PLAN.md — cleanup verification: grep audit toàn sources/ + docker-compose enforce SC5 (zero VNPay UNACCEPTABLE matches); smoke test compile + Playwright list; tạo 26.1-CLEANUP-VERIFY.md ghi log SC5 verdict
 **UI hint**: nhẹ (đổi label selector + trang kết quả tái dụng)
 
