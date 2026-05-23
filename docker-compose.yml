@@ -209,16 +209,17 @@ services:
       DB_NAME: payment_svc
       DB_USER: payment_svc
       DB_PASSWORD: payment_svc_pw
-      # Phase 26: RabbitMQ — payment-service là producer payment.events
+      # Phase 26.1: RabbitMQ — payment-service là producer payment.events
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_USER: guest
       SPRING_RABBITMQ_PASS: guest
-      # Phase 26: VNPay sandbox credentials — user cần đăng ký tại sandbox.vnpayment.vn
-      VNP_TMN_CODE: ${VNP_TMN_CODE}
-      VNP_HASH_SECRET: ${VNP_HASH_SECRET}
-      VNP_PAY_URL: ${VNP_PAY_URL:-https://sandbox.vnpayment.vn/paymentv2/vpcpay.html}
-      VNP_RETURN_URL: ${VNP_RETURN_URL:-http://localhost:3000/checkout/result}
-      VNP_IPN_URL: ${VNP_IPN_URL:-}
+      # Phase 26.1: MoMo Developer Sandbox credentials (D-19)
+      MOMO_PARTNER_CODE: ${MOMO_PARTNER_CODE:-MOMO}
+      MOMO_ACCESS_KEY: ${MOMO_ACCESS_KEY:-F8BBA842ECF85}
+      MOMO_SECRET_KEY: ${MOMO_SECRET_KEY:-K951B6PE1waDMi640xX08PD3vg6EkVlz}
+      MOMO_PAY_URL: ${MOMO_PAY_URL:-https://test-payment.momo.vn/v2/gateway/api/create}
+      MOMO_RETURN_URL: ${MOMO_RETURN_URL:-http://localhost:3000/checkout/result}
+      MOMO_IPN_URL: ${MOMO_IPN_URL:-}
 
   inventory-service:
     build: ./sources/backend/inventory-service

@@ -224,9 +224,9 @@ app:
       - { method: GET, pattern: "/api/products/**" }
       - { method: OPTIONS, pattern: "/**" }
       - { method: GET, pattern: "/actuator/health" }
-      # Phase 26: VNPay IPN/return — bên ngoài không gửi JWT, bảo mật qua HMAC SHA512 (D-15)
-      - { method: GET, pattern: "/api/payments/vnpay/ipn" }
-      - { method: GET, pattern: "/api/payments/vnpay/return" }
+      # Phase 26.1: MoMo IPN/return — bên ngoài không gửi JWT, bảo mật qua HMAC SHA256 (D-14)
+      - { method: POST, pattern: "/api/payments/momo/ipn" }
+      - { method: GET,  pattern: "/api/payments/momo/return" }
     # Endpoint yêu cầu role ADMIN — reject 403 nếu roles không chứa ADMIN.
     admin-path-patterns:
       - "/api/*/admin/**"

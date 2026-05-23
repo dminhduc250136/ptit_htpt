@@ -99,7 +99,7 @@ public class MomoService {
     body.put("ipnUrl", config.ipnUrl());
     body.put("redirectUrl", config.returnUrl());
     body.put("orderId", paymentSessionId);
-    body.put("amount", amountVnd);  // raw VND, KHÔNG ×100 (khác VNPay)
+    body.put("amount", amountVnd);  // raw VND (KHÔNG ×100)
     body.put("lang", LANG);
     body.put("orderInfo", orderInfo);
     body.put("requestId", paymentSessionId);

@@ -75,7 +75,7 @@ public class PaymentCrudService {
     return new SessionCreateResult(saved, paymentUrl);
   }
 
-  /** DTO kết quả tạo session — paymentUrl chỉ non-null khi provider=VNPAY. */
+  /** DTO kết quả tạo session — paymentUrl chỉ non-null khi provider=MOMO. */
   public record SessionCreateResult(PaymentSessionEntity session, String paymentUrl) {}
 
   public PaymentSessionEntity updateSession(String id, SessionUpsertRequest request) {

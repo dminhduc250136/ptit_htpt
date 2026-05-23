@@ -16,7 +16,7 @@ import org.springframework.stereotype.Component;
  *   - Ký create: concat key=value KHÔNG sort, KHÔNG URL-encode, theo thứ tự cố định MoMo doc
  *   - Ký IPN verify: concat 13 field theo thứ tự lexicographic MoMo IPN spec
  *   - Algorithm: HmacSHA256, hex encoded lowercase
- *   - Amount: raw VND (KHÔNG ×100 như VNPay)
+ *   - Amount: raw VND (KHÔNG nhân thêm — khác một số cổng khác)
  *
  * Security: KHÔNG log config.secretKey() (T-26.1-05).
  */

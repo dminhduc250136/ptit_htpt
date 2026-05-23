@@ -33,10 +33,11 @@ spring:
           multiplier: 2.0
           max-attempts: 3
 
-# VNPay config cố định cho test — KHÔNG dùng real credentials
-vnpay:
-  tmn-code: TESTCODE
-  hash-secret: SANDBOXSECRETKEY
-  pay-url: https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+# MoMo config cố định cho test — sandbox public credentials (D-18)
+momo:
+  partner-code: MOMO
+  access-key: F8BBA842ECF85
+  secret-key: K951B6PE1waDMi640xX08PD3vg6EkVlz
+  pay-url: https://test-payment.momo.vn/v2/gateway/api/create
   return-url: http://localhost:3000/checkout/result
-  ipn-url:
+  ipn-url: http://payment-service:8080/payments/momo/ipn
