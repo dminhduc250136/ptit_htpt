@@ -2,26 +2,26 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-last_updated: "2026-05-23T03:26:40.163Z"
+status: verifying
+last_updated: "2026-05-23T03:31:56.435Z"
 last_activity: 2026-05-23
 progress:
   total_phases: 13
-  completed_phases: 9
+  completed_phases: 10
   total_plans: 57
-  completed_plans: 49
-  percent: 86
+  completed_plans: 50
+  percent: 88
 ---
 
 ## Current Position
 
-Phase: 26.1 (migrate-payment-gateway-vnpay-to-momo) — EXECUTING
-Plan: 4 of 4
-Status: Ready to execute
+Phase: 26.1 (migrate-payment-gateway-vnpay-to-momo) — COMPLETED (ready for /gsd-verify-work)
+Plan: 4 of 4 (ALL PLANS COMPLETE)
+Status: Phase complete — ready for verification
 Last activity: 2026-05-23
 
 ```
-Progress: [█████████░] 86% (49/57 plans complete)
+Progress: [█████████░] 88% (50/57 plans complete)
 ```
 
 ## Project Reference
@@ -75,8 +75,16 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 23-message-queue-rabbitmq P05 | 5min | 2 tasks | 10 files |
 | Phase 23-message-queue-rabbitmq P06 | 10min | 2 tasks | 9 files |
 | Phase 26.1-migrate-payment-gateway P01 | 10min | 3 tasks | 16 files |
+| Phase 26.1-migrate-payment-gateway-vnpay-to-momo P04 | 3min | - tasks | - files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 26.1 Plan 04 decisions (2026-05-23):**
+
+- Grep audit sources/ 13 files có match — tất cả comment/Javadoc/migration history; 0 UNACCEPTABLE executable VNPay path; SC5 PASS
+- PaymentTransactionRepositoryJpaTest "VNPAY" string là JPA repository test data (không phải VNPay class import/runtime) — ACCEPTABLE per SC5 definition
+- V6__add_payment_status.sql giữ nguyên (Flyway checksum integrity); V7 đã rename cột vnp_transaction_no → payment_transaction_no
+- Phase 26.1 hoàn thành 4/4 plans; SC1-SC5 tất cả PASS; ready /gsd-verify-work
 
 **Phase 26.1 Plan 03 decisions (2026-05-23):**
 
