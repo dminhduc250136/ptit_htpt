@@ -2,9 +2,9 @@ package com.ptit.htpt.paymentservice.service;
 
 import com.ptit.htpt.paymentservice.domain.PaymentSessionEntity;
 import com.ptit.htpt.paymentservice.domain.PaymentTransactionEntity;
+import com.ptit.htpt.paymentservice.momo.MomoService;
 import com.ptit.htpt.paymentservice.repository.PaymentSessionRepository;
 import com.ptit.htpt.paymentservice.repository.PaymentTransactionRepository;
-import com.ptit.htpt.paymentservice.vnpay.VNPaySignature;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import java.math.BigDecimal;
@@ -21,14 +21,14 @@ import org.springframework.web.server.ResponseStatusException;
 public class PaymentCrudService {
   private final PaymentSessionRepository sessionRepo;
   private final PaymentTransactionRepository transactionRepo;
-  private final VNPaySignature vnPaySignature;
+  private final MomoService momoService;
 
   public PaymentCrudService(PaymentSessionRepository sessionRepo,
                              PaymentTransactionRepository transactionRepo,
-                             VNPaySignature vnPaySignature) {
+                             MomoService momoService) {
     this.sessionRepo = sessionRepo;
     this.transactionRepo = transactionRepo;
-    this.vnPaySignature = vnPaySignature;
+    this.momoService = momoService;
   }
 
   public Map<String, Object> listSessions(int page, int size, String sort, boolean includeDeleted) {
@@ -46,9 +46,9 @@ public class PaymentCrudService {
   }
 
   /**
-   * Tạo payment session. Nếu provider=VNPAY, build paymentUrl và trả về SessionCreateResult.
-   * vnp_TxnRef = sessionId (UUID mới mỗi session — cho phép retry, RESEARCH §Pitfall 6).
-   * orderInfo chứa mã đơn để hiển thị trên cổng VNPay.
+   * Tạo payment session. Nếu provider=MOMO, build paymentUrl bằng POST sang MoMo create endpoint.
+   * paymentSessionId = sessionId (UUID mới mỗi session — idempotency key D-11).
+   * orderInfo chứa mã đơn để hiển thị trên cổng MoMo.
    */
   public SessionCreateResult createSession(SessionUpsertRequest request) {
     // Status mặc định PENDING nếu không truyền
@@ -62,12 +62,15 @@ public class PaymentCrudService {
     PaymentSessionEntity saved = sessionRepo.save(session);
 
     String paymentUrl = null;
-    if ("VNPAY".equalsIgnoreCase(request.provider())) {
-      // vnp_TxnRef = sessionId, amountVnd = amount (VND), clientIp = "127.0.0.1" fallback
-      long amountVnd = saved.amount().longValue();
+    if ("MOMO".equalsIgnoreCase(request.provider())) {
+      long amountVnd = saved.amount().longValue();  // raw VND, KHÔNG ×100
       String orderInfo = "Thanh toan don " + saved.orderId();
-      String clientIp = request.clientIp() != null ? request.clientIp() : "127.0.0.1";
-      paymentUrl = vnPaySignature.buildPaymentUrl(saved.id(), amountVnd, orderInfo, clientIp);
+      paymentUrl = momoService.buildPaymentUrl(
+          saved.id(),
+          request.orderId(),
+          amountVnd,
+          orderInfo
+      );
     }
     return new SessionCreateResult(saved, paymentUrl);
   }
@@ -183,7 +186,7 @@ public class PaymentCrudService {
       @NotBlank String provider,
       @DecimalMin("0.0") BigDecimal amount,
       String status,  // nullable — default PENDING
-      String clientIp // nullable — IP khách để truyền vào vnp_IpAddr
+      String clientIp // nullable — giữ lại cho backward compat, MoMo không dùng
   ) {}
 
   public record SessionStatusRequest(@NotBlank String status) {}

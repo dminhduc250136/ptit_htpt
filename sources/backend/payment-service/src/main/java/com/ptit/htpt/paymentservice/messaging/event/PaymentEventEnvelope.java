@@ -32,11 +32,12 @@ public record PaymentEventEnvelope(
 
   /**
    * Payload của payment event — orderId là field bắt buộc, dùng bởi order-service consumer.
+   * D-07: Rename vnpTransactionNo → paymentTransactionNo (field chung cho mọi gateway).
    */
   public record PaymentPayload(
       String orderId,
       String paymentSessionId,
-      String vnpTransactionNo,
+      String paymentTransactionNo,
       BigDecimal amount,
       String currency
   ) {}
