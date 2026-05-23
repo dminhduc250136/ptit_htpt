@@ -207,10 +207,10 @@ export interface Order {
   discountAmount?: number;
   /** Mã coupon đã áp dụng (snapshot). null/undefined nếu không có coupon. */
   couponCode?: string | null;
-  // ===== Phase 26 / PAY-01..PAY-04 (Plan 26-04 OrderDto extension) =====
-  /** Mã giao dịch VNPay (vnp_TransactionNo từ IPN). null nếu chưa thanh toán hoặc không phải VNPay. */
-  vnpTransactionNo?: string;
-  /** URL redirect sang cổng VNPay. Chỉ có giá trị khi paymentMethod=VNPAY và vừa tạo đơn. */
+  // ===== Phase 26.1 / PAY-01..PAY-04 (Plan 26.1-03 OrderDto rename) =====
+  /** Mã giao dịch thanh toán (transId từ MoMo IPN / vnp_TransactionNo từ VNPay). null nếu chưa thanh toán. */
+  paymentTransactionNo?: string;
+  /** URL redirect sang cổng thanh toán. Chỉ có giá trị khi paymentMethod=MOMO và vừa tạo đơn. */
   paymentUrl?: string;
   createdAt: string;
   updatedAt: string;
@@ -234,7 +234,7 @@ export interface CreateOrderRequest {
   // so the backend can compute totalAmount server-side.
   items: { productId: string; productName: string; quantity: number; unitPrice: number }[];   // D-06: productName snapshot
   shippingAddress: Address;
-  paymentMethod: 'COD' | 'BANK_TRANSFER' | 'E_WALLET' | 'VNPAY';
+  paymentMethod: 'COD' | 'BANK_TRANSFER' | 'E_WALLET' | 'MOMO';
   note?: string;
   // Phase 20 / COUP-03 (D-19): optional coupon code applied at checkout.
   // BE atomic redeem step (Plan 20-03) trong cùng order transaction.

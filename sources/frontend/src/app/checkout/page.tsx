@@ -73,7 +73,7 @@ function CheckoutPageContent() {
     district: '',
     city: '',
     note: '',
-    paymentMethod: 'COD' as 'COD' | 'BANK_TRANSFER' | 'E_WALLET' | 'VNPAY',
+    paymentMethod: 'COD' as 'COD' | 'BANK_TRANSFER' | 'E_WALLET' | 'MOMO',
   });
   const [loading, setLoading] = useState(false);
 
@@ -218,10 +218,10 @@ function CheckoutPageContent() {
         console.error('[checkout] cart cleanup failed (non-blocking):', clearErr);
       }
 
-      // Phase 26 / D-14: VNPay redirect — nếu chọn VNPAY và đơn có paymentUrl → redirect cổng VNPay.
+      // Phase 26.1 / D-14: MoMo redirect — nếu chọn MOMO và đơn có paymentUrl → redirect cổng MoMo.
       // THAY VÌ router.push → dùng window.location.assign để redirect hoàn toàn ra ngoài app.
-      if (form.paymentMethod === 'VNPAY' && order.paymentUrl) {
-        showToast('Đang chuyển tới cổng thanh toán VNPay...', 'success');
+      if (form.paymentMethod === 'MOMO' && order.paymentUrl) {
+        showToast('Đang chuyển tới cổng thanh toán MoMo...', 'success');
         window.location.assign(order.paymentUrl);
         return; // Dừng tại đây — navigation diễn ra sau redirect
       }
@@ -342,8 +342,8 @@ function CheckoutPageContent() {
                   [
                     { value: 'COD', label: 'Thanh toán khi nhận hàng (COD)', icon: '💵' },
                     { value: 'BANK_TRANSFER', label: 'Chuyển khoản ngân hàng', icon: '🏦' },
-                    { value: 'E_WALLET', label: 'Ví điện tử (MoMo, ZaloPay)', icon: '📱' },
-                    { value: 'VNPAY', label: 'Thanh toán qua VNPay', icon: '💳' },
+                    { value: 'E_WALLET', label: 'Ví điện tử (ZaloPay, ...)', icon: '📱' },
+                    { value: 'MOMO', label: 'Thanh toán qua MoMo', icon: '💳' },
                   ] as const
                 ).map((m) => (
                   <label key={m.value} className={`${styles.paymentOption} ${form.paymentMethod === m.value ? styles.paymentActive : ''}`}>

@@ -17,7 +17,7 @@ export const paymentMethodMap: Record<string, string> = {
   COD: 'Thanh toán khi nhận hàng',
   BANK_TRANSFER: 'Chuyển khoản ngân hàng',
   E_WALLET: 'Ví điện tử',
-  VNPAY: 'Thanh toán qua VNPay',   // UI-SPEC §Order display + Phase 26 D-14
+  MOMO: 'Thanh toán qua MoMo',   // Phase 26.1 D-15 — thay VNPay
 };
 
 export const paymentStatusMap: Record<string, string> = {
