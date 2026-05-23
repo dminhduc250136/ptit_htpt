@@ -144,6 +144,11 @@ public class MomoService {
    */
   @Transactional
   public void processIpn(Map<String, Object> ipnPayload) {
+    // FIX 26.1: MoMo IPN payload KHÔNG kèm accessKey (đó là secret merchant-side, KHÔNG
+    // gửi qua mạng public). Inject từ config để verifyIpn tính HMAC SHA256 đúng — cùng
+    // pattern đã áp dụng cho return URL ở buildReturnView (line 239).
+    ipnPayload.putIfAbsent("accessKey", config.accessKey());
+
     // Bước 1: Verify chữ ký (T-26.1-01)
     if (!momoSignature.verifyIpn(ipnPayload)) {
       log.warn("[MOMO-IPN] Invalid signature — requestId={}", ipnPayload.get("requestId"));
