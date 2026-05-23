@@ -158,7 +158,7 @@ export default function AdminOrderDetailPage() {
             Thanh toán:{' '}
             <strong>{paymentMethodMap[order.paymentMethod] ?? order.paymentMethod ?? '—'}</strong>
           </p>
-          {/* Phase 26 / PAY-04: payment status badge + mã giao dịch VNPay (UI-SPEC §Order display + §Color) */}
+          {/* Phase 26.1 / PAY-04: payment status badge + mã giao dịch MoMo (UI-SPEC §Order display + §Color) */}
           {order.paymentStatus && (
             <p style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
               Trạng thái TT:{' '}
@@ -175,10 +175,10 @@ export default function AdminOrderDetailPage() {
               </Badge>
             </p>
           )}
-          {/* Mã giao dịch VNPay — ẩn dòng nếu rỗng (UI-SPEC §Order display) */}
-          {order.vnpTransactionNo && (
+          {/* Phase 26.1 / PAY-04: mã giao dịch MoMo — ẩn dòng nếu rỗng (UI-SPEC §Order display) */}
+          {order.paymentTransactionNo && (
             <p style={labelStyle}>
-              Mã GD VNPay: <strong>{order.vnpTransactionNo}</strong>
+              Mã giao dịch MoMo: <strong>{order.paymentTransactionNo}</strong>
             </p>
           )}
           {order.note && <p style={labelStyle}>Ghi chú: <strong>{order.note}</strong></p>}

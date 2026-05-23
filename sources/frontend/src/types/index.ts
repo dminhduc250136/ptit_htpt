@@ -208,7 +208,7 @@ export interface Order {
   /** Mã coupon đã áp dụng (snapshot). null/undefined nếu không có coupon. */
   couponCode?: string | null;
   // ===== Phase 26.1 / PAY-01..PAY-04 (Plan 26.1-03 OrderDto rename) =====
-  /** Mã giao dịch thanh toán (transId từ MoMo IPN / vnp_TransactionNo từ VNPay). null nếu chưa thanh toán. */
+  /** Mã giao dịch thanh toán (transId từ MoMo IPN). null nếu chưa thanh toán. */
   paymentTransactionNo?: string;
   /** URL redirect sang cổng thanh toán. Chỉ có giá trị khi paymentMethod=MOMO và vừa tạo đơn. */
   paymentUrl?: string;

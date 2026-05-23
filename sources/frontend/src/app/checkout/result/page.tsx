@@ -1,12 +1,12 @@
 'use client';
 
 /**
- * /checkout/result — Trang kết quả thanh toán VNPay (Phase 26 / PAY-02).
+ * /checkout/result — Trang kết quả thanh toán MoMo (Phase 26.1 / PAY-02).
  *
  * Flow:
- * 1. VNPay redirect về URL này kèm query params (vnp_ResponseCode, vnp_TxnRef, ...).
- * 2. Forward toàn bộ query string sang GET /api/payments/vnpay/return để resolve orderId
- *    (KHÔNG tin vnp_ResponseCode để cập nhật DB — chỉ hiển thị sơ bộ, D-06, T-26-13).
+ * 1. MoMo redirect về URL này kèm query params (resultCode, orderId=paymentSessionId, transId, ...).
+ * 2. Forward toàn bộ query string sang GET /api/payments/momo/return để resolve orderId nội bộ
+ *    (KHÔNG tin resultCode để cập nhật DB — chỉ hiển thị sơ bộ, D-16, T-26.1-12).
  * 3. Poll GET /api/orders/{orderId} mỗi 3s tối đa 5 lần, dừng sớm khi paymentStatus != PENDING.
  * 4. Render 5 trạng thái theo UI-SPEC §Copywriting Contract (verbatim).
  */
@@ -16,7 +16,7 @@ import { useSearchParams } from 'next/navigation';
 import Button from '@/components/ui/Button/Button';
 import RetrySection from '@/components/ui/RetrySection/RetrySection';
 import { getOrderById } from '@/services/orders';
-import { getVNPayReturn } from '@/services/payments';
+import { getMomoReturn } from '@/services/payments';
 import { isApiError } from '@/services/errors';
 import type { Order } from '@/types';
 
@@ -30,7 +30,7 @@ type ResultState =
   | 'polling'      // đang poll payment_status
   | 'success'      // PAID — thanh toán thành công
   | 'failed'       // FAILED — thanh toán thất bại
-  | 'cancelled'    // huỷ (vnp_ResponseCode=24 OR user cancel tại cổng)
+  | 'cancelled'    // huỷ (resultCode=1006 OR user cancel tại cổng MoMo)
   | 'timeout'      // poll hết hạn vẫn PENDING
   | 'empty'        // thiếu tham số / invalid return
   | 'error';       // lỗi mạng khi poll
@@ -41,7 +41,7 @@ const COPY: Record<
 > = {
   polling: {
     heading: 'Đang xác nhận thanh toán',
-    body: 'Vui lòng đợi trong giây lát, chúng tôi đang xác nhận giao dịch của bạn với VNPay.',
+    body: 'Vui lòng đợi trong giây lát, chúng tôi đang xác nhận giao dịch của bạn với MoMo.',
   },
   success: {
     heading: 'Thanh toán thành công',
@@ -57,7 +57,7 @@ const COPY: Record<
   },
   timeout: {
     heading: 'Chưa nhận được xác nhận',
-    body: 'Chúng tôi chưa nhận được xác nhận từ VNPay. Trạng thái đơn sẽ tự cập nhật — vui lòng kiểm tra lại trong trang đơn hàng sau ít phút.',
+    body: 'Chúng tôi chưa nhận được xác nhận từ MoMo. Trạng thái đơn sẽ tự cập nhật — vui lòng kiểm tra lại trong trang đơn hàng sau ít phút.',
   },
   empty: {
     heading: 'Không tìm thấy thông tin thanh toán',
@@ -66,13 +66,13 @@ const COPY: Record<
 };
 
 /**
- * Suy luận trạng thái sơ bộ từ vnp_ResponseCode (T-26-13: CHỈ để render ban đầu, KHÔNG update DB).
- * Nguồn sự thật là payment_status poll qua GET /api/orders (D-06).
+ * Suy luận trạng thái sơ bộ từ MoMo resultCode (T-26.1-12: CHỈ để render ban đầu, KHÔNG update DB).
+ * Nguồn sự thật là payment_status poll qua GET /api/orders (T-26.1-04 mitigate).
  */
 function codeToInitialState(code: string | null): ResultState {
-  if (code === '00') return 'polling';  // giả định thành công — chờ IPN
-  if (code === '24') return 'cancelled'; // user huỷ tại cổng VNPay
-  return 'failed';                       // mọi code khác → thất bại
+  if (code === '0' || code === '9000') return 'polling'; // thành công / pending authorized — chờ IPN
+  if (code === '1006') return 'cancelled';               // user huỷ tại cổng MoMo
+  return 'failed';                                       // mọi code khác → thất bại sơ bộ (vẫn poll)
 }
 
 /** Map payment_status từ BE sang ResultState terminal. */
@@ -89,8 +89,10 @@ function paymentStatusToState(status: string): ResultState {
 function ResultPageContent() {
   const searchParams = useSearchParams();
 
-  const vnpResponseCode = searchParams.get('vnp_ResponseCode');
-  const vnpTxnRef = searchParams.get('vnp_TxnRef');
+  // MoMo redirect query params (D-16)
+  const momoResultCode = searchParams.get('resultCode');
+  // orderId từ MoMo = paymentSessionId (KHÔNG phải orderId nội bộ — cần resolve qua getMomoReturn)
+  const momoOrderId = searchParams.get('orderId');
 
   const [state, setState] = useState<ResultState>('resolving');
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -100,24 +102,25 @@ function ResultPageContent() {
   const pollAttemptsRef = useRef(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // === Bước 1: Resolve orderId từ return endpoint ===
+  // === Bước 1: Resolve orderId nội bộ từ MoMo return endpoint ===
   useEffect(() => {
-    // Thiếu tham số bắt buộc → empty state ngay
-    if (!vnpTxnRef) {
+    // Thiếu tham số bắt buộc (orderId = paymentSessionId) → empty state ngay
+    if (!momoOrderId) {
       setState('empty');
       return;
     }
 
     const resolveOrderId = async () => {
       try {
-        const result = await getVNPayReturn(new URLSearchParams(window.location.search));
+        // Forward NGUYÊN query string — payment-service verify chữ ký SHA256 (T-26.1-14 mitigate)
+        const result = await getMomoReturn(new URLSearchParams(window.location.search));
         if (!result.valid || !result.orderId) {
           setState('empty');
           return;
         }
         setOrderId(result.orderId);
-        // Render sơ bộ từ vnp_ResponseCode (D-12)
-        setState(codeToInitialState(vnpResponseCode));
+        // Render sơ bộ từ resultCode (T-26.1-12: CHỈ hiển thị, KHÔNG update DB)
+        setState(codeToInitialState(momoResultCode));
       } catch {
         // Nếu không resolve được orderId → empty state (không block user)
         setState('empty');
@@ -170,9 +173,9 @@ function ResultPageContent() {
   // Khởi động poll khi orderId có (state thay từ 'resolving' sang 'polling' / 'cancelled')
   useEffect(() => {
     if (!orderId) return;
-    // Chỉ poll khi state ban đầu là 'polling' (vnp_ResponseCode=00)
-    // Với 'cancelled'/'failed' từ vnp_ResponseCode → không cần poll thêm,
-    // nhưng vẫn cố poll 1 lần để lấy trạng thái thật từ IPN nếu đã về (D-13)
+    // Chỉ poll khi state ban đầu là 'polling' (resultCode=0)
+    // Với 'cancelled'/'failed' từ resultCode → không cần poll thêm,
+    // nhưng vẫn cố poll 1 lần để lấy trạng thái thật từ IPN nếu đã về (T-26.1-04 mitigate)
     startPolling(orderId);
 
     return () => {

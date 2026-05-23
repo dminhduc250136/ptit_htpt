@@ -237,10 +237,10 @@ export default function OrderDetailPage() {
               {order.paymentStatus && (
                 <p className={styles.paymentStatus}>{paymentStatusMap[order.paymentStatus] ?? order.paymentStatus}</p>
               )}
-              {/* Phase 26 / PAY-04: mã giao dịch VNPay — ẩn nếu rỗng (UI-SPEC §Order display) */}
-              {order.vnpTransactionNo && (
+              {/* Phase 26.1 / PAY-04: mã giao dịch MoMo — ẩn nếu rỗng (UI-SPEC §Order display) */}
+              {order.paymentTransactionNo && (
                 <p style={{ fontSize: 'var(--text-label-lg)', color: 'var(--on-surface-variant)', marginTop: 'var(--space-2)' }}>
-                  Mã giao dịch VNPay: <strong>{order.vnpTransactionNo}</strong>
+                  Mã giao dịch MoMo: <strong>{order.paymentTransactionNo}</strong>
                 </p>
               )}
             </div>
