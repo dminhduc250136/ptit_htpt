@@ -22,7 +22,10 @@ public class ApiResponseAdvice implements ResponseBodyAdvice<Object> {
       "/v3/api-docs",
       "/swagger-ui",
       "/swagger-resources",
-      "/payments/momo"  // Phase 26.1: MoMo IPN/return cần JSON thuần / 204, không envelope
+      // Phase 26.1: chỉ IPN bắt buộc raw JSON {RspCode/Message} / 204 (MoMo spec).
+      // /return CẦN ApiResponse envelope vì FE httpGet auto-unwrap `parsed.data` —
+      // raw response làm `result` undefined ở FE → empty state.
+      "/payments/momo/ipn"
   );
   private static final Set<String> SKIP_EXACT = Set.of("/swagger-ui.html");
 
