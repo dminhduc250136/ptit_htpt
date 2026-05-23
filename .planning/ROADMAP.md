@@ -296,13 +296,17 @@ Plans:
 
 ### Phase 26.1: Migrate Payment Gateway VNPay to MoMo (INSERTED)
 
-**Goal:** [Urgent work - to be planned]
-**Requirements**: TBD
-**Depends on:** Phase 26
-**Plans:** 0 plans
-
-Plans:
-- [ ] TBD (run /gsd-plan-phase 26.1 to break down)
+**Goal:** Thay thế cổng thanh toán từ VNPay sang MoMo Developer (sandbox dễ tiếp cận hơn cho dev cá nhân — HMAC SHA256, JSON REST, không cần KYC). Giữ NGUYÊN kiến trúc event-based + cột `payment_status` đã có từ Phase 26: thay đổi giới hạn trong package `paymentservice/vnpay/` (rewrite sang `momo/`), rename cột `vnp_transaction_no` → `payment_transaction_no`, đổi enum value `VNPAY` → `MOMO` ở order-service + frontend. Xóa hoàn toàn code VNPay (không giữ song song).
+**Requirements:** PAY-01, PAY-02, PAY-03, PAY-04 (re-targeted to MoMo)
+**Depends on:** Phase 26 (cần code/architecture đã có)
+**Success Criteria** (what must be TRUE):
+  1. Khách hàng tại `/checkout` chọn phương thức "Thanh toán qua MoMo" → bấm đặt hàng → được redirect sang trang MoMo sandbox với đúng số tiền (đã trừ coupon nếu có) và mã đơn hàng
+  2. Sau khi thanh toán trên MoMo sandbox, khách quay lại return URL của ứng dụng và thấy trang kết quả rõ ràng (thành công / thất bại / huỷ) — KHÔNG dựa vào return URL để cập nhật DB
+  3. Backend nhận IPN callback từ MoMo (server-to-server POST JSON), verify chữ ký HMAC SHA256, so khớp số tiền, cập nhật `payment_status` của đơn (PAID / FAILED) — idempotent khi MoMo gửi lại cùng giao dịch
+  4. Đơn hàng tại `/account/orders/[id]` và `/admin/orders/[id]` hiển thị đúng trạng thái thanh toán + phương thức (MOMO) + mã giao dịch MoMo
+  5. Code VNPay (`paymentservice/vnpay/` + test) bị xóa sạch; không còn reference `VNPAY` / `vnp_*` trong codebase
+**Plans:** chưa lập (chạy /gsd-plan-phase 26.1)
+**UI hint**: nhẹ (đổi label selector + trang kết quả tái dụng)
 
 ### Phase 27: Gửi Email Thật (SMTP)
 
