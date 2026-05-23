@@ -150,10 +150,13 @@ services:
 
   # Phase 25: user-service issue JWT, api-gateway verify — phải chung JWT_SECRET.
   # Bỏ port mapping: chỉ truy cập được qua api-gateway (không expose ra host).
+  # Phase 27: thêm RabbitMQ + APP_BASE_URL để AccountEventPublisher publish user.events (MAIL-02).
   user-service:
     build: ./sources/backend/user-service
     depends_on:
       postgres-user:
+        condition: service_healthy
+      rabbitmq:
         condition: service_healthy
     environment:
       SPRING_PROFILES_ACTIVE: dev
@@ -163,6 +166,10 @@ services:
       DB_USER: user_svc
       DB_PASSWORD: user_svc_pw
       JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-key-minimum-32-characters-for-hs256-ok}
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USER: guest
+      SPRING_RABBITMQ_PASS: guest
+      APP_BASE_URL: http://localhost:3000
 
   product-service:
     build: ./sources/backend/product-service
@@ -241,6 +248,9 @@ services:
       SPRING_RABBITMQ_USER: guest
       SPRING_RABBITMQ_PASS: guest
 
+  # Phase 27: thêm SMTP env để EmailSender gửi email thật (MAIL-01 graceful degradation).
+  # KHÔNG hardcode credential — dùng ${VAR:-default} từ shell env / .env file của user.
+  # Nếu user không cấp MAIL_SMTP_USERNAME/PASSWORD/FROM → graceful degradation (status=SKIPPED).
   notification-service:
     build: ./sources/backend/notification-service
     depends_on:
@@ -258,6 +268,11 @@ services:
       SPRING_RABBITMQ_HOST: rabbitmq
       SPRING_RABBITMQ_USER: guest
       SPRING_RABBITMQ_PASS: guest
+      MAIL_SMTP_HOST: ${MAIL_SMTP_HOST:-smtp.gmail.com}
+      MAIL_SMTP_PORT: ${MAIL_SMTP_PORT:-587}
+      MAIL_SMTP_USERNAME: ${MAIL_SMTP_USERNAME:-}
+      MAIL_SMTP_PASSWORD: ${MAIL_SMTP_PASSWORD:-}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-}
 
   frontend:
     build: ./sources/frontend

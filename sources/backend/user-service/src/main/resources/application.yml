@@ -20,6 +20,15 @@ spring:
     enabled: true
     baseline-on-migrate: false
     locations: classpath:db/migration
+  # Phase 27 / Plan 27-02: messaging — producer user.events (MAIL-02)
+  # user-service chỉ là Producer → KHÔNG có listener.simple.retry block
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: 5672
+    username: ${SPRING_RABBITMQ_USER:guest}
+    password: ${SPRING_RABBITMQ_PASS:guest}
+    publisher-confirm-type: correlated
+    publisher-returns: true
 
 server:
   port: 8080

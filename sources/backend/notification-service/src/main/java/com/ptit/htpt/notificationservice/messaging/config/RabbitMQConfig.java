@@ -17,10 +17,16 @@ import org.springframework.context.annotation.Configuration;
 /**
  * Topology RabbitMQ Phase 23 (D-02, D-09) — declare ở notification-service.
  * Identical với order-service và inventory-service (AmqpAdmin idempotent).
+ *
+ * <p>Phase 27 / Plan 27-05: thêm user.events topology để UserEventListener
+ * consume notification.user-events (MAIL-02 account-verification + password-reset).
  */
 @Configuration
 public class RabbitMQConfig {
 
+  // =========================================================================
+  // Order events topology (Phase 23)
+  // =========================================================================
   public static final String EXCHANGE = "order.events";
   public static final String DLX = "order.dlx";
   public static final String DLQ = "order-events.dlq";
@@ -29,6 +35,16 @@ public class RabbitMQConfig {
   public static final String NOTIFICATION_QUEUE = "notification.order-events";
   public static final String BINDING_KEY = "order.#";
   public static final String ROUTING_KEY_ORDER_PLACED = "order.placed";
+
+  // =========================================================================
+  // User events topology (Phase 27 / Plan 27-05)
+  // =========================================================================
+  public static final String USER_EXCHANGE = "user.events";
+  public static final String USER_DLX = "user.dlx";
+  public static final String USER_DLQ = "user-events.dlq";
+  public static final String USER_DLQ_ROUTING = "user-events";
+  public static final String USER_NOTIFICATION_QUEUE = "notification.user-events";
+  public static final String USER_BINDING_KEY = "user.#";
 
   @Bean
   public TopicExchange orderEventsExchange() {
@@ -75,6 +91,49 @@ public class RabbitMQConfig {
   public Binding notificationBinding() {
     return BindingBuilder.bind(notificationQueue()).to(orderEventsExchange()).with(BINDING_KEY);
   }
+
+  // =========================================================================
+  // User events beans (Phase 27)
+  // =========================================================================
+
+  @Bean
+  public TopicExchange userEventsExchange() {
+    return ExchangeBuilder.topicExchange(USER_EXCHANGE).durable(true).build();
+  }
+
+  @Bean
+  public DirectExchange userDeadLetterExchange() {
+    return ExchangeBuilder.directExchange(USER_DLX).durable(true).build();
+  }
+
+  @Bean
+  public Queue userDeadLetterQueue() {
+    return QueueBuilder.durable(USER_DLQ).build();
+  }
+
+  @Bean
+  public Binding userDlqBinding() {
+    return BindingBuilder.bind(userDeadLetterQueue()).to(userDeadLetterExchange())
+        .with(USER_DLQ_ROUTING);
+  }
+
+  @Bean
+  public Queue userNotificationQueue() {
+    return QueueBuilder.durable(USER_NOTIFICATION_QUEUE)
+        .withArgument("x-dead-letter-exchange", USER_DLX)
+        .withArgument("x-dead-letter-routing-key", USER_DLQ_ROUTING)
+        .build();
+  }
+
+  @Bean
+  public Binding userNotificationBinding() {
+    return BindingBuilder.bind(userNotificationQueue())
+        .to(userEventsExchange()).with(USER_BINDING_KEY);
+  }
+
+  // =========================================================================
+  // Shared converter + template
+  // =========================================================================
 
   @Bean
   public Jackson2JsonMessageConverter jacksonMessageConverter(ObjectMapper objectMapper) {

@@ -64,8 +64,8 @@ class OrderPlacedNotifyListenerIT {
     return new OrderEventEnvelope(
         eventId, "OrderPlaced", Instant.now().toString(), traceId,
         new OrderEventEnvelope.OrderPlacedPayload(
-            orderId, userId,
-            List.of(new OrderEventEnvelope.Item("prod-1", 1, new BigDecimal("100"))),
+            orderId, userId, "customer@example.com",
+            List.of(new OrderEventEnvelope.Item("prod-1", "Product 1", 1, new BigDecimal("100"))),
             new BigDecimal("100"), "VND"));
   }
 
@@ -80,10 +80,12 @@ class OrderPlacedNotifyListenerIT {
     Awaitility.await().atMost(Duration.ofSeconds(10)).untilAsserted(() -> {
       var logs = dispatchLogRepository.findByEventId(eventId);
       assertThat(logs).hasSize(1);
-      assertThat(logs.get(0).status()).isEqualTo("SENT");
+      // Phase 27: status có thể là SENT (SMTP cấu hình) hoặc SKIPPED (graceful degradation — MAIL-01)
+      assertThat(logs.get(0).status()).isIn("SENT", "SKIPPED");
       assertThat(logs.get(0).channel()).isEqualTo("email");
       assertThat(logs.get(0).recipientUserId()).isEqualTo("user-N1");
-      assertThat(logs.get(0).subject()).contains("order-N1");
+      // subject là MailTemplate.ORDER_CONFIRMATION.subject() — không chứa orderId nữa
+      assertThat(logs.get(0).subject()).isEqualTo("Xác nhận đơn hàng");
       assertThat(processedEventRepository.findById(eventId)).isPresent();
     });
   }

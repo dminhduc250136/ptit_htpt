@@ -220,6 +220,10 @@ app:
     public-endpoints:
       - { method: POST, pattern: "/api/users/auth/login" }
       - { method: POST, pattern: "/api/users/auth/register" }
+      # Phase 27 MAIL-02: verify email + forgot/reset password đều public
+      - { method: GET, pattern: "/api/users/auth/verify-email" }
+      - { method: POST, pattern: "/api/users/auth/password/forgot" }
+      - { method: POST, pattern: "/api/users/auth/password/reset" }
       - { method: GET, pattern: "/api/products" }
       - { method: GET, pattern: "/api/products/**" }
       - { method: OPTIONS, pattern: "/**" }

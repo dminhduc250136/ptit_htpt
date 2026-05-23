@@ -110,10 +110,14 @@
 
 ### MAIL — Real Email Delivery (SMTP)
 
-- [ ] **MAIL-01** — Cấu hình SMTP qua biến môi trường: host, port, username, password/app-password, from-address đọc hoàn toàn từ env (KHÔNG hardcode credential trong source). Thiếu env → service vẫn khởi động được và log cảnh báo (graceful degradation, không crash). SMTP Gmail (App Password) — account do user cấp qua env.
-- [ ] **MAIL-02** — Email xác thực tài khoản: đăng ký tài khoản mới → gửi email xác minh tới hộp thư thật, link/token xác minh → tài khoản chuyển trạng thái verified. Yêu cầu reset mật khẩu → gửi email chứa link/token reset. Gắn vào user-service/auth flow.
-- [ ] **MAIL-03** — Email xác nhận đơn hàng: khi đặt hàng thành công, notification-service consume event `OrderPlaced` (từ RabbitMQ Phase 23) → gửi email xác nhận (mã đơn, danh sách sản phẩm, tổng tiền) tới email khách. Render bằng template tiếng Việt.
-- [ ] **MAIL-04** — Email cập nhật trạng thái đơn: khi trạng thái đơn thay đổi (shipped / delivered / cancelled) → gửi email cập nhật tương ứng tới khách. Gửi bất đồng bộ (không chặn request chính).
+- [x] **MAIL-01
+** — Cấu hình SMTP qua biến môi trường: host, port, username, password/app-password, from-address đọc hoàn toàn từ env (KHÔNG hardcode credential trong source). Thiếu env → service vẫn khởi động được và log cảnh báo (graceful degradation, không crash). SMTP Gmail (App Password) — account do user cấp qua env.
+- [x] **MAIL-02
+** — Email xác thực tài khoản: đăng ký tài khoản mới → gửi email xác minh tới hộp thư thật, link/token xác minh → tài khoản chuyển trạng thái verified. Yêu cầu reset mật khẩu → gửi email chứa link/token reset. Gắn vào user-service/auth flow.
+- [x] **MAIL-03
+** — Email xác nhận đơn hàng: khi đặt hàng thành công, notification-service consume event `OrderPlaced` (từ RabbitMQ Phase 23) → gửi email xác nhận (mã đơn, danh sách sản phẩm, tổng tiền) tới email khách. Render bằng template tiếng Việt.
+- [x] **MAIL-04
+** — Email cập nhật trạng thái đơn: khi trạng thái đơn thay đổi (shipped / delivered / cancelled) → gửi email cập nhật tương ứng tới khách. Gửi bất đồng bộ (không chặn request chính).
 
 ---
 
@@ -194,10 +198,10 @@
 | PAY-02 | Phase 26 | — | Active |
 | PAY-03 | Phase 26 | — | Active |
 | PAY-04 | Phase 26 | — | Active |
-| MAIL-01 | Phase 27 | — | Active |
-| MAIL-02 | Phase 27 | — | Active |
-| MAIL-03 | Phase 27 | — | Active |
-| MAIL-04 | Phase 27 | — | Active |
+| MAIL-01 | Phase 27 | 27-05 | Satisfied |
+| MAIL-02 | Phase 27 | 27-05 | Satisfied |
+| MAIL-03 | Phase 27 | 27-05 | Satisfied |
+| MAIL-04 | Phase 27 | 27-05 | Satisfied |
 
 **Total active REQs: 40** (SEED 4 + ORDER 1 + ADMIN-06 1 + STORE 3 + ADMIN-01-05 5 + COUP 5 + REV 3 + AI 5 + MQ 5 + PAY 4 + MAIL 4)
 **Mapped: 40/40** (100% coverage)

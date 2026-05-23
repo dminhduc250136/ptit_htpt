@@ -47,6 +47,9 @@ public class RabbitMQConfig {
   public static final String NOTIFICATION_QUEUE = "notification.order-events";
   public static final String BINDING_KEY = "order.#";
   public static final String ROUTING_KEY_ORDER_PLACED = "order.placed";
+  // Phase 27: routing key cho event đổi trạng thái đơn hàng
+  // Queue notification.order-events bind key "order.#" → tự route (D-03 Phase 23)
+  public static final String ROUTING_KEY_ORDER_STATUS_CHANGED = "order.status-changed";
 
   // ---- payment.events topology (Phase 26 — consumer side order-service) ----
   public static final String PAYMENT_EXCHANGE = "payment.events";

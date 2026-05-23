@@ -218,7 +218,7 @@ public class OrderCrudService {
           baseDto.createdAt(), baseDto.updatedAt()
       );
     } else {
-      // D-10: COD và non-VNPAY → publish OrderPlaced ngay (inventory trừ kho async).
+      // D-10: COD và non-MOMO → publish OrderPlaced ngay (inventory trừ kho async).
       // Phase 23 D-03/D-12: thay vì gọi REST deductStock đồng bộ (đã XÓA), publish event
       // OrderPlaced SAU khi DB commit. inventory-service consumer trừ kho async (Wave 2).
       // OrderEventPublisher tự defer publish qua TransactionSynchronizationManager.afterCommit;
@@ -231,16 +231,20 @@ public class OrderCrudService {
   /**
    * Phase 26 / Plan 26-03 (D-09): helper DRY publish OrderPlaced cho 1 OrderEntity.
    * Dùng chung bởi:
-   *   - createOrderFromCommand nhánh non-VNPAY (COD) ngay sau save
+   *   - createOrderFromCommand nhánh non-MOMO (COD) ngay sau save
    *   - PaymentEventListener nhánh PaymentSucceeded (trừ kho khi IPN xác nhận PAID)
+   * Phase 27 D-11: payload gồm productName per item + customerEmail (resolveCustomerEmail).
    */
   public void publishOrderPlacedForOrder(OrderEntity order) {
     List<OrderEventEnvelope.Item> payloadItems = order.items().stream()
-        .map(it -> new OrderEventEnvelope.Item(it.productId(), it.quantity(), it.unitPrice()))
+        .map(it -> new OrderEventEnvelope.Item(it.productId(), it.productName(), it.quantity(), it.unitPrice()))
         .toList();
+    // Phase 27 D-11: customerEmail fetch từ user-service qua resolveCustomerEmail()
+    // KHÔNG gọi REST từ notification-service — mọi dữ liệu phải có sẵn trong event payload
     OrderEventEnvelope.OrderPlacedPayload payload = new OrderEventEnvelope.OrderPlacedPayload(
         order.id(),
         order.userId(),
+        resolveCustomerEmail(order),
         payloadItems,
         order.total(),
         "VND"
@@ -255,11 +259,26 @@ public class OrderCrudService {
     return OrderMapper.toDto(orderRepository.save(current));
   }
 
+  @Transactional
   public OrderDto updateOrderState(String id, OrderStateRequest request) {
     OrderEntity current = orderRepository.findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
     current.setStatus(request.state());
-    return OrderMapper.toDto(orderRepository.save(current));
+    OrderEntity saved = orderRepository.save(current);
+
+    // Phase 27 D-12: publish OrderStatusChanged afterCommit khi admin đổi trạng thái
+    // notification-service consumer sẽ lọc chỉ gửi email cho shipped/delivered/cancelled
+    OrderEventEnvelope.OrderStatusChangedPayload statusPayload =
+        new OrderEventEnvelope.OrderStatusChangedPayload(
+            saved.id(),
+            saved.userId(),
+            resolveCustomerEmail(saved),
+            request.state(),
+            null  // customerName optional — notification-service có thể bỏ qua null
+        );
+    orderEventPublisher.publishOrderStatusChanged(statusPayload);
+
+    return OrderMapper.toDto(saved);
   }
 
   public void deleteOrder(String id) {
@@ -452,5 +471,43 @@ public class OrderCrudService {
     Object data = raw.get("data");
     if (data instanceof Map) return (Map<String, Object>) data;
     return raw; // fallback: response không phải envelope (legacy/contract test)
+  }
+
+  /**
+   * Phase 27 D-11: Lấy customerEmail từ user-service qua REST.
+   * order-service đã có RestTemplate (dùng cho stock validate Phase 23 D-11).
+   *
+   * Strategy (Phase 27 fix bug #5):
+   *  1. Gọi user-service GET /internal/users/{userId}/email TRỰC TIẾP qua docker network
+   *     (KHÔNG qua gateway — gateway yêu cầu JWT mà order-service nội bộ không có).
+   *     Endpoint /internal/** KHÔNG expose ngoài (Phase 25 đã bỏ port mapping user-service).
+   *  2. Nếu không lấy được (timeout/404/exception) → fallback "" + log WARN
+   *     → notification-service sẽ ghi SKIPPED trong dispatch_log (không crash).
+   *
+   * @param order OrderEntity đã save — dùng userId() để fetch
+   * @return email string hoặc "" nếu không lấy được
+   */
+  private String resolveCustomerEmail(OrderEntity order) {
+    try {
+      String url = "http://user-service:8080/internal/users/" + order.userId() + "/email";
+      @SuppressWarnings("unchecked")
+      Map<String, Object> raw = restTemplate.getForObject(url, Map.class);
+      // user-service wrap response qua ApiResponseAdvice → {status, message, data: {email, fullName}}
+      Map<String, Object> user = unwrapEnvelope(raw);
+      if (user == null) {
+        log.warn("[EMAIL-RESOLVE] user-service returned null for userId={}", order.userId());
+        return "";
+      }
+      Object email = user.get("email");
+      if (email == null || email.toString().isBlank()) {
+        log.warn("[EMAIL-RESOLVE] user-service returned blank email for userId={}", order.userId());
+        return "";
+      }
+      return email.toString();
+    } catch (Exception ex) {
+      // user-service không available hoặc endpoint không tồn tại — fallback an toàn
+      log.warn("[EMAIL-RESOLVE] Cannot fetch email for userId={}: {}", order.userId(), ex.getMessage());
+      return "";
+    }
   }
 }
