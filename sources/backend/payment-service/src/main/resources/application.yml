@@ -20,6 +20,13 @@ spring:
     enabled: true
     baseline-on-migrate: false
     locations: classpath:db/migration
+  rabbitmq:
+    host: ${SPRING_RABBITMQ_HOST:localhost}
+    port: 5672
+    username: ${SPRING_RABBITMQ_USER:guest}
+    password: ${SPRING_RABBITMQ_PASS:guest}
+    publisher-confirm-type: correlated
+    publisher-returns: true
 
 server:
   port: 8080
@@ -35,15 +42,6 @@ springdoc:
     path: /v3/api-docs
   swagger-ui:
     path: /swagger-ui.html
-
-spring:
-  rabbitmq:
-    host: ${SPRING_RABBITMQ_HOST:localhost}
-    port: 5672
-    username: ${SPRING_RABBITMQ_USER:guest}
-    password: ${SPRING_RABBITMQ_PASS:guest}
-    publisher-confirm-type: correlated
-    publisher-returns: true
 
 momo:
   partner-code: ${MOMO_PARTNER_CODE:MOMO}
