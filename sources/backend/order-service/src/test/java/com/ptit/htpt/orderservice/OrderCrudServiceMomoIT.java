@@ -3,7 +3,6 @@ package com.ptit.htpt.orderservice;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -15,7 +14,6 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ptit.htpt.orderservice.domain.OrderDto;
 import com.ptit.htpt.orderservice.domain.OrderEntity;
-import com.ptit.htpt.orderservice.domain.OrderItemEntity;
 import com.ptit.htpt.orderservice.messaging.publisher.OrderEventPublisher;
 import com.ptit.htpt.orderservice.repository.OrderItemRepository;
 import com.ptit.htpt.orderservice.repository.OrderRepository;
@@ -37,19 +35,22 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Phase 26 / Plan 26-03 (D-09, D-10): Unit tests cho nhánh VNPAY trong
+ * Phase 26.1 / Plan 26.1-02 (D-08, D-09, D-10): Unit tests cho nhánh MOMO trong
  * {@link OrderCrudService#createOrderFromCommand}.
+ *
+ * <p>Thay thế OrderCrudServiceVNPayIT (Phase 26) — đổi paymentMethod "VNPAY" → "MOMO",
+ * createVNPaySession → createMomoSession, paymentUrl assert MoMo sandbox URL.
  *
  * <p>Dùng Mockito plain unit test (pattern Phase 26-01 VNPayIpnControllerIT) — tránh Spring context
  * và Testcontainers để test nhanh và portable trên Windows env không có Docker.
  *
  * <p>Test coverage:
- *   1. VNPAY order → payment_status=PENDING, paymentUrl được set, KHÔNG publish OrderPlaced
- *   2. COD order   → publishOrderPlaced gọi 1 lần, paymentStatus=PENDING (default)
- *   3. PaymentSessionClient throw → ResponseStatusException propagate ra caller (lỗi cứng)
+ *   1. MOMO order  → payment_status=PENDING, paymentUrl được set, KHÔNG publish OrderPlaced (D-09)
+ *   2. COD order   → publishOrderPlaced gọi 1 lần, paymentStatus=PENDING (default), KHÔNG gọi createMomoSession
+ *   3. PaymentSessionClient.createMomoSession throw → ResponseStatusException 502 propagate ra caller
  */
 @ExtendWith(MockitoExtension.class)
-class OrderCrudServiceVNPayIT {
+class OrderCrudServiceMomoIT {
 
   @Mock private OrderRepository orderRepository;
   @Mock private OrderItemRepository orderItemRepository;
@@ -74,11 +75,11 @@ class OrderCrudServiceVNPayIT {
   // Helper: tạo command
   // ------------------------------------------------
 
-  private CreateOrderCommand vnpayCommand() {
+  private CreateOrderCommand momoCommand() {
     return new CreateOrderCommand(
         List.of(new OrderItemRequest("prod-1", "Laptop XYZ", 1, BigDecimal.valueOf(10_000_000))),
         new ShippingAddressRequest("123 Lê Lợi", "Phường 1", "Quận 1", "TP.HCM", "70000"),
-        "VNPAY",
+        "MOMO",
         null,
         null  // no coupon
     );
@@ -101,36 +102,36 @@ class OrderCrudServiceVNPayIT {
   }
 
   // ------------------------------------------------
-  // Test 1: VNPAY → PENDING, paymentUrl set, KHÔNG publish OrderPlaced
+  // Test 1: MOMO → PENDING, paymentUrl set, KHÔNG publish OrderPlaced (D-09)
   // ------------------------------------------------
 
   @Test
-  void createOrderFromCommand_vnpay_returnsPendingWithPaymentUrl_doesNotPublishOrderPlaced() {
+  void createOrderMomo_setsPendingAndPaymentUrl_doesNotPublishOrderPlaced() {
     BigDecimal total = BigDecimal.valueOf(10_000_000);
-    OrderEntity saved = savedEntity("VNPAY", total);
+    OrderEntity saved = savedEntity("MOMO", total);
 
     // Mock stock validate — product GET trả null (best-effort skip)
     when(restTemplate.getForObject(anyString(), eq(java.util.Map.class))).thenReturn(null);
     when(orderRepository.save(any(OrderEntity.class))).thenReturn(saved);
-    when(paymentSessionClient.createVNPaySession(anyString(), anyLong(), anyString(), isNull()))
-        .thenReturn("https://sandbox.vnpayment.vn/paymentv2/vpcpay.html?token=abc123");
+    when(paymentSessionClient.createMomoSession(anyString(), anyLong(), anyString(), isNull()))
+        .thenReturn("https://test-payment.momo.vn/v2/gateway/pay?token=abc");
 
-    OrderDto dto = service.createOrderFromCommand("user-1", vnpayCommand(), null);
+    OrderDto dto = service.createOrderFromCommand("user-1", momoCommand(), null);
 
-    // Phải có paymentUrl
-    assertThat(dto.paymentUrl()).isNotNull().contains("vnpayment.vn");
+    // Phải có paymentUrl MoMo
+    assertThat(dto.paymentUrl()).isNotNull().contains("momo.vn");
     // paymentStatus PENDING
     assertThat(dto.paymentStatus()).isEqualTo("PENDING");
-    // KHÔNG publish OrderPlaced (D-09)
+    // KHÔNG publish OrderPlaced (D-09 — trì hoãn tới khi PaymentSucceeded IPN về)
     verify(orderEventPublisher, never()).publishOrderPlaced(any());
   }
 
   // ------------------------------------------------
-  // Test 2: COD → publishOrderPlaced gọi 1 lần
+  // Test 2: COD → publishOrderPlaced gọi 1 lần, KHÔNG gọi createMomoSession
   // ------------------------------------------------
 
   @Test
-  void createOrderFromCommand_cod_publishesOrderPlacedImmediately_noPaymentUrl() {
+  void createOrderCod_publishesOrderPlacedImmediately() {
     BigDecimal total = BigDecimal.valueOf(1_000_000);
     OrderEntity saved = savedEntity("COD", total);
 
@@ -143,28 +144,31 @@ class OrderCrudServiceVNPayIT {
     assertThat(dto.paymentUrl()).isNull();
     // PublishOrderPlaced gọi đúng 1 lần (D-10)
     verify(orderEventPublisher).publishOrderPlaced(any());
-    // PaymentSessionClient KHÔNG được gọi
-    verify(paymentSessionClient, never()).createVNPaySession(anyString(), anyLong(), anyString(), any());
+    // PaymentSessionClient KHÔNG được gọi cho COD
+    verify(paymentSessionClient, never()).createMomoSession(anyString(), anyLong(), anyString(), any());
   }
 
   // ------------------------------------------------
-  // Test 3: PaymentSessionClient throw → ResponseStatusException propagate
+  // Test 3: PaymentSessionClient.createMomoSession throw → ResponseStatusException 502 propagate
   // ------------------------------------------------
 
   @Test
-  void createOrderFromCommand_paymentSessionClientFails_throwsResponseStatusException() {
+  void paymentSessionClientFail_throwsResponseStatusException502() {
     BigDecimal total = BigDecimal.valueOf(5_000_000);
-    OrderEntity saved = savedEntity("VNPAY", total);
+    OrderEntity saved = savedEntity("MOMO", total);
 
     when(restTemplate.getForObject(anyString(), eq(java.util.Map.class))).thenReturn(null);
     when(orderRepository.save(any(OrderEntity.class))).thenReturn(saved);
-    when(paymentSessionClient.createVNPaySession(anyString(), anyLong(), anyString(), isNull()))
+    when(paymentSessionClient.createMomoSession(anyString(), anyLong(), anyString(), isNull()))
         .thenThrow(new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-            "Không tạo được phiên thanh toán VNPay"));
+            "Không tạo được phiên thanh toán MoMo"));
 
-    assertThatThrownBy(() -> service.createOrderFromCommand("user-1", vnpayCommand(), null))
+    assertThatThrownBy(() -> service.createOrderFromCommand("user-1", momoCommand(), null))
         .isInstanceOf(ResponseStatusException.class)
-        .hasMessageContaining("VNPay");
+        .satisfies(ex -> {
+          ResponseStatusException rse = (ResponseStatusException) ex;
+          assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.BAD_GATEWAY);
+        });
 
     // OrderPlaced KHÔNG publish khi session tạo lỗi
     verify(orderEventPublisher, never()).publishOrderPlaced(any());

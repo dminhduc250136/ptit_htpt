@@ -24,8 +24,11 @@ import org.springframework.transaction.annotation.Transactional;
  * Phase 26 / Plan 26-03 (D-09, T-26-09): Consume PaymentSucceeded / PaymentFailed từ exchange
  * {@code payment.events}, queue {@code order.payment-events}.
  *
+ * <p>Phase 26.1 (D-07): setter rename setVnpTransactionNo → setPaymentTransactionNo;
+ * payload getter rename vnpTransactionNo() → paymentTransactionNo() (envelope shape sync Plan 01).
+ *
  * <p>Behavior:
- *   - PaymentSucceeded → set order.paymentStatus=PAID + set vnpTransactionNo + publish OrderPlaced (D-09)
+ *   - PaymentSucceeded → set order.paymentStatus=PAID + set paymentTransactionNo + publish OrderPlaced (D-09)
  *   - PaymentFailed    → set order.paymentStatus=FAILED, KHÔNG publish OrderPlaced
  *
  * <p>Idempotency (T-26-09 Pitfall 8): insertIfAbsent processed_events ĐẦU TIÊN trong cùng
@@ -81,8 +84,9 @@ public class PaymentEventListener {
 
       if ("PaymentSucceeded".equals(envelope.eventType())) {
         // D-09: IPN xác nhận PAID → trừ kho (publish OrderPlaced) lúc này
+        // Phase 26.1 (D-07): setter + payload getter rename để khớp envelope shape Plan 01
         order.setPaymentStatus("PAID");
-        order.setVnpTransactionNo(payload.vnpTransactionNo());
+        order.setPaymentTransactionNo(payload.paymentTransactionNo());
         orderRepository.save(order);
         // Helper DRY từ OrderCrudService — build payload + publish afterCommit (D-09)
         orderCrudService.publishOrderPlacedForOrder(order);

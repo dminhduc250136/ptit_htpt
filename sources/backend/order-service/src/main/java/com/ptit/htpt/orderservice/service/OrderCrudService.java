@@ -195,16 +195,17 @@ public class OrderCrudService {
     OrderEntity saved = orderRepository.save(order);
 
     // Phase 26 / Plan 26-03 (D-09, D-10): rẽ nhánh theo paymentMethod.
-    // VNPAY → gọi payment-service tạo session, KHÔNG publish OrderPlaced ngay (D-09).
-    // non-VNPAY (COD...) → publish OrderPlaced ngay như cũ (D-10).
-    if ("VNPAY".equalsIgnoreCase(command.paymentMethod())) {
+    // Phase 26.1 (D-08): đổi nhánh VNPAY → MOMO + dùng createMomoSession.
+    // MOMO → gọi payment-service tạo session, KHÔNG publish OrderPlaced ngay (D-09).
+    // non-MOMO (COD...) → publish OrderPlaced ngay như cũ (D-10).
+    if ("MOMO".equalsIgnoreCase(command.paymentMethod())) {
       // D-09: set PENDING + gọi payment-service lấy paymentUrl. KHÔNG publish OrderPlaced.
-      // amountVnd = total (đã trừ discount) — payment-service sẽ nhân ×100 để ra vnp_Amount
+      // amountVnd = total (đã trừ discount)
       saved.setPaymentStatus("PENDING");
-      String paymentUrl = paymentSessionClient.createVNPaySession(
+      String paymentUrl = paymentSessionClient.createMomoSession(
           saved.id(),
           saved.total().longValue(),
-          saved.id(),   // orderInfo = mã đơn (vnp_OrderInfo)
+          saved.id(),   // orderInfo = mã đơn
           authHeader
       );
       // Build DTO thủ công với paymentUrl (transient field KHÔNG trong entity)
@@ -213,7 +214,7 @@ public class OrderCrudService {
           baseDto.id(), baseDto.userId(), baseDto.total(), baseDto.status(), baseDto.note(),
           baseDto.items(), baseDto.shippingAddress(), baseDto.paymentMethod(),
           baseDto.discountAmount(), baseDto.couponCode(),
-          baseDto.paymentStatus(), baseDto.vnpTransactionNo(), paymentUrl,
+          baseDto.paymentStatus(), baseDto.paymentTransactionNo(), paymentUrl,
           baseDto.createdAt(), baseDto.updatedAt()
       );
     } else {

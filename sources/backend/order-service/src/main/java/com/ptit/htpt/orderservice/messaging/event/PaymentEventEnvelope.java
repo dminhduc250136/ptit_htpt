@@ -10,6 +10,10 @@ import java.util.UUID;
  * <p>Shape IDENTICAL với payment-service PaymentEventEnvelope — Jackson2JsonMessageConverter
  * deserialize qua field name matching (KHÔNG cần shared module).
  *
+ * <p>Phase 26.1 / Plan 26.1-02 (D-07, T-26.1-11): field rename vnpTransactionNo →
+ * paymentTransactionNo để khớp shape mới của payment-service (commit f9ee819).
+ * Jackson deserialize qua field name — shape PHẢI IDENTICAL giữa 2 service.
+ *
  * <p>eventType ∈ {"PaymentSucceeded", "PaymentFailed"}
  * exchange "payment.events"; routing key "payment.succeeded" / "payment.failed".
  */
@@ -39,12 +43,13 @@ public record PaymentEventEnvelope(
    * Payload chứa thông tin giao dịch — IDENTICAL shape với payment-service PaymentPayload.
    *
    * <p>orderId — map tới order-service OrderEntity.id.
-   * vnpTransactionNo — lưu vào orders.vnp_transaction_no khi PAID.
+   * paymentTransactionNo — lưu vào orders.payment_transaction_no khi PAID (Phase 26.1 D-07 rename).
+   * Jackson deserialize qua field name matching — shape phải khớp payment-service (commit f9ee819).
    */
   public record PaymentPayload(
       String orderId,
       String paymentSessionId,
-      String vnpTransactionNo,
+      String paymentTransactionNo,
       BigDecimal amount,
       String currency
   ) {}

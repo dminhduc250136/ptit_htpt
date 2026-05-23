@@ -71,7 +71,7 @@ public class OrderController {
   public ApiResponse<Object> createOrder(
       @Valid @RequestBody CreateOrderCommand command,
       @RequestHeader(value = "X-User-Id", required = false) String userId,
-      // Phase 26 / Plan 26-03 (T-26-10): forward Bearer JWT cho PaymentSessionClient khi VNPAY
+      // Phase 26 / Plan 26-03 (T-26-10): forward Bearer JWT cho PaymentSessionClient khi MOMO
       @RequestHeader(value = "Authorization", required = false) String authHeader
   ) {
     return ApiResponse.of(201, "Order created",

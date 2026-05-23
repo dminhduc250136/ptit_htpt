@@ -29,10 +29,13 @@ import org.springframework.amqp.AmqpRejectAndDontRequeueException;
 /**
  * Phase 26 / Plan 26-03 (T-26-09, D-09): Unit tests cho {@link PaymentEventListener}.
  *
+ * <p>Phase 26.1 / Plan 26.1-02 (D-07): cập nhật assertions và payload helper để dùng
+ * {@code paymentTransactionNo} thay {@code vnpTransactionNo} (field rename MoMo migration).
+ *
  * <p>Dùng Mockito plain unit test — tránh Spring context và Testcontainers (env Windows không Docker).
  *
  * <p>Test coverage:
- *   1. PaymentSucceeded → order.paymentStatus=PAID, vnpTransactionNo saved, publishOrderPlaced gọi
+ *   1. PaymentSucceeded → order.paymentStatus=PAID, paymentTransactionNo saved, publishOrderPlaced gọi
  *   2. PaymentFailed    → order.paymentStatus=FAILED, publishOrderPlaced KHÔNG gọi
  *   3. Duplicate eventId (cùng eventId gửi 2 lần) → chỉ xử lý 1 lần (idempotent)
  */
@@ -57,7 +60,8 @@ class PaymentEventListenerIT {
   private PaymentEventEnvelope succeededEnvelope(String eventId, String orderId) {
     return new PaymentEventEnvelope(
         eventId, "PaymentSucceeded", "2026-05-22T10:00:00Z", "trace-1",
-        new PaymentPayload(orderId, "session-1", "VNP-TXN-001",
+        // Phase 26.1 (D-07): field rename vnpTransactionNo → paymentTransactionNo
+        new PaymentPayload(orderId, "session-1", "MOMO-TXN-001",
             BigDecimal.valueOf(10_000_000), "VND")
     );
   }
@@ -72,7 +76,8 @@ class PaymentEventListenerIT {
 
   private OrderEntity pendingOrder(String orderId) {
     OrderEntity e = OrderEntity.create("user-1", BigDecimal.valueOf(10_000_000), "PENDING", null);
-    e.setPaymentMethod("VNPAY");
+    // Phase 26.1 (D-08): đổi paymentMethod VNPAY → MOMO
+    e.setPaymentMethod("MOMO");
     return e;
   }
 
@@ -94,8 +99,8 @@ class PaymentEventListenerIT {
 
     // paymentStatus = PAID
     assertThat(order.paymentStatus()).isEqualTo("PAID");
-    // vnpTransactionNo ghi vào entity
-    assertThat(order.vnpTransactionNo()).isEqualTo("VNP-TXN-001");
+    // paymentTransactionNo ghi vào entity (Phase 26.1 D-07: rename từ vnpTransactionNo)
+    assertThat(order.paymentTransactionNo()).isEqualTo("MOMO-TXN-001");
     // publishOrderPlacedForOrder được gọi (D-09 trừ kho sau PAID)
     verify(orderCrudService).publishOrderPlacedForOrder(order);
   }

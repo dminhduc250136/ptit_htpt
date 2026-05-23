@@ -17,12 +17,15 @@ import org.springframework.web.server.ResponseStatusException;
 
 /**
  * Phase 26 / Plan 26-03 (D-04, T-26-10): cross-svc REST client gọi payment-service qua gateway
- * tạo VNPay payment session và lấy về paymentUrl.
+ * tạo payment session và lấy về paymentUrl.
+ *
+ * <p>Phase 26.1 / Plan 26.1-02 (D-08): đổi provider "VNPAY" → "MOMO" + rename method.
+ * URL endpoint giữ nguyên (chung cho mọi provider): http://api-gateway:8080/api/payments/sessions.
  *
  * <p>Copy cấu trúc {@code ProductBatchClient}: {@code @Component} + {@code RestTemplate} injected.
  * URL qua gateway (http://api-gateway:8080) + forward Bearer JWT của user gốc (T-26-10).
  *
- * <p>KHÁC ProductBatchClient: fail → KHÔNG fallback empty — paymentUrl bắt buộc cho đơn VNPAY
+ * <p>KHÁC ProductBatchClient: fail → KHÔNG fallback empty — paymentUrl bắt buộc cho đơn MOMO
  * → throw {@link ResponseStatusException}(502 BAD_GATEWAY).
  */
 @Component
@@ -38,17 +41,20 @@ public class PaymentSessionClient {
   }
 
   /**
-   * Tạo VNPay session tại payment-service. Trả paymentUrl để redirect user.
+   * Tạo MoMo session tại payment-service. Trả paymentUrl để redirect user.
+   *
+   * <p>Phase 26.1 (D-08): renamed từ createVNPaySession; đổi provider "VNPAY" → "MOMO".
+   * Logic REST và URL endpoint giữ nguyên 100% (payment-service route theo provider value).
    *
    * @param orderId     order id (UUID string)
-   * @param amountVnd   số tiền đơn hàng tính bằng VND (đã trừ discount, payment-service sẽ ×100)
-   * @param orderInfo   mô tả đơn hàng (vd: mã đơn) truyền vào vnp_OrderInfo
+   * @param amountVnd   số tiền đơn hàng tính bằng VND (đã trừ discount)
+   * @param orderInfo   mô tả đơn hàng (vd: mã đơn)
    * @param authHeader  giá trị header Authorization từ request gốc (Bearer token) — T-26-10 forward JWT
-   * @return paymentUrl (non-null) để FE redirect sang cổng VNPay
+   * @return paymentUrl (non-null) để FE redirect sang cổng MoMo
    * @throws ResponseStatusException 502 nếu payment-service không trả về paymentUrl
    */
-  public String createVNPaySession(String orderId, long amountVnd, String orderInfo,
-                                   String authHeader) {
+  public String createMomoSession(String orderId, long amountVnd, String orderInfo,
+                                  String authHeader) {
     try {
       HttpHeaders headers = new HttpHeaders();
       headers.setContentType(MediaType.APPLICATION_JSON);
@@ -58,7 +64,7 @@ public class PaymentSessionClient {
       }
       HttpEntity<Map<String, Object>> entity = new HttpEntity<>(
           Map.of(
-              "provider", "VNPAY",
+              "provider", "MOMO",
               "orderId", orderId,
               "amount", amountVnd,
               "orderInfo", orderInfo
@@ -72,25 +78,25 @@ public class PaymentSessionClient {
 
       ApiResponse<Map<String, Object>> body = resp.getBody();
       if (body == null || body.data() == null) {
-        log.error("[VNPAY-SESSION] payment-service trả null body cho orderId={}", orderId);
+        log.error("[MOMO-SESSION] payment-service trả null body cho orderId={}", orderId);
         throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-            "Không tạo được phiên thanh toán VNPay");
+            "Không tạo được phiên thanh toán MoMo");
       }
       Object paymentUrl = body.data().get("paymentUrl");
       if (paymentUrl == null || paymentUrl.toString().isBlank()) {
-        log.error("[VNPAY-SESSION] payment-service không trả paymentUrl cho orderId={}", orderId);
+        log.error("[MOMO-SESSION] payment-service không trả paymentUrl cho orderId={}", orderId);
         throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-            "Không tạo được phiên thanh toán VNPay");
+            "Không tạo được phiên thanh toán MoMo");
       }
-      log.info("[VNPAY-SESSION] orderId={} paymentUrl=OK", orderId);
+      log.info("[MOMO-SESSION] orderId={} paymentUrl=OK", orderId);
       return paymentUrl.toString();
     } catch (ResponseStatusException e) {
       throw e; // re-throw — đã log ở trên
     } catch (Exception ex) {
-      log.error("[VNPAY-SESSION] lỗi khi gọi payment-service orderId={}: {}", orderId,
+      log.error("[MOMO-SESSION] lỗi khi gọi payment-service orderId={}: {}", orderId,
           ex.getMessage());
       throw new ResponseStatusException(HttpStatus.BAD_GATEWAY,
-          "Không tạo được phiên thanh toán VNPay");
+          "Không tạo được phiên thanh toán MoMo");
     }
   }
 }
