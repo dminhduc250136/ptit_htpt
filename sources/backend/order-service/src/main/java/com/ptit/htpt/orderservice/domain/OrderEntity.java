@@ -60,13 +60,15 @@ public class OrderEntity {
   @Column(name = "coupon_code", length = 64)
   private String couponCode;
 
-  // Phase 26 / PAY-04 (D-02): VNPay payment fields.
+  // Phase 26 / PAY-04 (D-02): payment fields — Phase 26.1 (D-07): rename cột dùng chung mọi gateway.
   // payment_status default PENDING — backward compatible với COD orders cũ.
   @Column(name = "payment_status", nullable = false, length = 20)
   private String paymentStatus = "PENDING";
 
-  @Column(name = "vnp_transaction_no", length = 50)
-  private String vnpTransactionNo;
+  // Phase 26.1 / PAY-04 (D-07): renamed từ vnp_transaction_no → payment_transaction_no qua V7 migration.
+  // Dùng chung cho mọi gateway (MoMo, và tương lai multi-gateway nếu cần).
+  @Column(name = "payment_transaction_no", length = 50)
+  private String paymentTransactionNo;
 
   @Column(nullable = false)
   private boolean deleted = false;
@@ -134,15 +136,16 @@ public class OrderEntity {
   public void setDiscountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount; }
   public void setCouponCode(String couponCode) { this.couponCode = couponCode; }
 
-  // Phase 26 / PAY-04 (D-02): VNPay payment field accessors.
+  // Phase 26 / PAY-04 (D-02): payment field accessors.
+  // Phase 26.1 (D-07): vnpTransactionNo → paymentTransactionNo (rename cột + field).
   public String paymentStatus() { return paymentStatus; }
-  public String vnpTransactionNo() { return vnpTransactionNo; }
+  public String paymentTransactionNo() { return paymentTransactionNo; }
   public void setPaymentStatus(String paymentStatus) {
     this.paymentStatus = paymentStatus;
     this.updatedAt = Instant.now();
   }
-  public void setVnpTransactionNo(String vnpTransactionNo) {
-    this.vnpTransactionNo = vnpTransactionNo;
+  public void setPaymentTransactionNo(String paymentTransactionNo) {
+    this.paymentTransactionNo = paymentTransactionNo;
     this.updatedAt = Instant.now();
   }
 
