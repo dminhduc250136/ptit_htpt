@@ -3,22 +3,22 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-23T02:59:13.569Z"
-last_activity: 2026-05-23 -- Phase 26.1 planning complete
+last_updated: "2026-05-23T03:11:57.406Z"
+last_activity: 2026-05-23 -- Phase 26.1 Plan 01 completed (MoMo payment-service core)
 progress:
   total_phases: 13
   completed_phases: 9
   total_plans: 57
-  completed_plans: 46
-  percent: 81
+  completed_plans: 47
+  percent: 82
 ---
 
 ## Current Position
 
-Phase: 26 (vnpay-payment-integration) — COMPLETED
-Plan: 4 of 4 (DONE)
-Status: Ready to execute
-Last activity: 2026-05-23 -- Phase 26.1 planning complete
+Phase: 26.1 (migrate-payment-gateway-vnpay-to-momo) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute Plan 02
+Last activity: 2026-05-23 — Plan 01 completed: MoMo payment-service core (HMAC SHA256 + IPN + MomoConfig)
 
 ```
 Progress: [█████████░] 87% (46/53 plans complete)
@@ -30,7 +30,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 
 **Core value:** Demo end-to-end shopping experience hoạt động với real data ở mọi điểm user nhìn thấy, đồng thời rèn quy trình GSD từ planning → execute → verify → archive.
 
-**Current focus:** Phase 26 — vnpay-payment-integration
+**Current focus:** Phase 26.1 — migrate-payment-gateway-vnpay-to-momo
 
 ## Resume Cheat-Sheet
 
@@ -73,8 +73,17 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 23-message-queue-rabbitmq P04 | 8min | 2 tasks | 13 files |
 | Phase 23-message-queue-rabbitmq P05 | 5min | 2 tasks | 10 files |
 | Phase 23-message-queue-rabbitmq P06 | 10min | 2 tasks | 9 files |
+| Phase 26.1-migrate-payment-gateway P01 | 10min | 3 tasks | 16 files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 26.1 Plan 01 decisions (2026-05-23):**
+
+- MomoIpnControllerIT dùng @ExtendWith(MockitoExtension.class) plain unit test (analog VNPayIpnControllerIT Phase 26 §Deviation 1) — tránh conflict @EnableConfigurationProperties
+- AppConfig @Bean RestTemplate tạo mới (payment-service thiếu bean này trước đây — Rule 2 auto-add)
+- MomoService tạo đầy đủ ở Task 1 (không defer sang Task 2) — bắt buộc để PaymentCrudService compile ngay sau khi xóa VNPaySignature
+- buildSignDataCreate KHÔNG sort key (fixed order theo MoMo doc); buildSignDataIpn hard-code 13 field lexicographic
+- PaymentEventEnvelope.PaymentPayload rename vnpTransactionNo → paymentTransactionNo (field chung cho mọi gateway)
 
 **Phase 26 Plan 04 decisions (2026-05-22):**
 
