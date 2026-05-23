@@ -53,6 +53,13 @@ async function loginAndSave(email: string, password: string, outFile: string) {
 }
 
 export default async function globalSetup(_config: FullConfig) {
+  // E2E_SKIP_GLOBAL_SETUP=1 → bỏ qua login storageState (dành cho specs anonymous
+  // có mock API, vd 12-mail-auth.spec.ts — không cần backend chạy).
+  if (process.env.E2E_SKIP_GLOBAL_SETUP === '1') {
+    // eslint-disable-next-line no-console
+    console.log('[global-setup] E2E_SKIP_GLOBAL_SETUP=1 — skipping login fixtures.');
+    return;
+  }
   fs.mkdirSync(STATE_DIR, { recursive: true });
   // eslint-disable-next-line no-console
   console.log('[global-setup] Logging in user + admin...');

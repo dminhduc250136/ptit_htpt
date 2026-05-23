@@ -11,7 +11,7 @@ export default defineConfig({
   retries: 0,
   reporter: [['list'], ['json', { outputFile: 'e2e/results.json' }]],
   use: {
-    baseURL: 'http://localhost:3000',
+    baseURL: process.env.E2E_BASE_URL ?? 'http://localhost:3000',
     trace: 'on',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',

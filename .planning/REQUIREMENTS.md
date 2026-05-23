@@ -2,14 +2,14 @@
 
 **Milestone:** v1.3
 **Started:** 2026-05-02
-**Status:** Roadmap complete — 27/27 REQs mapped
+**Status:** Roadmap complete — 40/40 REQs mapped (PAY + MAIL thêm 2026-05-22)
 **Phase numbering:** tiếp tục từ Phase 16 (KHÔNG reset)
 
 ---
 
 ## Scope Summary
 
-8 trục bổ sung cho tmdt-use-gsd e-commerce demo (Spring Boot microservices + Next.js):
+10 trục bổ sung cho tmdt-use-gsd e-commerce demo (Spring Boot microservices + Next.js):
 
 1. **SEED** — Catalog 100 SP / 5 categories realistic + ảnh Unsplash WebP
 2. **STORE** — Audit toàn FE storage + cart→DB migration
@@ -19,6 +19,8 @@
 6. **ORDER** — Order detail items fix BE/FE cả user + admin
 7. **COUP** — Coupon system (% off + fixed + admin CRUD)
 8. **MQ** — RabbitMQ async messaging cho luồng OrderPlaced (producer + 2 consumer + retry + DLQ + idempotency)
+9. **PAY** — Tích hợp thanh toán VNPay sandbox (checkout redirect + IPN callback verify chữ ký + cập nhật trạng thái đơn)
+10. **MAIL** — Gửi email thật qua SMTP (xác thực tài khoản + xác nhận đơn + cập nhật trạng thái đơn)
 
 **Locks (từ research + user answers):**
 - Review delete = **soft-delete** (column `deleted_at` hoặc `hidden`); admin vẫn xem
@@ -99,6 +101,24 @@
 - [x] **MQ-04** — notification-service consume từ queue `notification.order-events` (bind `order.#`), ghi `notification_svc.dispatch_log` (status=SENT, channel=email, không gửi SMTP thật), idempotent qua `notification_svc.processed_events`. Per D-14.
 - [ ] **MQ-05** — Consumer throw exception → retry 3 lần exponential backoff (1s → 2s → 4s, config `spring.rabbitmq.listener.simple.retry.*`); `PermanentMessageException` → reject ngay (0 retry) vào DLQ `order-events.dlq` qua DLX `order.dlx` (direct). Verify được message trong DLQ qua Management UI. traceId propagate qua header `X-Trace-Id` xuyên 3 service. Per D-07, D-08, D-09, D-16, D-17.
 
+### PAY — VNPay Sandbox Payment Integration
+
+- [ ] **PAY-01** — Checkout payment method: tại `/checkout` thêm lựa chọn phương thức "Thanh toán qua VNPay" (bên cạnh COD nếu có). Khi chọn VNPay + đặt hàng → order tạo với `payment_method=VNPAY` + `payment_status=PENDING`, BE build URL thanh toán VNPay sandbox (params `vnp_Amount`, `vnp_TxnRef`, `vnp_OrderInfo`, `vnp_ReturnUrl`, ... + `vnp_SecureHash` HMAC SHA512) và FE redirect khách sang cổng VNPay.
+- [ ] **PAY-02** — Return URL: VNPay redirect khách về `vnp_ReturnUrl` của ứng dụng sau thanh toán. FE render trang kết quả rõ ràng (thành công / thất bại / huỷ) dựa trên `vnp_ResponseCode`. KHÔNG cập nhật trạng thái đơn dựa trên return URL (return URL chỉ để hiển thị — nguồn sự thật là IPN).
+- [ ] **PAY-03** — IPN callback (server-to-server): BE expose endpoint nhận IPN từ VNPay, verify `vnp_SecureHash` (HMAC SHA512 với secret), so khớp `vnp_Amount` với số tiền đơn, so khớp `vnp_TxnRef` với order. Hợp lệ + `vnp_ResponseCode=00` → cập nhật `payment_status=PAID` + lưu `vnp_TransactionNo`; thất bại → `payment_status=FAILED`. Idempotent khi VNPay gửi lại cùng giao dịch. Trả response đúng format VNPay yêu cầu.
+- [ ] **PAY-04** — Order display: `/account/orders/[id]` + `/admin/orders/[id]` hiển thị phương thức thanh toán + trạng thái thanh toán (PENDING/PAID/FAILED) + mã giao dịch VNPay nếu có. Chữ ký sai hoặc số tiền lệch → giao dịch bị từ chối và ghi log audit.
+
+### MAIL — Real Email Delivery (SMTP)
+
+- [x] **MAIL-01
+** — Cấu hình SMTP qua biến môi trường: host, port, username, password/app-password, from-address đọc hoàn toàn từ env (KHÔNG hardcode credential trong source). Thiếu env → service vẫn khởi động được và log cảnh báo (graceful degradation, không crash). SMTP Gmail (App Password) — account do user cấp qua env.
+- [x] **MAIL-02
+** — Email xác thực tài khoản: đăng ký tài khoản mới → gửi email xác minh tới hộp thư thật, link/token xác minh → tài khoản chuyển trạng thái verified. Yêu cầu reset mật khẩu → gửi email chứa link/token reset. Gắn vào user-service/auth flow.
+- [x] **MAIL-03
+** — Email xác nhận đơn hàng: khi đặt hàng thành công, notification-service consume event `OrderPlaced` (từ RabbitMQ Phase 23) → gửi email xác nhận (mã đơn, danh sách sản phẩm, tổng tiền) tới email khách. Render bằng template tiếng Việt.
+- [x] **MAIL-04
+** — Email cập nhật trạng thái đơn: khi trạng thái đơn thay đổi (shipped / delivered / cancelled) → gửi email cập nhật tương ứng tới khách. Gửi bất đồng bộ (không chặn request chính).
+
 ---
 
 ## Future Requirements (Defer v1.4+)
@@ -122,7 +142,7 @@
 
 ## Out of Scope (v1.3 Explicit Exclusions)
 
-- **Real payment gateway integration** — mock đủ cho dự án thử nghiệm GSD (Out of Scope project-wide, locked v1.0)
+- ~~**Real payment gateway integration** — mock đủ cho dự án thử nghiệm GSD~~ — **REVISED 2026-05-22:** đưa vào scope qua Phase 26 (VNPay **sandbox** — môi trường test, không phải merchant production thật; đáp ứng yêu cầu tích hợp cổng thanh toán mà vẫn an toàn cho dự án demo)
 - **Production-grade infrastructure** — load balancing, K8s, failover (project-wide lock)
 - **Mobile app** — web-only (project-wide lock)
 - **Real-time WebSockets** — polling/SSE đủ (project-wide lock)
@@ -174,6 +194,16 @@
 | MQ-03 | Phase 23 | — | Active |
 | MQ-04 | Phase 23 | 23-05 | Completed 2026-05-20 |
 | MQ-05 | Phase 23 | — | Active |
+| PAY-01 | Phase 26 | — | Active |
+| PAY-02 | Phase 26 | — | Active |
+| PAY-03 | Phase 26 | — | Active |
+| PAY-04 | Phase 26 | — | Active |
+| MAIL-01 | Phase 27 | 27-05 | Satisfied |
+| MAIL-02 | Phase 27 | 27-05 | Satisfied |
+| MAIL-03 | Phase 27 | 27-05 | Satisfied |
+| MAIL-04 | Phase 27 | 27-05 | Satisfied |
 
-**Total active REQs: 32** (SEED 4 + ORDER 1 + ADMIN-06 1 + STORE 3 + ADMIN-01-05 5 + COUP 5 + REV 3 + AI 5 + MQ 5)
-**Mapped: 32/32** (100% coverage)
+**Total active REQs: 40** (SEED 4 + ORDER 1 + ADMIN-06 1 + STORE 3 + ADMIN-01-05 5 + COUP 5 + REV 3 + AI 5 + MQ 5 + PAY 4 + MAIL 4)
+**Mapped: 40/40** (100% coverage)
+
+*Note: DB-01..04 (Phase 24) + SEC-01..04 (Phase 25) chưa backfill vào file này — sẽ thêm khi audit milestone. PAY + MAIL thêm 2026-05-22.*

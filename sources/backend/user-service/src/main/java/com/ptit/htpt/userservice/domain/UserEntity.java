@@ -51,6 +51,9 @@ public class UserEntity {
   @Column(nullable = false)
   private boolean deleted = false;
 
+  @Column(name = "email_verified", nullable = false)
+  private boolean emailVerified = false;
+
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
 
@@ -71,6 +74,7 @@ public class UserEntity {
     this.fullName = fullName;
     this.phone = phone;
     this.deleted = deleted;
+    this.emailVerified = false;
     this.createdAt = createdAt;
     this.updatedAt = updatedAt;
   }
@@ -103,6 +107,11 @@ public class UserEntity {
     this.updatedAt = Instant.now();
   }
 
+  public void setEmailVerified(boolean v) {
+    this.emailVerified = v;
+    this.updatedAt = Instant.now();
+  }
+
   public void setRoles(String roles) {
     this.roles = roles;
     this.updatedAt = Instant.now();
@@ -125,6 +134,7 @@ public class UserEntity {
   public String fullName() { return fullName; }
   public String phone() { return phone; }
   public boolean deleted() { return deleted; }
+  public boolean emailVerified() { return emailVerified; }
   public Instant createdAt() { return createdAt; }
   public Instant updatedAt() { return updatedAt; }
 

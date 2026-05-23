@@ -1,27 +1,28 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
-milestone_name: Catalog Realism & Commerce Intelligence
-status: executing
-last_updated: "2026-05-20T00:00:00Z"
-last_activity: 2026-05-20
+milestone: v1.0
+milestone_name: milestone
+status: phase_complete
+last_updated: "2026-05-23T00:00:00.000Z"
+last_activity: 2026-05-23
 progress:
-  total_phases: 7
-  completed_phases: 4
-  total_plans: 14
-  completed_plans: 20
-  percent: 57
+  total_phases: 12
+  completed_phases: 9
+  total_plans: 54
+  completed_plans: 47
+  percent: 87
 ---
 
 ## Current Position
 
-Phase: 23-message-queue-rabbitmq — COMPLETED execution (6/6 plans done — ready /gsd-verify-work)
-Plan: 6 of 6 — 23-06 COMPLETED (Integration tests 9 @Test methods qua 3 IT class: OrderEventPublisherIT 2 + OrderPlacedListenerIT 4 FULL D-18 không @Disabled + OrderPlacedNotifyListenerIT 3; @SpyBean StockLedgerRepository + Mockito doAnswer cho transientThenSuccess retry scenario; scripts/verify-mq.sh smoke Management UI HTTP API; architecture/02-sequence-diagrams.md Kafka → RabbitMQ + Appendix A topology table + error-path diagram; 23-VERIFICATION.md 7/7 SC SATISFIED static+IT)
-Status: Phase 23 ready /gsd-verify-work (mvn verify defer Windows + docker smoke + manual demo qua Management UI).
-Last activity: 2026-05-20
+Phase: 27 (real-email-smtp) — COMPLETED & VERIFIED
+Plan: 5 of 5 (DONE)
+Status: Phase 27 verified (15/15 must-haves). 5 human-UAT items pending in 27-HUMAN-UAT.md (FE runtime render + end-to-end SMTP flow + graceful degradation).
+Last activity: 2026-05-23
+Stopped at: Phase 27 complete — verification passed, human UAT tracked
 
 ```
-Progress: [█████░░░░░] 57% (4/7 phases complete)
+Progress: [█████████░] 87%
 ```
 
 ## Project Reference
@@ -30,7 +31,7 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 
 **Core value:** Demo end-to-end shopping experience hoạt động với real data ở mọi điểm user nhìn thấy, đồng thời rèn quy trình GSD từ planning → execute → verify → archive.
 
-**Current focus:** Phase 19 next — Hoàn Thiện Admin Charts + Low-Stock (ADMIN-01..05)
+**Current focus:** Phase 27 — real-email-smtp
 
 ## Resume Cheat-Sheet
 
@@ -73,8 +74,45 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 | Phase 23-message-queue-rabbitmq P04 | 8min | 2 tasks | 13 files |
 | Phase 23-message-queue-rabbitmq P05 | 5min | 2 tasks | 10 files |
 | Phase 23-message-queue-rabbitmq P06 | 10min | 2 tasks | 9 files |
+| Phase 27-real-email-smtp P01 | 15min | 3 tasks | 4 files |
+| Phase 27-real-email-smtp P02 | 4min | 3 tasks | 13 files |
+| Phase 27 P03 | 8min | 3 tasks | 10 files |
+| Phase 27 P04 | 10min | 2 tasks | 5 files |
+| Phase 27 P05 | 20min | 3 tasks | 12 files |
+| Phase 27 P05 | 20min | - tasks | - files |
 
 ## Decisions (active v1.3 locks)
+
+**Phase 27 Plan 05 decisions (2026-05-22):**
+
+- UserEventListener idempotent consume notification.user-events — branch UserRegistered→ACCOUNT_VERIFICATION / PasswordResetRequested→PASSWORD_RESET — topology user.events khai báo trong RabbitMQConfig notification-service (6 bean mới)
+- [Rule 1 Bug fix] OrderPlacedNotifyListener: EVENT_TYPE hardcode "OrderPlaced" → envelope.eventType() dynamic — ghi đúng eventType vào processed_events cho cả 2 event
+- docker-compose user-service: thêm depends_on rabbitmq service_healthy + SPRING_RABBITMQ_* + APP_BASE_URL; notification-service: MAIL_SMTP_* env với ${VAR:-} pattern (KHÔNG hardcode credential)
+- 3 trang FE (forgot-password/verify-email/reset-password): npm run build exit 0; verify-email state machine 4 trạng thái; reset-password token invalid → status card thay form
+- CTA "Gửi lại email xác minh" → /register (endpoint resend chưa có — UI-SPEC A3)
+
+**Phase 27 Plan 04 decisions (2026-05-22):**
+
+- AuthService.resetPassword dùng changePasswordHash() (tên method thực tế UserEntity) — KHÔNG setPasswordHash (không tồn tại)
+- forgotPassword ifPresent pattern không throw — anti-enumeration (D-08, T-27-10)
+- 3 endpoint verify-email/forgot/reset PUBLIC — user-service không có Spring Security filter (auth do API Gateway handle)
+- AuthControllerIT exclude RabbitAutoConfiguration — test IT không cần RabbitMQ broker thật
+- D-07 LOCK confirmed: register phát JWT ngay, email_verified KHÔNG hard-gate login
+
+**Phase 27 Plan 02 decisions (2026-05-22):**
+
+- VerificationTokenEntity dùng record-style accessors (KHÔNG Lombok) — nhất quán UserEntity convention
+- verifyAndConsume kiểm tra usedAt TRƯỚC expiresAt — đã dùng ưu tiên báo 410 GONE
+- UserRabbitMQConfig khai báo cả DLX + DLQ + notification.user-events queue — Wave 3 consumer có thể dùng ngay
+- user-service Producer only → KHÔNG có listener.simple.retry block trong application.yml
+- AccountEventPublisher.publishUserRegistered/publishPasswordReset tạo sẵn nhưng chưa wire vào AuthService — Plan 27-03 sẽ wire
+
+**Phase 27 Plan 01 decisions (2026-05-22):**
+
+- OrderEventEnvelope: giữ 1 record, đổi payload sang Object + Jackson @JsonTypeInfo/@JsonSubTypes (discriminator = eventType "OrderPlaced"/"OrderStatusChanged") — tránh refactor publisher generic + 2 listener sides (Pitfall 3)
+- ROUTING_KEY_ORDER_STATUS_CHANGED = "order.status-changed" — queue notification.order-events bind "order.#" nên tự route (KHÔNG cần exchange/queue mới)
+- resolveCustomerEmail(): GET /api/users/{userId} qua api-gateway; fallback "" + log WARN nếu fail — notification-service ghi SKIPPED, KHÔNG crash
+- doPublish() refactor: thêm routingKey param để dùng chung cho OrderPlaced và OrderStatusChanged
 
 **Phase 23 Plan 06 decisions (2026-05-20):**
 
@@ -156,8 +194,6 @@ See: `.planning/PROJECT.md` (updated 2026-05-02 — Current Milestone: v1.3 Cata
 - db/init/01-schemas.sql: thêm CREATE SCHEMA IF NOT EXISTS notification_svc (idempotent, sau inventory_svc) — note dev cần docker volume rm tmdt-pgdata HOẶC manual psql tạo schema nếu volume cũ tồn tại
 - REQUIREMENTS.md backfilled: section MQ với MQ-01..MQ-05 + traceability 5 dòng + scope 7→8 trục + Total 27→32 (32/32 mapped 100%)
 - Threat register accept: guest/guest credential acceptable cho dev (port 5672 bind localhost, không expose firewall ngoài) — đổi password defer Phase ops
-
-
 
 **Phase 20 Plan 03 decisions (2026-05-03):**
 
@@ -274,6 +310,8 @@ Không có blocker.
 - 2026-05-20 — Phase 23 CONTEXT captured: 18 decisions (D-01 đến D-18) qua 4 gray areas. Quyết định chính: 1 event OrderPlaced (topic exchange `order.events`); publish-after-commit; idempotency qua processed_events table; retry 3 lần exp backoff + DLQ qua x-dead-letter-exchange; GIỮ REST stock validate đồng bộ + BỎ REST stock deduct (thay bằng inventory consumer); notification ghi dispatch_log (defer SMTP). 8 deferred ideas (Saga đầy đủ, SMTP, observability, tách DB, X-User-Id...).
 - 2026-05-20 — Phase 24 added: Database Per Service (tách CSDL hạ tầng) — củng cố 3.4 + failure isolation. 5 postgres container riêng (user/product/order/payment/inventory). Demo: tắt 1 DB → service khác vẫn chạy.
 - 2026-05-20 — Phase 25 added: Gateway JWT Edge Authentication — vá lỗ hổng X-User-Id. Gateway verify JWT + strip + inject trusted header. Bỏ port expose của service nội bộ. Đóng bug orders-cross-user-leak ở tầng kiến trúc.
+- 2026-05-22 — Phase 26 added: Tích Hợp Thanh Toán VNPay Sandbox — khách chọn VNPay tại checkout → redirect cổng VNPay sandbox → backend xử lý IPN callback (verify HMAC SHA512, so khớp số tiền, cập nhật payment_status idempotent). Depends on Phase 20 (cần discountAmount để số tiền gửi VNPay là final). Cổng chọn: VNPay sandbox (user quyết định — phổ biến nhất, sandbox miễn phí). REQ PAY-01..04.
+- 2026-05-22 — Phase 27 added: Gửi Email Thật (SMTP) — email thật qua SMTP Gmail (credential qua env, user cấp account riêng) cho 3 luồng: xác thực tài khoản (verify đăng ký + reset mật khẩu), xác nhận đơn hàng, cập nhật trạng thái đơn. Tái dụng notification-service + consumer RabbitMQ OrderPlaced (Phase 23). Depends on Phase 23. REQ MAIL-01..04.
 
 - Project: tmdt-use-gsd — dự án thử nghiệm GSD workflow (Spring Boot microservices + Next.js + API gateway + Docker Compose).
 - Foundation v1.0 + v1.1 + v1.2 reuse được: ApiErrorResponse + traceId envelope; Swagger/OpenAPI codegen; Postgres + JPA + Flyway 5 services; auth thật JWT HS256; admin CRUD qua gateway; FE typed services; rhf+zod pattern; Playwright E2E suite (14 baseline + 4 smoke); reviews verified-buyer cross-service; FilterSidebar pattern; M3 design tokens.
@@ -290,6 +328,7 @@ Không có blocker.
 4. `/gsd-ai-integration-phase 22` → Execute Phase 22: AI Chatbot Claude API MVP (dùng AI integration workflow thay plan-phase chuẩn)
 
 **Completed:**
+
 - Phase 16: Seed Catalog Hiện Thực — **COMPLETED 2026-05-02** (3/3 plans, SEED-01..04)
 - Phase 17: Sửa Order Detail Items — **COMPLETED 2026-05-02** (4/4 plans, ORDER-01 + ADMIN-06)
 - Phase 18: Kiểm Toán Storage + Cart→DB — **COMPLETED 2026-05-02** (6/6 plans, STORE-01/02/03 closed)
@@ -305,3 +344,9 @@ Không có blocker.
 - Phase 23 Plan 05: Notification consumer DispatchLogEntity + ProcessedEventEntity + NotificationDispatchService render template + OrderPlacedNotifyListener idempotent — **COMPLETED 2026-05-20** (MQ-04 done; 10 files, 2 commits)
 - Phase 23 Plan 06: Integration tests 3 IT class 9 @Test methods (FULL D-18 không @Disabled) + scripts/verify-mq.sh smoke + architecture/02-sequence-diagrams.md Kafka→RabbitMQ — **COMPLETED 2026-05-20** (MQ-02/03/04/05 evidence; 9 files, 2 commits fc86cb0 + 9957b99)
 - Phase 23: Message Queue Integration (RabbitMQ) — **COMPLETED 2026-05-20** execution (6/6 plans, MQ-01..05 đã có evidence; ready /gsd-verify-work cho mvn + docker smoke runtime)
+- Phase 27 Plan 01: Mở rộng order-service producer — **COMPLETED 2026-05-22** (OrderEventEnvelope mở rộng + publishOrderStatusChanged + resolveCustomerEmail; 4 files, 3 commits)
+- Phase 27 Plan 02: Nền tảng token + RabbitMQ Producer user-service — **COMPLETED 2026-05-22** (Flyway V102+V103 + VerificationTokenService single-use + AccountEventPublisher afterCommit; 13 files, 4 commits)
+- Phase 27 Plan 03: notification-service consumer user events + EmailSender SMTP + FE 3 trang — **COMPLETED 2026-05-22** (UserEventListener + EmailSender + MailTemplate + FE verify-email/forgot-password/reset-password; 10 files, 3 commits)
+- Phase 27 Plan 04: AuthService register hook + 3 endpoint verify-email/forgot/reset — **COMPLETED 2026-05-22** (AuthService 4 method + AuthController 3 endpoint + 2 DTO + AuthControllerIT 5 tests; 5 files, 3 commits)
+- Phase 27 Plan 05: Wave 3 — UserEventListener + docker-compose env + 3 trang FE auth — **COMPLETED 2026-05-22** (topology user.events + UserEventEnvelope + UserEventListener + OrderPlacedNotifyListener fix + docker-compose SMTP env + forgot-password/verify-email/reset-password pages; 12 files, 4 commits)
+- Phase 27: Gửi Email Thật (SMTP) — **COMPLETED 2026-05-22** (5/5 plans, MAIL-01..04 evidence: EmailSender SMTP graceful degradation + 6 template HTML + OrderPlaced/OrderStatusChanged consumer + UserEventListener + 3 auth pages; ready /gsd-verify-work)
