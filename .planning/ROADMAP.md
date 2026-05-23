@@ -294,6 +294,16 @@ Plans:
 
 ---
 
+### Phase 26.1: Migrate Payment Gateway VNPay to MoMo (INSERTED)
+
+**Goal:** [Urgent work - to be planned]
+**Requirements**: TBD
+**Depends on:** Phase 26
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (run /gsd-plan-phase 26.1 to break down)
+
 ### Phase 27: Gửi Email Thật (SMTP)
 
 **Goal:** Ứng dụng gửi email thật tới hộp thư người dùng qua SMTP cho ba luồng: xác thực tài khoản (xác minh email khi đăng ký + reset mật khẩu), xác nhận đơn hàng, và cập nhật trạng thái đơn. Tái dụng notification-service đã có consumer RabbitMQ từ Phase 23.
