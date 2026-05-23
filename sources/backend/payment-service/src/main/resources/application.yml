@@ -49,7 +49,10 @@ momo:
   secret-key: ${MOMO_SECRET_KEY:K951B6PE1waDMi640xX08PD3vg6EkVlz}
   pay-url: ${MOMO_PAY_URL:https://test-payment.momo.vn/v2/gateway/api/create}
   return-url: ${MOMO_RETURN_URL:http://localhost:3000/checkout/result}
-  ipn-url: ${MOMO_IPN_URL:}
+  # MoMo bắt buộc ipnUrl không được blank (validation phía MoMo).
+  # Default placeholder: dùng URL local — sandbox MoMo chỉ validate format, không gọi tới được localhost
+  # Để IPN thật hoạt động: set MOMO_IPN_URL=https://<ngrok-tunnel>.ngrok-free.app/api/payments/momo/ipn
+  ipn-url: ${MOMO_IPN_URL:http://localhost:8080/api/payments/momo/ipn}
 
 ---
 spring:
