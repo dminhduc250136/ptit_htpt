@@ -22,7 +22,7 @@ public class ApiResponseAdvice implements ResponseBodyAdvice<Object> {
       "/v3/api-docs",
       "/swagger-ui",
       "/swagger-resources",
-      "/payments/vnpay"  // Phase 26: VNPay IPN/return cần JSON thuần, không envelope
+      "/payments/momo"  // Phase 26.1: MoMo IPN/return cần JSON thuần / 204, không envelope
   );
   private static final Set<String> SKIP_EXACT = Set.of("/swagger-ui.html");
 
