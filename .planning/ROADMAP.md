@@ -55,7 +55,8 @@ Thực hiện trước khi bắt đầu Phase 16. Không cần plan riêng — g
 - [ ] **Phase 23: Message Queue Integration (RabbitMQ)** — Đáp ứng yêu cầu BẮT BUỘC 3.3 của đề chủ đề 4: giao tiếp bất đồng bộ giữa các microservice qua RabbitMQ; luồng OrderPlaced → inventory + notification với retry + DLQ
 - [x] **Phase 24: Database Per Service (tách CSDL hạ tầng)** ✅ 2026-05-21 — Củng cố yêu cầu 3.4 + tính chịu lỗi độc lập (mục 4): chuyển từ "shared postgres / separate schema" sang "mỗi service một postgres container + credential riêng". Demo được failure isolation (1 DB chết → các service khác vẫn chạy). 4/4 plans
 - [x] **Phase 25: Gateway JWT Edge Authentication (vá lỗ hổng X-User-Id)** ✅ 2026-05-21 — Củng cố yêu cầu 4 (JWT): gateway verify JWT + strip X-User-Id từ client + inject trusted X-User-Id sau khi verify. Bỏ port mapping của các service nội bộ trong docker-compose. Đóng lỗ hổng `orders-cross-user-leak` ở tầng kiến trúc. 5/5 plans
-- [x] **Phase 26: Tích Hợp Thanh Toán VNPay Sandbox** — Khách chọn VNPay tại checkout → redirect cổng VNPay sandbox → IPN callback verify chữ ký HMAC SHA512 + cập nhật trạng thái thanh toán đơn hàng (idempotent) (completed 2026-05-22)
+- [x] **Phase 26: Tích Hợp Thanh Toán VNPay Sandbox** — Khách chọn VNPay tại checkout → redirect cổng VNPay sandbox → IPN callback verify chữ ký HMAC SHA512 + cập nhật trạng thái thanh toán đơn hàng (idempotent)
+ (completed 2026-05-22)
 - [ ] **Phase 27: Gửi Email Thật (SMTP)** — Email thật qua SMTP cho 3 luồng: xác thực tài khoản (verify đăng ký + reset mật khẩu), xác nhận đơn hàng, cập nhật trạng thái đơn — tái dụng notification-service consumer RabbitMQ (Phase 23)
 
 ---
@@ -305,7 +306,13 @@ Plans:
   3. Backend nhận IPN callback từ MoMo (server-to-server POST JSON), verify chữ ký HMAC SHA256, so khớp số tiền, cập nhật `payment_status` của đơn (PAID / FAILED) — idempotent khi MoMo gửi lại cùng giao dịch
   4. Đơn hàng tại `/account/orders/[id]` và `/admin/orders/[id]` hiển thị đúng trạng thái thanh toán + phương thức (MOMO) + mã giao dịch MoMo
   5. Code VNPay (`paymentservice/vnpay/` + test) bị xóa sạch; không còn reference `VNPAY` / `vnp_*` trong codebase
-**Plans:** chưa lập (chạy /gsd-plan-phase 26.1)
+**Plans:** 4 plans
+
+Plans:
+- [ ] 26.1-01-PLAN.md — payment-service: xóa vnpay/ + 2 test; tạo package momo/ (MomoConfig + MomoSignature HMAC SHA256 + MomoService buildPaymentUrl POST MoMo create + processIpn idempotent 204 + MomoController) + ApiResponseAdvice bypass + PaymentEventEnvelope rename field + gateway whitelist 2 endpoint MoMo + docker-compose env MOMO_*
+- [ ] 26.1-02-PLAN.md — order-service: Flyway V7 RENAME COLUMN vnp_transaction_no → payment_transaction_no; OrderEntity/OrderDto/OrderMapper field rename; OrderCrudService switch case MOMO; PaymentSessionClient.createMomoSession (provider=MOMO); PaymentEventListener setPaymentTransactionNo; XÓA OrderCrudServiceVNPayIT, tạo OrderCrudServiceMomoIT
+- [ ] 26.1-03-PLAN.md — frontend: type Order rename paymentTransactionNo; orderLabels MOMO; services/payments.ts getMomoReturn; checkout selector option MoMo + redirect; /checkout/result đọc MoMo query (resultCode/orderId/transId) giữ poll 3s×5 + 5 trạng thái UI-SPEC; order display "Mã giao dịch MoMo"; XÓA e2e/12-vnpay-payment.spec.ts, tạo 12-momo-payment.spec.ts
+- [ ] 26.1-04-PLAN.md — cleanup verification: grep audit toàn sources/ + docker-compose enforce SC5 (zero VNPay UNACCEPTABLE matches); smoke test compile + Playwright list; tạo 26.1-CLEANUP-VERIFY.md ghi log SC5 verdict
 **UI hint**: nhẹ (đổi label selector + trang kết quả tái dụng)
 
 ### Phase 27: Gửi Email Thật (SMTP)
