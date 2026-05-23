@@ -71,9 +71,11 @@ public class OrderPlacedNotifyListener {
         case "OrderPlaced" ->
             notificationDispatchService.sendOrderConfirmation(eventId, envelope.orderPlacedPayload());
         case "OrderStatusChanged" -> {
-          // Chỉ shipped/delivered/cancelled gửi email — bỏ qua pending/confirmed
+          // Chỉ shipped/delivered/cancelled gửi email — bỏ qua pending/confirmed.
+          // Order-service publish status UPPERCASE (vd "SHIPPED") nên lowercase trước khi match.
           String status = envelope.orderStatusChangedPayload().newStatus();
-          com.ptit.htpt.notificationservice.service.email.MailTemplate template = switch (status) {
+          String norm = status == null ? "" : status.toLowerCase(java.util.Locale.ROOT);
+          com.ptit.htpt.notificationservice.service.email.MailTemplate template = switch (norm) {
             case "shipped"   -> com.ptit.htpt.notificationservice.service.email.MailTemplate.ORDER_SHIPPED;
             case "delivered" -> com.ptit.htpt.notificationservice.service.email.MailTemplate.ORDER_DELIVERED;
             case "cancelled" -> com.ptit.htpt.notificationservice.service.email.MailTemplate.ORDER_CANCELLED;

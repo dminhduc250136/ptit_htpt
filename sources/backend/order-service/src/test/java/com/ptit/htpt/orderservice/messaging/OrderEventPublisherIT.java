@@ -56,9 +56,10 @@ class OrderEventPublisherIT {
   @Autowired PlatformTransactionManager txManager;
 
   private OrderEventEnvelope.OrderPlacedPayload payload(String orderId) {
+    // Phase 27: OrderPlacedPayload + Item có thêm customerEmail / productName.
     return new OrderEventEnvelope.OrderPlacedPayload(
-        orderId, "user-1",
-        List.of(new OrderEventEnvelope.Item("prod-1", 1, new BigDecimal("100"))),
+        orderId, "user-1", "test@example.com",
+        List.of(new OrderEventEnvelope.Item("prod-1", "Test Product", 1, new BigDecimal("100"))),
         new BigDecimal("100"), "VND");
   }
 

@@ -425,19 +425,22 @@ public class OrderCrudService {
    * Phase 27 D-11: Lấy customerEmail từ user-service qua REST.
    * order-service đã có RestTemplate (dùng cho stock validate Phase 23 D-11).
    *
-   * Strategy:
-   *  1. Gọi user-service GET /api/users/{userId} qua api-gateway để lấy email
+   * Strategy (Phase 27 fix bug #5):
+   *  1. Gọi user-service GET /internal/users/{userId}/email TRỰC TIẾP qua docker network
+   *     (KHÔNG qua gateway — gateway yêu cầu JWT mà order-service nội bộ không có).
+   *     Endpoint /internal/** KHÔNG expose ngoài (Phase 25 đã bỏ port mapping user-service).
    *  2. Nếu không lấy được (timeout/404/exception) → fallback "" + log WARN
-   *     → notification-service sẽ ghi SKIPPED trong dispatch_log (không crash)
+   *     → notification-service sẽ ghi SKIPPED trong dispatch_log (không crash).
    *
    * @param order OrderEntity đã save — dùng userId() để fetch
    * @return email string hoặc "" nếu không lấy được
    */
   private String resolveCustomerEmail(OrderEntity order) {
     try {
-      String url = "http://api-gateway:8080/api/users/" + order.userId();
+      String url = "http://user-service:8080/internal/users/" + order.userId() + "/email";
       @SuppressWarnings("unchecked")
       Map<String, Object> raw = restTemplate.getForObject(url, Map.class);
+      // user-service wrap response qua ApiResponseAdvice → {status, message, data: {email, fullName}}
       Map<String, Object> user = unwrapEnvelope(raw);
       if (user == null) {
         log.warn("[EMAIL-RESOLVE] user-service returned null for userId={}", order.userId());
