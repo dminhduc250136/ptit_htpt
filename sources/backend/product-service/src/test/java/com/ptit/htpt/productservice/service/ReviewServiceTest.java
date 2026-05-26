@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.ptit.htpt.productservice.domain.CategoryEntity;
 import com.ptit.htpt.productservice.domain.ProductEntity;
+import com.ptit.htpt.productservice.domain.ReviewEntity;
 import com.ptit.htpt.productservice.repository.CategoryRepository;
 import com.ptit.htpt.productservice.repository.ProductRepository;
 import com.ptit.htpt.productservice.repository.ReviewRepository;
@@ -15,6 +16,7 @@ import java.math.BigDecimal;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -143,5 +145,270 @@ class ReviewServiceTest {
     ProductEntity updated = productRepo.findById(product.id()).orElseThrow();
     assertThat(updated.avgRating().doubleValue()).isEqualTo(4.0);
     assertThat(updated.reviewCount()).isEqualTo(2);
+  }
+
+  // ===========================================================================
+  // Phase 21 / Plan 02 — REV-04 / REV-05 / REV-06 tests
+  // ===========================================================================
+
+  /** Helper: tạo 1 review trực tiếp qua repo, bỏ qua eligibility check, return id. */
+  private String seedReview(String userId, int rating, String content) {
+    ReviewEntity r = ReviewEntity.create(product.id(), userId, "Reviewer-" + userId, rating, content);
+    reviewRepo.save(r);
+    return r.id();
+  }
+
+  // ---- editReview ---------------------------------------------------------
+
+  @Test
+  void editReview_ownerWithinWindow_returnsUpdated() {
+    String rid = seedReview("u-edit-1", 4, "first content");
+
+    Map<String, Object> result = reviewService.editReview(rid, "u-edit-1", 5, "edited content");
+
+    assertThat(result.get("rating")).isEqualTo(5);
+    assertThat((String) result.get("content")).contains("edited");
+  }
+
+  @Test
+  void editReview_nonOwner_returns403() {
+    String rid = seedReview("u-owner", 4, "content");
+
+    assertThatThrownBy(() -> reviewService.editReview(rid, "u-attacker", 5, "hacked"))
+        .isInstanceOf(ResponseStatusException.class)
+        .satisfies(e -> {
+          ResponseStatusException rse = (ResponseStatusException) e;
+          assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+          assertThat(rse.getReason()).contains("REVIEW_NOT_OWNER");
+        });
+  }
+
+  @Test
+  void editReview_softDeletedReview_returns422NotFound() {
+    String rid = seedReview("u-del-1", 4, "content");
+    // Soft-delete trước
+    reviewService.softDeleteReview(rid, "u-del-1");
+
+    assertThatThrownBy(() -> reviewService.editReview(rid, "u-del-1", 5, "edit"))
+        .isInstanceOf(ResponseStatusException.class)
+        .satisfies(e -> {
+          ResponseStatusException rse = (ResponseStatusException) e;
+          assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+          assertThat(rse.getReason()).contains("REVIEW_NOT_FOUND");
+        });
+  }
+
+  @Test
+  void editReview_contentOnly_skipsRecomputeAvgUnchanged() {
+    mockEligibility(true);
+    // Setup: 2 review với rating khác nhau → avg = 3.5, count = 2
+    reviewService.createReview(product.id(), "u-co-1", "U", 5, "five");
+    reviewService.createReview(product.id(), "u-co-2", "U", 2, "two");
+    BigDecimal avgBefore = productRepo.findById(product.id()).orElseThrow().avgRating();
+
+    // Pick rid của review user u-co-1
+    String rid = reviewRepo.findAll().stream()
+        .filter(r -> "u-co-1".equals(r.userId())).findFirst().orElseThrow().id();
+    int oldRating = 5;
+
+    // Edit content-only (rating null) — KHÔNG trigger recompute logic ngay cả nếu chạy
+    reviewService.editReview(rid, "u-co-1", null, "new content only");
+
+    BigDecimal avgAfter = productRepo.findById(product.id()).orElseThrow().avgRating();
+    // Pitfall 2: rating không đổi → avg cùng kết quả (recompute path KHÔNG được gọi)
+    assertThat(avgAfter).isEqualByComparingTo(avgBefore);
+    // Verify content thực sự đổi
+    ReviewEntity updated = reviewRepo.findById(rid).orElseThrow();
+    assertThat(updated.content()).isEqualTo("new content only");
+    assertThat(updated.rating()).isEqualTo(oldRating);
+  }
+
+  @Test
+  void editReview_ratingChanged_triggersRecompute() {
+    mockEligibility(true);
+    reviewService.createReview(product.id(), "u-rc-1", "U", 5, null);
+    reviewService.createReview(product.id(), "u-rc-2", "U", 5, null);
+    // Initial avg = 5.0
+    assertThat(productRepo.findById(product.id()).orElseThrow().avgRating().doubleValue())
+        .isEqualTo(5.0);
+
+    String rid = reviewRepo.findAll().stream()
+        .filter(r -> "u-rc-1".equals(r.userId())).findFirst().orElseThrow().id();
+
+    reviewService.editReview(rid, "u-rc-1", 1, null);
+
+    BigDecimal avgAfter = productRepo.findById(product.id()).orElseThrow().avgRating();
+    // (5 + 1) / 2 = 3.0
+    assertThat(avgAfter.doubleValue()).isEqualTo(3.0);
+  }
+
+  // ---- softDeleteReview ---------------------------------------------------
+
+  @Test
+  void softDeleteReview_owner_marksDeletedAndRecomputes() {
+    mockEligibility(true);
+    reviewService.createReview(product.id(), "u-sd-1", "U", 5, null);
+    reviewService.createReview(product.id(), "u-sd-2", "U", 3, null);
+    String rid = reviewRepo.findAll().stream()
+        .filter(r -> "u-sd-1".equals(r.userId())).findFirst().orElseThrow().id();
+
+    reviewService.softDeleteReview(rid, "u-sd-1");
+
+    ReviewEntity after = reviewRepo.findById(rid).orElseThrow();
+    assertThat(after.deletedAt()).isNotNull();
+    // Recompute scope: chỉ còn review rating=3 còn active → avg=3.0, count=1
+    ProductEntity p = productRepo.findById(product.id()).orElseThrow();
+    assertThat(p.avgRating().doubleValue()).isEqualTo(3.0);
+    assertThat(p.reviewCount()).isEqualTo(1);
+  }
+
+  @Test
+  void softDeleteReview_nonOwner_returns403() {
+    String rid = seedReview("u-owner-2", 4, "x");
+    assertThatThrownBy(() -> reviewService.softDeleteReview(rid, "u-attacker-2"))
+        .isInstanceOf(ResponseStatusException.class)
+        .satisfies(e -> {
+          ResponseStatusException rse = (ResponseStatusException) e;
+          assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
+          assertThat(rse.getReason()).contains("REVIEW_NOT_OWNER");
+        });
+  }
+
+  // ---- setVisibility ------------------------------------------------------
+
+  @Test
+  void setVisibility_hide_recomputesAvgExcludingHidden() {
+    mockEligibility(true);
+    reviewService.createReview(product.id(), "u-vis-1", "U", 5, null);
+    reviewService.createReview(product.id(), "u-vis-2", "U", 1, null);
+    // avg = 3.0
+    String ridLow = reviewRepo.findAll().stream()
+        .filter(r -> "u-vis-2".equals(r.userId())).findFirst().orElseThrow().id();
+
+    reviewService.setVisibility(ridLow, true);
+
+    ReviewEntity hidden = reviewRepo.findById(ridLow).orElseThrow();
+    assertThat(hidden.hidden()).isTrue();
+    ProductEntity p = productRepo.findById(product.id()).orElseThrow();
+    // Hidden review excluded → còn rating=5 active visible → avg=5.0, count=1
+    assertThat(p.avgRating().doubleValue()).isEqualTo(5.0);
+    assertThat(p.reviewCount()).isEqualTo(1);
+  }
+
+  // ---- hardDelete ---------------------------------------------------------
+
+  @Test
+  void hardDelete_removesRowAndRecomputes() {
+    mockEligibility(true);
+    reviewService.createReview(product.id(), "u-hd-1", "U", 4, null);
+    reviewService.createReview(product.id(), "u-hd-2", "U", 2, null);
+    // avg = 3.0
+    String rid = reviewRepo.findAll().stream()
+        .filter(r -> "u-hd-1".equals(r.userId())).findFirst().orElseThrow().id();
+
+    reviewService.hardDelete(rid);
+
+    assertThat(reviewRepo.findById(rid)).isEmpty();
+    ProductEntity p = productRepo.findById(product.id()).orElseThrow();
+    // Còn rating=2 → avg=2.0, count=1
+    assertThat(p.avgRating().doubleValue()).isEqualTo(2.0);
+    assertThat(p.reviewCount()).isEqualTo(1);
+  }
+
+  // ---- listReviews sort + config ------------------------------------------
+
+  @Test
+  void listReviews_sortRatingDesc_ordersHighFirst() {
+    mockEligibility(true);
+    reviewService.createReview(product.id(), "u-s-1", "U", 1, null);
+    reviewService.createReview(product.id(), "u-s-2", "U", 5, null);
+    reviewService.createReview(product.id(), "u-s-3", "U", 3, null);
+
+    Map<String, Object> result = reviewService.listReviews(product.id(), 0, 10, "rating_desc");
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> content = (List<Map<String, Object>>) result.get("content");
+
+    assertThat(content).hasSize(3);
+    assertThat(content.get(0).get("rating")).isEqualTo(5);
+    assertThat(content.get(1).get("rating")).isEqualTo(3);
+    assertThat(content.get(2).get("rating")).isEqualTo(1);
+  }
+
+  @Test
+  void listReviews_invalidSort_fallbackNewestNoThrow() {
+    mockEligibility(true);
+    reviewService.createReview(product.id(), "u-fb-1", "U", 4, null);
+
+    // KHÔNG throw — fallback newest (D-13)
+    Map<String, Object> result = reviewService.listReviews(product.id(), 0, 10, "garbage_value");
+
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> content = (List<Map<String, Object>>) result.get("content");
+    assertThat(content).hasSize(1);
+    // Config embedded for FE (D-02)
+    @SuppressWarnings("unchecked")
+    Map<String, Object> config = (Map<String, Object>) result.get("config");
+    assertThat(config).isNotNull();
+    assertThat(config.get("editWindowHours")).isNotNull();
+  }
+
+  @Test
+  void listReviews_excludesDeletedAndHidden() {
+    mockEligibility(true);
+    reviewService.createReview(product.id(), "u-ex-1", "U", 5, null);
+    reviewService.createReview(product.id(), "u-ex-2", "U", 4, null);
+    reviewService.createReview(product.id(), "u-ex-3", "U", 3, null);
+    String ridDeleted = reviewRepo.findAll().stream()
+        .filter(r -> "u-ex-1".equals(r.userId())).findFirst().orElseThrow().id();
+    String ridHidden = reviewRepo.findAll().stream()
+        .filter(r -> "u-ex-2".equals(r.userId())).findFirst().orElseThrow().id();
+
+    reviewService.softDeleteReview(ridDeleted, "u-ex-1");
+    reviewService.setVisibility(ridHidden, true);
+
+    Map<String, Object> result = reviewService.listReviews(product.id(), 0, 10, "newest");
+    @SuppressWarnings("unchecked")
+    List<Map<String, Object>> content = (List<Map<String, Object>>) result.get("content");
+    // Chỉ còn 1 review active+visible
+    assertThat(content).hasSize(1);
+    assertThat(content.get(0).get("rating")).isEqualTo(3);
+  }
+
+  // ---- recompute scope ----------------------------------------------------
+
+  @Test
+  void recompute_resetsToZero_whenAllReviewsDeleted() {
+    mockEligibility(true);
+    reviewService.createReview(product.id(), "u-z-1", "U", 5, null);
+    String rid = reviewRepo.findAll().stream()
+        .filter(r -> "u-z-1".equals(r.userId())).findFirst().orElseThrow().id();
+
+    reviewService.softDeleteReview(rid, "u-z-1");
+
+    ProductEntity p = productRepo.findById(product.id()).orElseThrow();
+    assertThat(p.avgRating().doubleValue()).isEqualTo(0.0);
+    assertThat(p.reviewCount()).isEqualTo(0);
+  }
+
+  // ---- listAdminReviews ---------------------------------------------------
+
+  @Test
+  void listAdminReviews_filterAll_includesDeletedAndHiddenWithSlug() {
+    mockEligibility(true);
+    reviewService.createReview(product.id(), "u-ar-1", "U", 5, null);
+    reviewService.createReview(product.id(), "u-ar-2", "U", 4, null);
+    String rid1 = reviewRepo.findAll().stream()
+        .filter(r -> "u-ar-1".equals(r.userId())).findFirst().orElseThrow().id();
+    reviewService.softDeleteReview(rid1, "u-ar-1");
+
+    Map<String, Object> result = reviewService.listAdminReviews(0, 20, "all");
+    @SuppressWarnings("unchecked")
+    List<AdminReviewDTO> content = (List<AdminReviewDTO>) result.get("content");
+
+    assertThat(content).hasSize(2);
+    // Cả 2 review đều phải có productSlug (product chưa soft-delete)
+    assertThat(content).allSatisfy(d -> assertThat(d.productSlug()).isNotNull());
+    // Có ít nhất 1 deleted
+    assertThat(content).anyMatch(d -> d.deletedAt() != null);
   }
 }

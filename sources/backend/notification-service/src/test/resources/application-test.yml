@@ -1,0 +1,17 @@
+# Test profile cho notification-service (Phase 23 — Plan 23-02 chuẩn bị Wave 3 IT).
+# Datasource + rabbitmq host/port được Testcontainers @ServiceConnection inject runtime.
+# Phase 24 (Database Per Service): dùng schema `public` mặc định — KHÔNG set schema riêng.
+# Override retry delay nhanh hơn (100ms/500ms) để IT chạy gọn — production yml dùng 1s/10s.
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  rabbitmq:
+    listener:
+      simple:
+        retry:
+          initial-interval: 100
+          max-interval: 500

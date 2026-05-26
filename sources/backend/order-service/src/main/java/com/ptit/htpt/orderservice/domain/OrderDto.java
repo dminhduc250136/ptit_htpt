@@ -13,6 +13,18 @@ import java.util.Map;
  * đã consume `totalAmount`).
  *
  * <p>Phase 8 Plan 02: thêm items (per-item breakdown), shippingAddress (JSONB object), paymentMethod.
+ *
+ * <p>Phase 20 Plan 03 (D-23, D-24): thêm 2 field snapshot {@code discountAmount} +
+ * {@code couponCode} cho FE display ở /profile/orders/[id] và /admin/orders/[id].
+ * {@code discountAmount} mặc định BigDecimal.ZERO (DB column NOT NULL DEFAULT 0).
+ * {@code couponCode} nullable cho order chưa áp coupon (backward compat).
+ *
+ * <p>Phase 26 Plan 02 (PAY-04, D-02): thêm 3 field payment.
+ * {@code paymentStatus} — PENDING/PAID/FAILED, map từ entity.
+ * {@code paymentTransactionNo} — nullable, map từ entity. Phase 26.1 (D-07): renamed từ
+ * {@code vnpTransactionNo} để dùng chung cho mọi gateway.
+ * {@code paymentUrl} — nullable, transient (KHÔNG map từ entity); set thủ công trong
+ * OrderCrudService nhánh MOMO (Plan 03).
  */
 public record OrderDto(
     String id,
@@ -23,6 +35,11 @@ public record OrderDto(
     List<OrderItemDto> items,
     Map<String, Object> shippingAddress,
     String paymentMethod,
+    BigDecimal discountAmount,
+    String couponCode,
+    String paymentStatus,
+    String paymentTransactionNo,
+    String paymentUrl,
     Instant createdAt,
     Instant updatedAt
 ) {

@@ -5,5 +5,6 @@
 .success .icon { background: #dcfce7; color: #16a34a; }
 .error .icon { background: var(--error-container); color: var(--error); }
 .info .icon { background: var(--primary-fixed); color: var(--primary); }
+.warning .icon { background: #fef9c3; color: #b45309; }
 .message { flex: 1; font-size: var(--text-body-md); font-weight: var(--weight-medium); color: var(--on-surface); }
 .close { background: none; border: none; color: var(--outline); cursor: pointer; font-size: 0.9rem; padding: var(--space-1); }

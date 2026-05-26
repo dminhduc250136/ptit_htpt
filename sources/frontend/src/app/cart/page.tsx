@@ -1,40 +1,109 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button/Button';
+import { useToast } from '@/components/ui/Toast/Toast';
 import {
-  readCart,
-  removeFromCart,
-  updateQuantity,
-  type CartItem,
-} from '@/services/cart';
+  useCart,
+  useUpdateCartItem,
+  useRemoveCartItem,
+  parseCartError,
+} from '@/hooks/useCart';
 import { formatPrice } from '@/services/api';
 
 export default function CartPage() {
-  // Hydrate cart synchronously on first client render via lazy initializer.
-  // `typeof window` guard keeps SSR safe (Pitfall 2). Same pattern as AuthProvider —
-  // avoids the react-hooks/set-state-in-effect lint trigger.
-  const [cartItems, setCartItems] = useState<CartItem[]>(() =>
-    typeof window === 'undefined' ? [] : readCart(),
-  );
-  const [hydrated, setHydrated] = useState<boolean>(() => typeof window !== 'undefined');
+  const { showToast } = useToast();
+  const router = useRouter();
+  const { data: cartItems = [], isLoading } = useCart();
+  const updateMutation = useUpdateCartItem();
+  const removeMutation = useRemoveCartItem();
 
+  const hydrated = !isLoading;
+
+  // Tập productId các mục được tích chọn để thanh toán.
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  // Đánh dấu đã khởi tạo selection lần đầu (tránh chọn lại mỗi lần cart refetch).
+  const [initialized, setInitialized] = useState(false);
+
+  // Lần đầu giỏ hàng load xong → chọn sẵn tất cả.
+  // Các lần cart đổi sau đó → chỉ loại bỏ mục đã bị xóa khỏi giỏ, giữ nguyên
+  // lựa chọn của user (không tự ý tích lại).
   useEffect(() => {
-    // Subscribe to cart:change so cross-page updates (remove/update) reflect here.
-    const onChange = () => setCartItems(readCart());
-    window.addEventListener('cart:change', onChange);
-    // Ensure hydrated flag is true once effect runs on the client (defensive for SSR).
-    if (!hydrated) setHydrated(true);
-    return () => window.removeEventListener('cart:change', onChange);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    if (cartItems.length === 0) return;
+    if (!initialized) {
+      setSelectedIds(new Set(cartItems.map((i) => i.productId)));
+      setInitialized(true);
+      return;
+    }
+    setSelectedIds((prev) => {
+      const cartIds = new Set(cartItems.map((i) => i.productId));
+      const next = new Set<string>();
+      for (const id of prev) {
+        if (cartIds.has(id)) next.add(id);
+      }
+      return next;
+    });
+  }, [cartItems, initialized]);
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  const allSelected = cartItems.length > 0 && selectedIds.size === cartItems.length;
+
+  const toggleOne = (productId: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(productId)) next.delete(productId);
+      else next.add(productId);
+      return next;
+    });
+  };
+
+  const toggleAll = () => {
+    setSelectedIds(allSelected ? new Set() : new Set(cartItems.map((i) => i.productId)));
+  };
+
+  const handleQuantityChange = (productId: string, qty: number) => {
+    updateMutation.mutate(
+      { productId, qty },
+      {
+        onError: (err) => {
+          const ctx = parseCartError(err);
+          showToast(ctx.message, 'error');
+        },
+      }
+    );
+  };
+
+  const handleRemove = (productId: string) => {
+    removeMutation.mutate(productId, {
+      onError: (err) => {
+        const ctx = parseCartError(err);
+        showToast(ctx.message, 'error');
+      },
+    });
+  };
+
+  // Chỉ tính tiền trên các mục được chọn.
+  const selectedItems = useMemo(
+    () => cartItems.filter((i) => selectedIds.has(i.productId)),
+    [cartItems, selectedIds]
+  );
+  const selectedCount = selectedItems.reduce((s, i) => s + i.quantity, 0);
+  const subtotal = selectedItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const shippingFee = subtotal >= 1000000 ? 0 : 30000;
   const total = subtotal + shippingFee;
+
+  // Đi tới checkout với danh sách mục đã chọn truyền qua query param.
+  const goToCheckout = () => {
+    if (selectedItems.length === 0) {
+      showToast('Vui lòng chọn ít nhất một sản phẩm để thanh toán', 'error');
+      return;
+    }
+    const ids = selectedItems.map((i) => i.productId).join(',');
+    router.push(`/checkout?items=${encodeURIComponent(ids)}`);
+  };
 
   return (
     <div className={styles.page}>
@@ -63,11 +132,38 @@ export default function CartPage() {
           <div className={styles.layout}>
             {/* Cart Items */}
             <div className={styles.cartItems}>
+              {/* Thanh chọn tất cả */}
+              {cartItems.length > 0 && (
+                <label className={styles.selectAllBar}>
+                  <input
+                    type="checkbox"
+                    className={styles.checkbox}
+                    checked={allSelected}
+                    onChange={toggleAll}
+                    aria-label="Chọn tất cả sản phẩm"
+                  />
+                  <span>Chọn tất cả ({cartItems.length})</span>
+                </label>
+              )}
+
               {cartItems.map((item) => {
                 // stock=0 on legacy items (added before this fix) — treat as uncapped
                 const atStockLimit = item.stock > 0 && item.quantity >= item.stock;
+                const checked = selectedIds.has(item.productId);
                 return (
-                  <div key={item.productId} className={styles.cartItem}>
+                  <div
+                    key={item.productId}
+                    className={`${styles.cartItem} ${checked ? styles.cartItemSelected : ''}`}
+                  >
+                    {/* Checkbox chọn mục */}
+                    <input
+                      type="checkbox"
+                      className={styles.checkbox}
+                      checked={checked}
+                      onChange={() => toggleOne(item.productId)}
+                      aria-label={`Chọn ${item.name}`}
+                    />
+
                     <Link href={`/products/${item.productId}`} className={styles.itemImage}>
                       <Image
                         src={item.thumbnailUrl?.trim() ? item.thumbnailUrl : '/placeholder.png'}
@@ -93,7 +189,8 @@ export default function CartPage() {
                         </div>
                         <button
                           className={styles.removeBtn}
-                          onClick={() => removeFromCart(item.productId)}
+                          onClick={() => handleRemove(item.productId)}
+                          disabled={removeMutation.isPending}
                           aria-label="Xóa sản phẩm"
                         >
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -107,16 +204,16 @@ export default function CartPage() {
                         <div className={styles.quantitySelector}>
                           <button
                             className={styles.qtyBtn}
-                            onClick={() => updateQuantity(item.productId, item.quantity - 1)}
-                            disabled={item.quantity <= 1}
+                            onClick={() => handleQuantityChange(item.productId, item.quantity - 1)}
+                            disabled={item.quantity <= 1 || updateMutation.isPending}
                           >
                             −
                           </button>
                           <span className={styles.qtyValue}>{item.quantity}</span>
                           <button
                             className={styles.qtyBtn}
-                            onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                            disabled={atStockLimit}
+                            onClick={() => handleQuantityChange(item.productId, item.quantity + 1)}
+                            disabled={atStockLimit || updateMutation.isPending}
                           >
                             +
                           </button>
@@ -140,7 +237,11 @@ export default function CartPage() {
 
               <div className={styles.summaryRows}>
                 <div className={styles.summaryRow}>
-                  <span>Tạm tính ({cartItems.reduce((s, i) => s + i.quantity, 0)} SP)</span>
+                  <span>Đã chọn</span>
+                  <span>{selectedItems.length} / {cartItems.length} sản phẩm</span>
+                </div>
+                <div className={styles.summaryRow}>
+                  <span>Tạm tính ({selectedCount} SP)</span>
                   <span>{formatPrice(subtotal)}</span>
                 </div>
                 <div className={styles.summaryRow}>
@@ -149,7 +250,7 @@ export default function CartPage() {
                     {shippingFee === 0 ? 'Miễn phí' : formatPrice(shippingFee)}
                   </span>
                 </div>
-                {shippingFee > 0 && (
+                {subtotal > 0 && shippingFee > 0 && (
                   <p className={styles.shippingNote}>
                     Miễn phí vận chuyển cho đơn từ {formatPrice(1000000)}
                   </p>
@@ -161,8 +262,13 @@ export default function CartPage() {
                 <span className={styles.totalPrice}>{formatPrice(total)}</span>
               </div>
 
-              <Button href="/checkout" size="lg" fullWidth>
-                Tiến hành thanh toán
+              <Button
+                size="lg"
+                fullWidth
+                onClick={goToCheckout}
+                disabled={selectedItems.length === 0}
+              >
+                Thanh toán ({selectedItems.length})
               </Button>
               <Link href="/products" className={styles.continueLink}>
                 ← Tiếp tục mua sắm

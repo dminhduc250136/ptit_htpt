@@ -2,6 +2,7 @@ package com.ptit.htpt.paymentservice.service;
 
 import com.ptit.htpt.paymentservice.domain.PaymentSessionEntity;
 import com.ptit.htpt.paymentservice.domain.PaymentTransactionEntity;
+import com.ptit.htpt.paymentservice.momo.MomoService;
 import com.ptit.htpt.paymentservice.repository.PaymentSessionRepository;
 import com.ptit.htpt.paymentservice.repository.PaymentTransactionRepository;
 import jakarta.validation.constraints.DecimalMin;
@@ -20,10 +21,14 @@ import org.springframework.web.server.ResponseStatusException;
 public class PaymentCrudService {
   private final PaymentSessionRepository sessionRepo;
   private final PaymentTransactionRepository transactionRepo;
+  private final MomoService momoService;
 
-  public PaymentCrudService(PaymentSessionRepository sessionRepo, PaymentTransactionRepository transactionRepo) {
+  public PaymentCrudService(PaymentSessionRepository sessionRepo,
+                             PaymentTransactionRepository transactionRepo,
+                             MomoService momoService) {
     this.sessionRepo = sessionRepo;
     this.transactionRepo = transactionRepo;
+    this.momoService = momoService;
   }
 
   public Map<String, Object> listSessions(int page, int size, String sort, boolean includeDeleted) {
@@ -40,19 +45,43 @@ public class PaymentCrudService {
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Payment session not found"));
   }
 
-  public PaymentSessionEntity createSession(SessionUpsertRequest request) {
+  /**
+   * Tạo payment session. Nếu provider=MOMO, build paymentUrl bằng POST sang MoMo create endpoint.
+   * paymentSessionId = sessionId (UUID mới mỗi session — idempotency key D-11).
+   * orderInfo chứa mã đơn để hiển thị trên cổng MoMo.
+   */
+  public SessionCreateResult createSession(SessionUpsertRequest request) {
+    // Status mặc định PENDING nếu không truyền
+    String status = request.status() != null && !request.status().isBlank() ? request.status() : "PENDING";
     PaymentSessionEntity session = PaymentSessionEntity.create(
         request.orderId(),
         request.provider(),
         request.amount(),
-        request.status()
+        status
     );
-    return sessionRepo.save(session);
+    PaymentSessionEntity saved = sessionRepo.save(session);
+
+    String paymentUrl = null;
+    if ("MOMO".equalsIgnoreCase(request.provider())) {
+      long amountVnd = saved.amount().longValue();  // raw VND, KHÔNG ×100
+      String orderInfo = "Thanh toan don " + saved.orderId();
+      paymentUrl = momoService.buildPaymentUrl(
+          saved.id(),
+          request.orderId(),
+          amountVnd,
+          orderInfo
+      );
+    }
+    return new SessionCreateResult(saved, paymentUrl);
   }
+
+  /** DTO kết quả tạo session — paymentUrl chỉ non-null khi provider=MOMO. */
+  public record SessionCreateResult(PaymentSessionEntity session, String paymentUrl) {}
 
   public PaymentSessionEntity updateSession(String id, SessionUpsertRequest request) {
     PaymentSessionEntity current = getSession(id, true);
-    current.update(request.orderId(), request.provider(), request.amount(), request.status());
+    String status = request.status() != null && !request.status().isBlank() ? request.status() : current.status();
+    current.update(request.orderId(), request.provider(), request.amount(), status);
     return sessionRepo.save(current);
   }
 
@@ -156,7 +185,8 @@ public class PaymentCrudService {
       @NotBlank String orderId,
       @NotBlank String provider,
       @DecimalMin("0.0") BigDecimal amount,
-      @NotBlank String status
+      String status,  // nullable — default PENDING
+      String clientIp // nullable — giữ lại cho backward compat, MoMo không dùng
   ) {}
 
   public record SessionStatusRequest(@NotBlank String status) {}

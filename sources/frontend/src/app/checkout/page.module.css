@@ -32,6 +32,63 @@
 .backLink { text-align: center; font-size: var(--text-body-md); color: var(--primary); text-decoration: none; }
 .backLink:hover { opacity: 0.7; }
 
+/* === Phase 20 / COUP-03 — Coupon section (D-17, D-20) === */
+.couponSection {
+  padding: var(--space-3) 0;
+  border-top: 1px solid rgba(195,198,214,0.15);
+  border-bottom: 1px solid rgba(195,198,214,0.15);
+  margin: var(--space-2) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.couponTitle {
+  font-size: var(--text-body-md);
+  font-weight: var(--weight-semibold);
+}
+.couponRow {
+  display: flex;
+  gap: var(--space-2);
+  align-items: flex-end;
+}
+.couponRow > :first-child {
+  flex: 1;
+}
+.couponChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: rgba(94,124,255,0.12);
+  border-radius: var(--radius-md);
+  font-size: var(--text-body-md);
+  align-self: flex-start;
+}
+.couponChipCode {
+  font-weight: var(--weight-semibold);
+  color: var(--primary);
+}
+.couponChipDiscount {
+  color: #16a34a;
+  font-weight: var(--weight-medium);
+}
+.couponChipRemove {
+  background: none;
+  border: none;
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: var(--text-body-sm);
+  padding: 0 var(--space-1);
+}
+.couponChipRemove:hover {
+  color: #ef4444;
+}
+.discountRow {
+  color: #16a34a;
+  font-weight: var(--weight-medium);
+}
+
 /* AddressPicker divider */
 .pickerDivider {
   text-align: center;

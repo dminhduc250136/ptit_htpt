@@ -54,7 +54,8 @@ export default function RegisterPage() {
         password: form.password,
       });
       // D-04: auth.register() đã gọi setTokens + setUserRole nội bộ
-      authLogin({ id: data.user.id, email: data.user.email, name: data.user.username ?? data.user.email });
+      // Phase 18 / D-13: await để mergeGuestCartToServer() hoàn tất trước router.replace
+      await authLogin({ id: data.user.id, email: data.user.email, name: data.user.username ?? data.user.email });
       router.replace('/');  // D-04: redirect về trang chủ (không qua /login)
     } catch (err: unknown) {
       if (err instanceof ApiError) {

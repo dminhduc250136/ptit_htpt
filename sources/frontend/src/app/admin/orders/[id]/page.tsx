@@ -9,8 +9,10 @@ import RetrySection from '@/components/ui/RetrySection/RetrySection';
 import { useToast } from '@/components/ui/Toast/Toast';
 import { getAdminOrderById, updateOrderState } from '@/services/orders';
 import type { Order } from '@/types';
-import { paymentMethodMap, statusMap } from '@/lib/orderLabels';
+import { paymentMethodMap, paymentStatusMap, statusMap } from '@/lib/orderLabels';
 import { useEnrichedItems } from '@/lib/useEnrichedItems';
+import SuggestReplyModal from '@/components/chat/SuggestReplyModal/SuggestReplyModal';
+import { fetchSuggestReply } from '@/services/admin-chat';
 
 const STATUS_OPTIONS = ['PENDING', 'CONFIRMED', 'SHIPPING', 'DELIVERED', 'CANCELLED'];
 
@@ -25,6 +27,10 @@ export default function AdminOrderDetailPage() {
   const [failed, setFailed] = useState(false);
   const [newStatus, setNewStatus] = useState('');
   const [saving, setSaving] = useState(false);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  const [suggestText, setSuggestText] = useState('');
+  const [suggestError, setSuggestError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     if (!id) return;
@@ -56,6 +62,31 @@ export default function AdminOrderDetailPage() {
       showToast('Không thể cập nhật trạng thái. Vui lòng thử lại', 'error');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSuggestReply = async () => {
+    if (!order) return;
+    setSuggestOpen(true);
+    setSuggestLoading(true);
+    setSuggestError(null);
+    setSuggestText('');
+    try {
+      const data = await fetchSuggestReply(order.id);
+      setSuggestText(data.text);
+    } catch (e) {
+      setSuggestError(e instanceof Error ? e.message : 'Không thể sinh gợi ý');
+    } finally {
+      setSuggestLoading(false);
+    }
+  };
+
+  const handleCopySuggestion = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      showToast('Đã sao chép gợi ý vào clipboard', 'success');
+    } catch {
+      showToast('Trình duyệt không cho phép sao chép tự động — chọn và Ctrl+C thủ công', 'error');
     }
   };
 
@@ -127,6 +158,29 @@ export default function AdminOrderDetailPage() {
             Thanh toán:{' '}
             <strong>{paymentMethodMap[order.paymentMethod] ?? order.paymentMethod ?? '—'}</strong>
           </p>
+          {/* Phase 26.1 / PAY-04: payment status badge + mã giao dịch MoMo (UI-SPEC §Order display + §Color) */}
+          {order.paymentStatus && (
+            <p style={{ ...labelStyle, display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              Trạng thái TT:{' '}
+              <Badge
+                variant={
+                  order.paymentStatus === 'PAID'
+                    ? 'sale'
+                    : order.paymentStatus === 'FAILED'
+                    ? 'out-of-stock'
+                    : 'default'
+                }
+              >
+                {paymentStatusMap[order.paymentStatus] ?? order.paymentStatus}
+              </Badge>
+            </p>
+          )}
+          {/* Phase 26.1 / PAY-04: mã giao dịch MoMo — ẩn dòng nếu rỗng (UI-SPEC §Order display) */}
+          {order.paymentTransactionNo && (
+            <p style={labelStyle}>
+              Mã giao dịch MoMo: <strong>{order.paymentTransactionNo}</strong>
+            </p>
+          )}
           {order.note && <p style={labelStyle}>Ghi chú: <strong>{order.note}</strong></p>}
         </div>
       </div>
@@ -193,12 +247,45 @@ export default function AdminOrderDetailPage() {
             </tbody>
           </table>
         )}
+        {/* Phase 20 / COUP-05 (D-23): coupon snapshot block — chỉ render khi có coupon.
+            BE Plan 20-03 đã set totalAmount = subtotal - discountAmount trước khi save,
+            nên KHÔNG cần subtract discount lần nữa ở FE — chỉ hiển thị 2 dòng info bổ sung. */}
+        {order.couponCode && (
+          <div style={{ borderTop: '1px solid rgba(195,198,214,0.15)', marginTop: 'var(--space-3)', paddingTop: 'var(--space-3)', textAlign: 'right' }}>
+            <div style={{ marginBottom: 'var(--space-1)' }}>
+              <span style={{ color: 'var(--on-surface-variant)' }}>Mã giảm giá: </span>
+              <strong>{order.couponCode}</strong>
+            </div>
+            <div style={{ color: 'var(--success, #10b981)' }}>
+              <span>Giảm giá: </span>
+              <strong>-{(order.discountAmount ?? 0).toLocaleString('vi-VN')}₫</strong>
+            </div>
+          </div>
+        )}
         <div style={{ borderTop: '1px solid rgba(195,198,214,0.15)', marginTop: 'var(--space-3)', paddingTop: 'var(--space-3)', textAlign: 'right' }}>
           <span style={{ fontWeight: 700, fontSize: 'var(--text-title-sm)' }}>Tổng cộng: </span>
           <span style={{ color: 'var(--primary)', fontWeight: 700 }}>
             {(order.totalAmount ?? order.total ?? 0).toLocaleString('vi-VN')}₫
           </span>
         </div>
+      </div>
+
+      {/* AI suggest reply card */}
+      <div style={cardStyle}>
+        <h3 style={{ fontSize: 'var(--text-title-lg)', fontWeight: 700, marginBottom: 'var(--space-3)' }}>
+          Phản hồi khách hàng
+        </h3>
+        <p style={{ color: 'var(--on-surface-variant)', marginBottom: 'var(--space-3)', fontSize: 'var(--text-body-sm)' }}>
+          AI sẽ đề xuất nội dung phản hồi khách dựa trên thông tin đơn hàng. Bạn cần kiểm tra và gửi thủ công.
+        </p>
+        <Button
+          onClick={handleSuggestReply}
+          disabled={suggestLoading}
+          loading={suggestLoading}
+          data-testid="suggest-reply-button"
+        >
+          AI gợi ý phản hồi
+        </Button>
       </div>
 
       {/* Status update card */}
@@ -219,6 +306,15 @@ export default function AdminOrderDetailPage() {
           Cập nhật trạng thái
         </Button>
       </div>
+
+      <SuggestReplyModal
+        open={suggestOpen}
+        onClose={() => setSuggestOpen(false)}
+        loading={suggestLoading}
+        initialText={suggestText}
+        error={suggestError}
+        onCopy={handleCopySuggestion}
+      />
     </div>
   );
 }

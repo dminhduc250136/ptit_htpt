@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './page.module.css';
 import Button from '@/components/ui/Button/Button';
 import Input from '@/components/ui/Input/Input';
@@ -11,19 +11,21 @@ import Banner from '@/components/ui/Banner/Banner';
 import Modal from '@/components/ui/Modal/Modal';
 import { useToast } from '@/components/ui/Toast/Toast';
 import {
-  readCart,
-  clearCart,
-  removeFromCart,
-  updateQuantity,
-  type CartItem,
-} from '@/services/cart';
+  useCart,
+  useUpdateCartItem,
+  useRemoveCartItem,
+  useClearCart,
+} from '@/hooks/useCart';
 import { createOrder } from '@/services/orders';
+import { validateCoupon } from '@/services/coupons';
 import { listAddresses } from '@/services/users';
 import { isApiError } from '@/services/errors';
 import { formatPrice } from '@/services/api';
 import { useAuth } from '@/providers/AuthProvider';
 import AddressPicker from '@/components/ui/AddressPicker/AddressPicker';
-import type { SavedAddress } from '@/types';
+import { useApplyCoupon } from '@/hooks/useApplyCoupon';
+import { formatCouponError, isCouponError } from '@/lib/couponErrorMessages';
+import type { SavedAddress, CouponPreview } from '@/types';
 
 interface StockConflictItem {
   productId: string;
@@ -32,24 +34,35 @@ interface StockConflictItem {
   requestedQuantity: number;
 }
 
-export default function CheckoutPage() {
+function CheckoutPageContent() {
   const { showToast } = useToast();
   const { user } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  // Hydrate cart via lazy initializer (SSR-safe, avoids set-state-in-effect lint).
-  const [cartItems, setCartItems] = useState<CartItem[]>(() =>
-    typeof window === 'undefined' ? [] : readCart(),
+  // Phase 18: fetch cart async qua React Query (cả guest localStorage + user DB)
+  const { data: allCartItems = [], isLoading: cartLoading } = useCart();
+  const updateMutation = useUpdateCartItem();
+  const removeMutation = useRemoveCartItem();
+  const clearMutation = useClearCart();
+
+  const hydrated = !cartLoading;
+
+  // Các sản phẩm cần thanh toán = mục được chọn ở trang giỏ hàng (?items=id1,id2).
+  // Nếu không có param (vào /checkout trực tiếp) → thanh toán toàn bộ giỏ.
+  const selectedProductIds = useMemo(() => {
+    const raw = searchParams.get('items');
+    if (!raw) return null; // null = thanh toán tất cả
+    return new Set(raw.split(',').filter(Boolean));
+  }, [searchParams]);
+
+  const cartItems = useMemo(
+    () =>
+      selectedProductIds
+        ? allCartItems.filter((i) => selectedProductIds.has(i.productId))
+        : allCartItems,
+    [allCartItems, selectedProductIds]
   );
-  const [hydrated, setHydrated] = useState<boolean>(() => typeof window !== 'undefined');
-
-  useEffect(() => {
-    const onChange = () => setCartItems(readCart());
-    window.addEventListener('cart:change', onChange);
-    if (!hydrated) setHydrated(true);
-    return () => window.removeEventListener('cart:change', onChange);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   const [form, setForm] = useState({
     fullName: '',
@@ -60,7 +73,7 @@ export default function CheckoutPage() {
     district: '',
     city: '',
     note: '',
-    paymentMethod: 'COD' as 'COD' | 'BANK_TRANSFER' | 'E_WALLET',
+    paymentMethod: 'COD' as 'COD' | 'BANK_TRANSFER' | 'E_WALLET' | 'MOMO',
   });
   const [loading, setLoading] = useState(false);
 
@@ -115,6 +128,58 @@ export default function CheckoutPage() {
   const shippingFee = subtotal >= 1000000 ? 0 : 30000;
   const total = subtotal + shippingFee;
 
+  // === COUPON STATE (D-17, D-18) ===
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<CouponPreview | null>(null);
+  const applyCouponMutation = useApplyCoupon();
+
+  const handleApplyCoupon = async () => {
+    const code = couponInput.trim().toUpperCase();
+    if (!code) {
+      showToast('Vui lòng nhập mã giảm giá', 'error');
+      return;
+    }
+    try {
+      const preview = await applyCouponMutation.mutateAsync({ code, cartTotal: subtotal });
+      setAppliedCoupon(preview);
+      setCouponInput('');
+      showToast('Áp dụng mã thành công', 'success');
+    } catch (err) {
+      if (isApiError(err) && isCouponError(err.code)) {
+        const msg = formatCouponError(err.code, err.details) ?? 'Không thể áp dụng mã giảm giá';
+        showToast(msg, 'error');
+      } else {
+        showToast('Không thể áp dụng mã giảm giá, vui lòng thử lại', 'error');
+      }
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponInput('');
+  };
+
+  // D-18: Auto re-validate khi cart đổi (subtotal thay đổi) sau khi đã apply coupon.
+  // Nếu fail (ví dụ subtotal mới < minOrder) → clear coupon + toast.
+  useEffect(() => {
+    if (!appliedCoupon || cartItems.length === 0) return;
+    let alive = true;
+    validateCoupon({ code: appliedCoupon.code, cartTotal: subtotal })
+      .then((preview) => {
+        if (!alive) return;
+        setAppliedCoupon(preview);
+      })
+      .catch((err) => {
+        if (!alive) return;
+        setAppliedCoupon(null);
+        if (isApiError(err) && isCouponError(err.code)) {
+          showToast('Mã giảm giá không còn áp dụng được', 'error');
+        }
+      });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subtotal]);
+
   async function submitOrder() {
     setLoading(true);
     setBannerVisible(false);
@@ -135,8 +200,32 @@ export default function CheckoutPage() {
         },
         paymentMethod: form.paymentMethod,
         note: form.note || undefined,
-      }, user?.id);                     // Phase 4-06: userId → X-User-Id header (Phase 5: JWT-claim derivation)
-      clearCart();
+        couponCode: appliedCoupon?.code,   // D-19: undefined nếu chưa apply coupon
+      });                                // Phase 25: userId derive từ JWT claim ở gateway, FE không truyền
+
+      // Dọn giỏ hàng sau khi đặt thành công:
+      // - Thanh toán TẤT CẢ (không có ?items=) → clear toàn bộ giỏ.
+      // - Thanh toán MỘT PHẦN → chỉ xóa các mục vừa đặt, giữ lại phần còn lại.
+      try {
+        if (selectedProductIds) {
+          await Promise.all(
+            cartItems.map((i) => removeMutation.mutateAsync(i.productId))
+          );
+        } else {
+          await clearMutation.mutateAsync();
+        }
+      } catch (clearErr) {
+        console.error('[checkout] cart cleanup failed (non-blocking):', clearErr);
+      }
+
+      // Phase 26.1 / D-14: MoMo redirect — nếu chọn MOMO và đơn có paymentUrl → redirect cổng MoMo.
+      // THAY VÌ router.push → dùng window.location.assign để redirect hoàn toàn ra ngoài app.
+      if (form.paymentMethod === 'MOMO' && order.paymentUrl) {
+        showToast('Đang chuyển tới cổng thanh toán MoMo...', 'success');
+        window.location.assign(order.paymentUrl);
+        return; // Dừng tại đây — navigation diễn ra sau redirect
+      }
+
       router.push('/profile/orders/' + order.id);
     } catch (err) {
       if (!isApiError(err)) {
@@ -175,8 +264,18 @@ export default function CheckoutPage() {
         case 'NOT_FOUND':
           showToast(err.message || 'Không tìm thấy', 'error');
           break;
-        default:
-          showToast('Đã có lỗi, vui lòng thử lại', 'error');
+        default: {
+          if (isCouponError(err.code)) {
+            // D-19: BE atomic redeem fail (coupon vừa bị disable / race-lose / expired between preview & submit)
+            const msg = formatCouponError(err.code, err.details) ?? 'Mã giảm giá không khả dụng';
+            showToast(msg, 'error');
+            // KHÔNG clear cart — user có thể bỏ mã + retry
+            setAppliedCoupon(null);
+          } else {
+            showToast('Đã có lỗi, vui lòng thử lại', 'error');
+          }
+          break;
+        }
       }
     } finally {
       setLoading(false);
@@ -243,7 +342,8 @@ export default function CheckoutPage() {
                   [
                     { value: 'COD', label: 'Thanh toán khi nhận hàng (COD)', icon: '💵' },
                     { value: 'BANK_TRANSFER', label: 'Chuyển khoản ngân hàng', icon: '🏦' },
-                    { value: 'E_WALLET', label: 'Ví điện tử (MoMo, ZaloPay)', icon: '📱' },
+                    { value: 'E_WALLET', label: 'Ví điện tử (ZaloPay, ...)', icon: '📱' },
+                    { value: 'MOMO', label: 'Thanh toán qua MoMo', icon: '💳' },
                   ] as const
                 ).map((m) => (
                   <label key={m.value} className={`${styles.paymentOption} ${form.paymentMethod === m.value ? styles.paymentActive : ''}`}>
@@ -290,6 +390,45 @@ export default function CheckoutPage() {
                   </div>
                 ))}
               </div>
+              {/* === COUPON SECTION (D-17) === */}
+              <div className={styles.couponSection}>
+                <h4 className={styles.couponTitle}>Mã giảm giá</h4>
+                {!appliedCoupon ? (
+                  <div className={styles.couponRow}>
+                    <Input
+                      placeholder="Nhập mã giảm giá"
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      fullWidth
+                    />
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={handleApplyCoupon}
+                      loading={applyCouponMutation.isPending}
+                    >
+                      Áp dụng
+                    </Button>
+                  </div>
+                ) : (
+                  <div className={styles.couponChip}>
+                    <span className={styles.couponChipCode}>{appliedCoupon.code}</span>
+                    <span className={styles.couponChipDiscount}>
+                      -{formatPrice(appliedCoupon.discountAmount)}
+                    </span>
+                    <button
+                      type="button"
+                      className={styles.couponChipRemove}
+                      onClick={handleRemoveCoupon}
+                      aria-label="Bỏ mã giảm giá"
+                    >
+                      Bỏ
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* === SUMMARY ROWS (D-20: 3 dòng — Tạm tính / Phí vận chuyển / Giảm giá khi có coupon) === */}
               <div className={styles.summaryRows}>
                 <div className={styles.summaryRow}>
                   <span>Tạm tính</span>
@@ -299,10 +438,18 @@ export default function CheckoutPage() {
                   <span>Phí vận chuyển</span>
                   <span className={shippingFee === 0 ? styles.free : ''}>{shippingFee === 0 ? 'Miễn phí' : formatPrice(shippingFee)}</span>
                 </div>
+                {appliedCoupon && (
+                  <div className={`${styles.summaryRow} ${styles.discountRow}`}>
+                    <span>Giảm giá ({appliedCoupon.code})</span>
+                    <span>-{formatPrice(appliedCoupon.discountAmount)}</span>
+                  </div>
+                )}
               </div>
               <div className={styles.totalRow}>
                 <span>Tổng cộng</span>
-                <span className={styles.totalPrice}>{formatPrice(total)}</span>
+                <span className={styles.totalPrice}>
+                  {formatPrice(Math.max(0, total - (appliedCoupon?.discountAmount ?? 0)))}
+                </span>
               </div>
               <Button type="submit" size="lg" fullWidth loading={loading} disabled={cartItems.length === 0}>
                 Đặt hàng
@@ -322,20 +469,24 @@ export default function CheckoutPage() {
         title="Một số sản phẩm không đủ hàng"
         primaryAction={{
           label: 'Cập nhật số lượng',
-          onClick: () => {
-            stockModal?.forEach((item) => {
-              updateQuantity(item.productId, item.availableQuantity);
-            });
+          onClick: async () => {
+            if (!stockModal) return;
+            await Promise.all(
+              stockModal.map((item) =>
+                updateMutation.mutateAsync({ productId: item.productId, qty: item.availableQuantity })
+              )
+            );
             setStockModal(null);
           },
         }}
         secondaryAction={{
           label: 'Xóa khỏi giỏ',
           variant: 'danger',
-          onClick: () => {
-            stockModal?.forEach((item) => {
-              removeFromCart(item.productId);
-            });
+          onClick: async () => {
+            if (!stockModal) return;
+            await Promise.all(
+              stockModal.map((item) => removeMutation.mutateAsync(item.productId))
+            );
             setStockModal(null);
           },
         }}
@@ -383,5 +534,14 @@ export default function CheckoutPage() {
         Giao dịch không thành công. Bạn có thể thử lại hoặc chọn phương thức thanh toán khác.
       </Modal>
     </div>
+  );
+}
+
+export default function CheckoutPage() {
+  // useSearchParams cần bọc Suspense (Next.js App Router).
+  return (
+    <Suspense fallback={<div className={styles.page} />}>
+      <CheckoutPageContent />
+    </Suspense>
   );
 }

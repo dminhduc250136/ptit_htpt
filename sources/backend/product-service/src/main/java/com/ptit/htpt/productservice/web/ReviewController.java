@@ -14,7 +14,9 @@ import java.util.Map;
 import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -58,8 +60,35 @@ public class ReviewController {
   public ApiResponse<Map<String, Object>> listReviews(
       @PathVariable String productId,
       @RequestParam(defaultValue = "0") int page,
-      @RequestParam(defaultValue = "10") int size) {
-    return ApiResponse.of(200, "Reviews listed", reviewService.listReviews(productId, page, size));
+      @RequestParam(defaultValue = "10") int size,
+      @RequestParam(defaultValue = "newest") String sort) {
+    return ApiResponse.of(200, "Reviews listed",
+        reviewService.listReviews(productId, page, size, sort));
+  }
+
+  /** Phase 21 REV-04: owner edit review trong cửa sổ 24h. */
+  @PatchMapping("/{reviewId}")
+  public ApiResponse<Map<String, Object>> editReview(
+      @PathVariable String productId,
+      @PathVariable String reviewId,
+      @RequestHeader("Authorization") String auth,
+      @Valid @RequestBody EditReviewRequest body) {
+    Claims claims = parseToken(auth);
+    String userId = claims.getSubject();
+    return ApiResponse.of(200, "Review updated",
+        reviewService.editReview(reviewId, userId, body.rating(), body.content()));
+  }
+
+  /** Phase 21 REV-04: owner soft-delete review (204 No Content). */
+  @DeleteMapping("/{reviewId}")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void softDeleteReview(
+      @PathVariable String productId,
+      @PathVariable String reviewId,
+      @RequestHeader("Authorization") String auth) {
+    Claims claims = parseToken(auth);
+    String userId = claims.getSubject();
+    reviewService.softDeleteReview(reviewId, userId);
   }
 
   @GetMapping("/eligibility")
@@ -95,6 +124,15 @@ public class ReviewController {
       @Min(value = 1, message = "Rating phải từ 1 đến 5")
       @Max(value = 5, message = "Rating phải từ 1 đến 5")
       int rating,
+      @Size(max = 500, message = "Nhận xét tối đa 500 ký tự")
+      String content
+  ) {}
+
+  /** Phase 21 REV-04: edit body — rating nullable (chỉ sửa content được), content nullable (chỉ sửa rating). */
+  public record EditReviewRequest(
+      @Min(value = 1, message = "Rating phải từ 1 đến 5")
+      @Max(value = 5, message = "Rating phải từ 1 đến 5")
+      Integer rating,
       @Size(max = 500, message = "Nhận xét tối đa 500 ký tự")
       String content
   ) {}

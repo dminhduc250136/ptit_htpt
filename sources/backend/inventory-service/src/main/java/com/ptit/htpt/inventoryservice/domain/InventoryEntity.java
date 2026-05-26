@@ -9,14 +9,14 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * JPA entity cho inventory_svc.inventory_items. Renamed từ record cũ {@code InventoryItem}
+ * JPA entity cho bảng inventory_items. Renamed từ record cũ {@code InventoryItem}
  * theo PATTERNS.md cross-cutting note #1 (symmetry với UserEntity/ProductEntity).
  *
  * <p>Phase 5 scope-cut: KHÔNG có soft-delete (record cũ có cờ {@code deleted} nhưng plan V1 DDL
  * loại bỏ vì inventory không cần audit ẩn). Phase 8 sẽ thêm reservation flow + stock decrement.
  */
 @Entity
-@Table(name = "inventory_items", schema = "inventory_svc")
+@Table(name = "inventory_items")
 public class InventoryEntity {
 
   @Id
@@ -64,6 +64,14 @@ public class InventoryEntity {
 
   public void adjustQuantity(int quantity) {
     this.quantity = quantity;
+    this.updatedAt = Instant.now();
+  }
+
+  /** Phase 23 D-10: giảm quantity theo delta (KHÁC adjustQuantity vốn SET tuyệt đối).
+   * Cho phép quantity âm sau decrement — caller log warning ở D-10 bước 2 (audit concurrency,
+   * KHÔNG block message vì stock đã validate đồng bộ trước đó qua REST D-11). */
+  public void decrementQuantity(int delta) {
+    this.quantity = this.quantity - delta;
     this.updatedAt = Instant.now();
   }
 

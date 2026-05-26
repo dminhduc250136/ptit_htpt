@@ -18,9 +18,9 @@ import java.util.UUID;
  * Field {@code parentId, status} của record cũ ĐÃ DROP (xem 05-03-SUMMARY §Deviations).
  */
 @Entity
-@Table(name = "categories", schema = "product_svc")
+@Table(name = "categories")
 @SQLRestriction("deleted = false")
-@SQLDelete(sql = "UPDATE product_svc.categories SET deleted = true, updated_at = NOW() WHERE id = ?")
+@SQLDelete(sql = "UPDATE categories SET deleted = true, updated_at = NOW() WHERE id = ?")
 public class CategoryEntity {
 
   @Id

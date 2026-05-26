@@ -4,6 +4,7 @@ import com.ptit.htpt.orderservice.domain.OrderEntity;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -62,4 +63,47 @@ public interface OrderRepository extends JpaRepository<OrderEntity, String> {
   boolean existsDeliveredOrderWithProduct(
       @Param("userId") String userId,
       @Param("productId") String productId);
+
+  /**
+   * Phase 19 / Plan 19-01 (ADMIN-01): aggregate revenue theo ngày từ DELIVERED orders.
+   *
+   * <p>Pitfall #3 (RESEARCH): dùng {@code FUNCTION('DATE', col)} để Hibernate map ra
+   * Postgres {@code DATE(col)} (KHÔNG raw {@code DATE()} JPQL — không support).
+   * Nullable {@code from} dùng {@code cast(:from as timestamp) IS NULL} idiom (analog line 41).
+   *
+   * @return list of {@code [java.sql.Date day, BigDecimal total]} sorted ASC by day.
+   */
+  @Query("""
+      SELECT FUNCTION('DATE', o.createdAt) AS day, SUM(o.total) AS total
+      FROM OrderEntity o
+      WHERE o.status = 'DELIVERED'
+        AND (cast(:from as timestamp) IS NULL OR o.createdAt >= :from)
+      GROUP BY FUNCTION('DATE', o.createdAt)
+      ORDER BY day ASC
+      """)
+  List<Object[]> aggregateRevenueByDay(@Param("from") Instant from);
+
+  /**
+   * Phase 19 / Plan 19-01 (ADMIN-02): aggregate top-products theo qty bán
+   * từ DELIVERED orders. Caller cap pageable = {@code PageRequest.of(0, 10)}.
+   *
+   * @return list of {@code [String productId, Long qtySold]} sorted DESC by qtySold.
+   */
+  @Query("""
+      SELECT i.productId, SUM(i.quantity) AS qtySold
+      FROM OrderEntity o JOIN o.items i
+      WHERE o.status = 'DELIVERED'
+        AND (cast(:from as timestamp) IS NULL OR o.createdAt >= :from)
+      GROUP BY i.productId
+      ORDER BY qtySold DESC
+      """)
+  List<Object[]> aggregateTopProducts(@Param("from") Instant from, Pageable limit);
+
+  /**
+   * Phase 19 / Plan 19-01 (ADMIN-03): snapshot phân phối order status (KHÔNG range).
+   *
+   * @return list of {@code [String status, Long count]}.
+   */
+  @Query("SELECT o.status, COUNT(o) FROM OrderEntity o GROUP BY o.status")
+  List<Object[]> aggregateStatusDistribution();
 }

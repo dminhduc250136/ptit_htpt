@@ -119,6 +119,32 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
   }
 
+  /**
+   * Phase 24 (D-14): khi DB cua service down giua runtime, Hibernate/Hikari nem
+   * CannotCreateTransactionException hoac JDBCConnectionException → tra 503
+   * DATABASE_UNAVAILABLE de FE / gateway co the discriminate va hien thi friendly message.
+   */
+  @ExceptionHandler({
+      org.springframework.transaction.CannotCreateTransactionException.class,
+      org.hibernate.exception.JDBCConnectionException.class
+  })
+  public org.springframework.http.ResponseEntity<ApiErrorResponse> handleDatabaseUnavailable(
+      Exception ex,
+      HttpServletRequest request
+  ) {
+    log.error("Database unavailable at {}: {}", request.getRequestURI(), ex.getMessage());
+    HttpStatus status = HttpStatus.SERVICE_UNAVAILABLE;
+    return org.springframework.http.ResponseEntity.status(status).body(ApiErrorResponse.of(
+        status.value(),
+        status.getReasonPhrase(),
+        "Order database is temporarily unavailable",
+        "DATABASE_UNAVAILABLE",
+        request.getRequestURI(),
+        getTraceId(request),
+        List.of()
+    ));
+  }
+
   @ExceptionHandler(Exception.class)
   public org.springframework.http.ResponseEntity<ApiErrorResponse> handleFallback(
       Exception ex,

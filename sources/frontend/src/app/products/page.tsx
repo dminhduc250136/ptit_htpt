@@ -8,6 +8,7 @@ import Button from '@/components/ui/Button/Button';
 import Input from '@/components/ui/Input/Input';
 import RetrySection from '@/components/ui/RetrySection/RetrySection';
 import FilterSidebar, { type FilterValue } from '@/components/ui/FilterSidebar/FilterSidebar';
+import Pagination from '@/components/ui/Pagination/Pagination';
 import { listProducts, listCategories, listBrands } from '@/services/products';
 import type { Product, Category } from '@/types';
 
@@ -16,10 +17,12 @@ type SortOption = 'newest' | 'price_asc' | 'price_desc' | 'popular' | 'rating';
 function ProductsPageContent() {
   const searchParams = useSearchParams();
   const initialCategorySlug = searchParams.get('category');
+  // Từ khóa tìm kiếm đến từ Header (?keyword=...) — khởi tạo state từ URL.
+  const initialKeyword = searchParams.get('keyword') ?? '';
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(initialKeyword);
   const [sortBy, setSortBy] = useState<SortOption>('newest');
   const [filterBrands, setFilterBrands] = useState<string[]>([]);
   const [filterPriceMin, setFilterPriceMin] = useState<number | undefined>(undefined);
@@ -31,6 +34,18 @@ function ProductsPageContent() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
+
+  // Phân trang — page 0-based khớp Spring Pageable.
+  const PAGE_SIZE = 24;
+  const [page, setPage] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [totalElements, setTotalElements] = useState(0);
+
+  // Đồng bộ khi user search lại từ Header trong lúc đang Ở trang /products:
+  // router.push đổi ?keyword=... nhưng component không remount → cập nhật state thủ công.
+  useEffect(() => {
+    setSearchQuery(searchParams.get('keyword') ?? '');
+  }, [searchParams]);
 
   // Load categories once (best-effort; failure here does NOT block the grid).
   useEffect(() => {
@@ -89,8 +104,8 @@ function ProductsPageContent() {
           ? 'reviewCount,desc'
           : undefined;
       const resp = await listProducts({
-        page: 0,
-        size: 24,
+        page,
+        size: PAGE_SIZE,
         sort: sortParam,
         categoryId: selectedCategory ?? undefined,
         keyword: searchQuery.trim() || undefined,
@@ -99,18 +114,35 @@ function ProductsPageContent() {
         priceMax: filterPriceMax,
       });
       setProducts(resp?.content ?? []);
+      setTotalPages(resp?.totalPages ?? 0);
+      setTotalElements(resp?.totalElements ?? 0);
     } catch {
       // Any ApiError (incl. 5xx / network) → RetrySection per D-10. No auto-retry.
       setFailed(true);
       setProducts([]);
+      setTotalPages(0);
+      setTotalElements(0);
     } finally {
       setLoading(false);
     }
-  }, [sortBy, selectedCategory, searchQuery, filterBrands, filterPriceMin, filterPriceMax]);
+  }, [page, sortBy, selectedCategory, searchQuery, filterBrands, filterPriceMin, filterPriceMax]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  // Đổi filter/sort/search → quay về trang đầu (tránh kẹt ở trang vượt totalPages mới).
+  useEffect(() => {
+    setPage(0);
+  }, [sortBy, selectedCategory, searchQuery, filterBrands, filterPriceMin, filterPriceMax]);
+
+  // Đổi trang → cuộn lên đầu danh sách để user thấy SP mới.
+  const handlePageChange = (next: number) => {
+    setPage(next);
+    if (typeof window !== 'undefined') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
   // D-10: "Xóa bộ lọc" trong FilterSidebar chỉ reset brand+price; KHÔNG đụng categories/keyword/sort.
   const clearFilters = () => {
@@ -215,7 +247,7 @@ function ProductsPageContent() {
             {/* Mobile close */}
             <div className={styles.mobileFilterClose}>
               <Button fullWidth onClick={() => setIsMobileFilterOpen(false)}>
-                Xem {products.length} sản phẩm
+                Xem {totalElements} sản phẩm
               </Button>
             </div>
           </aside>
@@ -225,7 +257,7 @@ function ProductsPageContent() {
             {/* Toolbar */}
             <div className={styles.toolbar}>
               <span className={styles.resultCount}>
-                {products.length} sản phẩm
+                {totalElements} sản phẩm
               </span>
               <select
                 className={styles.sortSelect}
@@ -250,11 +282,18 @@ function ProductsPageContent() {
             ) : failed ? (
               <RetrySection onRetry={() => load()} loading={loading} />
             ) : products.length > 0 ? (
-              <div className={styles.productsGrid}>
-                {products.map((product) => (
-                  <ProductCard key={product.id} product={product} />
-                ))}
-              </div>
+              <>
+                <div className={styles.productsGrid}>
+                  {products.map((product) => (
+                    <ProductCard key={product.id} product={product} />
+                  ))}
+                </div>
+                <Pagination
+                  page={page}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              </>
             ) : (
               <div className={styles.emptyState}>
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="var(--outline-variant)" strokeWidth="1.5">

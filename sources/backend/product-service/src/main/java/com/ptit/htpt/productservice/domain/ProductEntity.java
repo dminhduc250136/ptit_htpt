@@ -22,9 +22,9 @@ import java.util.UUID;
  * record có deleted=true; delete(entity) sẽ trigger UPDATE thay vì DELETE.
  */
 @Entity
-@Table(name = "products", schema = "product_svc")
+@Table(name = "products")
 @SQLRestriction("deleted = false")
-@SQLDelete(sql = "UPDATE product_svc.products SET deleted = true, updated_at = NOW() WHERE id = ?")
+@SQLDelete(sql = "UPDATE products SET deleted = true, updated_at = NOW() WHERE id = ?")
 public class ProductEntity {
 
   @Id

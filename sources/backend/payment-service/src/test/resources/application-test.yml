@@ -1,0 +1,43 @@
+# Phase 26: payment-service test config cho Testcontainers
+# Pattern copy từ order-service (analog) — @ServiceConnection override datasource/rabbitmq tự động.
+spring:
+  datasource:
+    # @ServiceConnection sẽ override url/username/password bằng Testcontainers Postgres
+    # Giữ placeholder để Spring không fail khi chạy test không có @ServiceConnection
+    url: jdbc:postgresql://localhost:5432/payment_svc
+    username: payment_svc
+    password: payment_svc_pw
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: false
+    locations: classpath:db/migration
+  rabbitmq:
+    # @ServiceConnection sẽ override host/port bằng Testcontainers RabbitMQ
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+    publisher-confirm-type: correlated
+    publisher-returns: true
+    listener:
+      simple:
+        retry:
+          enabled: true
+          initial-interval: 1000ms
+          max-interval: 10000ms
+          multiplier: 2.0
+          max-attempts: 3
+
+# MoMo config cố định cho test — sandbox public credentials (D-18)
+momo:
+  partner-code: MOMO
+  access-key: F8BBA842ECF85
+  secret-key: K951B6PE1waDMi640xX08PD3vg6EkVlz
+  pay-url: https://test-payment.momo.vn/v2/gateway/api/create
+  return-url: http://localhost:3000/checkout/result
+  ipn-url: http://payment-service:8080/payments/momo/ipn

@@ -1,14 +1,15 @@
 package com.ptit.htpt.orderservice.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.ptit.htpt.orderservice.domain.CartEntity;
+import com.ptit.htpt.orderservice.domain.CouponEntity;
 import com.ptit.htpt.orderservice.domain.OrderDto;
 import com.ptit.htpt.orderservice.domain.OrderEntity;
 import com.ptit.htpt.orderservice.domain.OrderItemEntity;
 import com.ptit.htpt.orderservice.domain.OrderMapper;
 import com.ptit.htpt.orderservice.exception.StockShortageException;
 import com.ptit.htpt.orderservice.exception.StockShortageException.StockShortageItem;
-import com.ptit.htpt.orderservice.repository.InMemoryCartRepository;
+import com.ptit.htpt.orderservice.messaging.event.OrderEventEnvelope;
+import com.ptit.htpt.orderservice.messaging.publisher.OrderEventPublisher;
 import com.ptit.htpt.orderservice.repository.OrderItemRepository;
 import com.ptit.htpt.orderservice.repository.OrderRepository;
 import jakarta.validation.Valid;
@@ -28,11 +29,7 @@ import java.util.List;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
@@ -41,55 +38,28 @@ import org.springframework.web.server.ResponseStatusException;
 @Service
 public class OrderCrudService {
   private static final Logger log = LoggerFactory.getLogger(OrderCrudService.class);
-  private final InMemoryCartRepository cartRepository;
   private final OrderRepository orderRepository;
   private final OrderItemRepository orderItemRepository;
   private final ObjectMapper objectMapper;
   private final RestTemplate restTemplate;
+  private final CouponRedemptionService couponRedemptionService;
+  private final OrderEventPublisher orderEventPublisher;
+  private final PaymentSessionClient paymentSessionClient;
 
-  public OrderCrudService(InMemoryCartRepository cartRepository,
-                          OrderRepository orderRepository,
+  public OrderCrudService(OrderRepository orderRepository,
                           OrderItemRepository orderItemRepository,
                           ObjectMapper objectMapper,
-                          RestTemplate restTemplate) {
-    this.cartRepository = cartRepository;
+                          RestTemplate restTemplate,
+                          CouponRedemptionService couponRedemptionService,
+                          OrderEventPublisher orderEventPublisher,
+                          PaymentSessionClient paymentSessionClient) {
     this.orderRepository = orderRepository;
     this.orderItemRepository = orderItemRepository;
     this.objectMapper = objectMapper;
     this.restTemplate = restTemplate;
-  }
-
-  public Map<String, Object> listCarts(int page, int size, String sort, boolean includeDeleted) {
-    List<CartEntity> all = cartRepository.findAllCarts().stream()
-        .filter(cart -> includeDeleted || !cart.deleted())
-        .sorted(cartComparator(sort))
-        .toList();
-    return paginate(all, page, size);
-  }
-
-  public CartEntity getCart(String id, boolean includeDeleted) {
-    CartEntity cart = cartRepository.findCartById(id)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart item not found"));
-    if (!includeDeleted && cart.deleted()) {
-      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Cart item not found");
-    }
-    return cart;
-  }
-
-  public CartEntity createCart(CartUpsertRequest request) {
-    CartEntity cart = CartEntity.create(request.userId(), request.productId(), request.quantity(), request.status());
-    return cartRepository.saveCart(cart);
-  }
-
-  public CartEntity updateCart(String id, CartUpsertRequest request) {
-    CartEntity current = getCart(id, true);
-    CartEntity updated = current.update(request.userId(), request.productId(), request.quantity(), request.status());
-    return cartRepository.saveCart(updated);
-  }
-
-  public void deleteCart(String id) {
-    CartEntity current = getCart(id, true);
-    cartRepository.saveCart(current.softDelete());
+    this.couponRedemptionService = couponRedemptionService;
+    this.orderEventPublisher = orderEventPublisher;
+    this.paymentSessionClient = paymentSessionClient;
   }
 
   /**
@@ -121,6 +91,20 @@ public class OrderCrudService {
     return OrderMapper.toDto(order);
   }
 
+  /**
+   * BUG-FIX (orders-cross-user-leak): User-facing GET /orders/{id} phải kiểm tra ownership.
+   * Trả 404 (không 403) để tránh leak existence của order của user khác.
+   */
+  @Transactional(readOnly = true)
+  public OrderDto getOrderForUser(String id, String userId) {
+    OrderEntity order = orderRepository.findByIdWithItems(id)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
+    if (!userId.equals(order.userId())) {
+      throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found");
+    }
+    return OrderMapper.toDto(order);
+  }
+
   public OrderDto createOrder(OrderUpsertRequest request) {
     OrderEntity order = OrderEntity.create(request.userId(), request.totalAmount(), request.status(), request.note());
     return OrderMapper.toDto(orderRepository.save(order));
@@ -139,8 +123,21 @@ public class OrderCrudService {
    * mapper iterate items → có thể trigger lazy proxy. items vừa được addItem() trong cùng
    * scope nên hiện tại an toàn, nhưng @Transactional là defense-in-depth.
    */
+  /**
+   * Backward-compat overload cho code cũ và test không truyền authHeader (COD path).
+   */
   @Transactional
   public OrderDto createOrderFromCommand(String userId, CreateOrderCommand command) {
+    return createOrderFromCommand(userId, command, null);
+  }
+
+  /**
+   * Phase 26 / Plan 26-03 (D-04, D-09, D-10): thêm authHeader để forward Bearer JWT
+   * cho PaymentSessionClient khi tạo đơn VNPAY (T-26-10).
+   */
+  @Transactional
+  public OrderDto createOrderFromCommand(String userId, CreateOrderCommand command,
+                                         String authHeader) {
     if (userId == null || userId.isBlank()) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Missing X-User-Id session header");
     }
@@ -148,7 +145,8 @@ public class OrderCrudService {
     // D-04: Validate stock trước khi persist — throw 409 STOCK_SHORTAGE nếu quantity > stock
     validateStockOrThrow(command.items());
 
-    BigDecimal totalAmount = command.items().stream()
+    // D-10: Server compute subtotal từ items — KHÔNG tin client cartTotal
+    BigDecimal subtotal = command.items().stream()
         .map(item -> item.unitPrice().multiply(BigDecimal.valueOf(item.quantity())))
         .reduce(BigDecimal.ZERO, BigDecimal::add);
 
@@ -160,10 +158,26 @@ public class OrderCrudService {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid shippingAddress format");
     }
 
-    // Tạo và persist OrderEntity
-    OrderEntity order = OrderEntity.create(userId, totalAmount, "PENDING", command.note());
+    // Tạo OrderEntity với subtotal làm total mặc định (no coupon path)
+    OrderEntity order = OrderEntity.create(userId, subtotal, "PENDING", command.note());
     order.setShippingAddress(shippingAddressJson);
     order.setPaymentMethod(command.paymentMethod());
+
+    // === COUPON STEP (D-08, D-09, D-10, D-12) ===
+    // KHÔNG tin client discountAmount — server compute lại từ subtotal qua
+    // CouponPreviewService.computeDiscount. atomicRedeem trong cùng @Transactional
+    // → fail (CONFLICT_OR_EXHAUSTED hoặc ALREADY_REDEEMED) → toàn transaction rollback.
+    if (command.couponCode() != null && !command.couponCode().isBlank()) {
+      // D-09: re-fetch coupon by code (KHÔNG dùng id từ preview — tránh TOCTOU window)
+      CouponEntity coupon = couponRedemptionService.atomicRedeem(
+          command.couponCode(), userId, order.id());
+      // D-10: server-side discount math từ subtotal (cap ≤ subtotal)
+      BigDecimal discountAmount = CouponPreviewService.computeDiscount(coupon, subtotal);
+      order.setDiscountAmount(discountAmount);
+      order.setCouponCode(coupon.code());
+      order.setTotal(subtotal.subtract(discountAmount));
+    }
+    // No coupon path: discountAmount giữ default BigDecimal.ZERO, couponCode null
 
     // Tạo OrderItemEntity cho từng item — cascade ALL sẽ persist cùng order
     // D-06: productName snapshot lấy trực tiếp từ command (FE truyền item.name từ cart state)
@@ -180,10 +194,62 @@ public class OrderCrudService {
 
     OrderEntity saved = orderRepository.save(order);
 
-    // D-05: Deduct stock sau persist — best-effort, không rollback order nếu fail
-    deductStockAfterPersist(command.items());
+    // Phase 26 / Plan 26-03 (D-09, D-10): rẽ nhánh theo paymentMethod.
+    // Phase 26.1 (D-08): đổi nhánh VNPAY → MOMO + dùng createMomoSession.
+    // MOMO → gọi payment-service tạo session, KHÔNG publish OrderPlaced ngay (D-09).
+    // non-MOMO (COD...) → publish OrderPlaced ngay như cũ (D-10).
+    if ("MOMO".equalsIgnoreCase(command.paymentMethod())) {
+      // D-09: set PENDING + gọi payment-service lấy paymentUrl. KHÔNG publish OrderPlaced.
+      // amountVnd = total (đã trừ discount)
+      saved.setPaymentStatus("PENDING");
+      String paymentUrl = paymentSessionClient.createMomoSession(
+          saved.id(),
+          saved.total().longValue(),
+          saved.id(),   // orderInfo = mã đơn
+          authHeader
+      );
+      // Build DTO thủ công với paymentUrl (transient field KHÔNG trong entity)
+      OrderDto baseDto = OrderMapper.toDto(saved);
+      return new OrderDto(
+          baseDto.id(), baseDto.userId(), baseDto.total(), baseDto.status(), baseDto.note(),
+          baseDto.items(), baseDto.shippingAddress(), baseDto.paymentMethod(),
+          baseDto.discountAmount(), baseDto.couponCode(),
+          baseDto.paymentStatus(), baseDto.paymentTransactionNo(), paymentUrl,
+          baseDto.createdAt(), baseDto.updatedAt()
+      );
+    } else {
+      // D-10: COD và non-MOMO → publish OrderPlaced ngay (inventory trừ kho async).
+      // Phase 23 D-03/D-12: thay vì gọi REST deductStock đồng bộ (đã XÓA), publish event
+      // OrderPlaced SAU khi DB commit. inventory-service consumer trừ kho async (Wave 2).
+      // OrderEventPublisher tự defer publish qua TransactionSynchronizationManager.afterCommit;
+      // capture MDC traceId NGAY tại thread này (Pitfall 1 — afterCommit có thể MDC empty).
+      publishOrderPlacedForOrder(saved);
+      return OrderMapper.toDto(saved);
+    }
+  }
 
-    return OrderMapper.toDto(saved);
+  /**
+   * Phase 26 / Plan 26-03 (D-09): helper DRY publish OrderPlaced cho 1 OrderEntity.
+   * Dùng chung bởi:
+   *   - createOrderFromCommand nhánh non-MOMO (COD) ngay sau save
+   *   - PaymentEventListener nhánh PaymentSucceeded (trừ kho khi IPN xác nhận PAID)
+   * Phase 27 D-11: payload gồm productName per item + customerEmail (resolveCustomerEmail).
+   */
+  public void publishOrderPlacedForOrder(OrderEntity order) {
+    List<OrderEventEnvelope.Item> payloadItems = order.items().stream()
+        .map(it -> new OrderEventEnvelope.Item(it.productId(), it.productName(), it.quantity(), it.unitPrice()))
+        .toList();
+    // Phase 27 D-11: customerEmail fetch từ user-service qua resolveCustomerEmail()
+    // KHÔNG gọi REST từ notification-service — mọi dữ liệu phải có sẵn trong event payload
+    OrderEventEnvelope.OrderPlacedPayload payload = new OrderEventEnvelope.OrderPlacedPayload(
+        order.id(),
+        order.userId(),
+        resolveCustomerEmail(order),
+        payloadItems,
+        order.total(),
+        "VND"
+    );
+    orderEventPublisher.publishOrderPlaced(payload);
   }
 
   public OrderDto updateOrder(String id, OrderUpsertRequest request) {
@@ -193,11 +259,26 @@ public class OrderCrudService {
     return OrderMapper.toDto(orderRepository.save(current));
   }
 
+  @Transactional
   public OrderDto updateOrderState(String id, OrderStateRequest request) {
     OrderEntity current = orderRepository.findById(id)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Order not found"));
     current.setStatus(request.state());
-    return OrderMapper.toDto(orderRepository.save(current));
+    OrderEntity saved = orderRepository.save(current);
+
+    // Phase 27 D-12: publish OrderStatusChanged afterCommit khi admin đổi trạng thái
+    // notification-service consumer sẽ lọc chỉ gửi email cho shipped/delivered/cancelled
+    OrderEventEnvelope.OrderStatusChangedPayload statusPayload =
+        new OrderEventEnvelope.OrderStatusChangedPayload(
+            saved.id(),
+            saved.userId(),
+            resolveCustomerEmail(saved),
+            request.state(),
+            null  // customerName optional — notification-service có thể bỏ qua null
+        );
+    orderEventPublisher.publishOrderStatusChanged(statusPayload);
+
+    return OrderMapper.toDto(saved);
   }
 
   public void deleteOrder(String id) {
@@ -250,17 +331,6 @@ public class OrderCrudService {
     return paginate(dtos, query.page(), query.size());
   }
 
-  private Comparator<CartEntity> cartComparator(String sort) {
-    if (sort == null || sort.isBlank()) {
-      return Comparator.comparing(CartEntity::updatedAt).reversed();
-    }
-    boolean desc = sort.endsWith(",desc");
-    Comparator<CartEntity> comparator = sort.startsWith("userId")
-        ? Comparator.comparing(CartEntity::userId, String.CASE_INSENSITIVE_ORDER)
-        : Comparator.comparing(CartEntity::id);
-    return desc ? comparator.reversed() : comparator;
-  }
-
   private Comparator<OrderEntity> orderComparator(String sort) {
     if (sort == null || sort.isBlank()) {
       return Comparator.comparing(OrderEntity::updatedAt).reversed();
@@ -292,13 +362,6 @@ public class OrderCrudService {
     return result;
   }
 
-  public record CartUpsertRequest(
-      @NotBlank String userId,
-      @NotBlank String productId,
-      @Min(1) int quantity,
-      @NotBlank String status
-  ) {}
-
   public record OrderUpsertRequest(
       @NotBlank String userId,
       @DecimalMin("0.0") BigDecimal totalAmount,
@@ -317,7 +380,10 @@ public class OrderCrudService {
       @NotEmpty List<@Valid OrderItemRequest> items,
       @NotNull @Valid ShippingAddressRequest shippingAddress,
       @NotBlank String paymentMethod,
-      String note
+      String note,
+      // Phase 20 / Plan 20-03 (D-12): optional coupon code. null/blank → tạo order như cũ
+      // (backward compat). Validation lỏng — server sẽ tra DB qua atomicRedeem để xác thực.
+      String couponCode
   ) {}
 
   public record OrderItemRequest(
@@ -364,12 +430,13 @@ public class OrderCrudService {
       try {
         String url = "http://api-gateway:8080/api/products/" + item.productId();
         @SuppressWarnings("unchecked")
-        Map<String, Object> product = restTemplate.getForObject(url, Map.class);
+        Map<String, Object> raw = restTemplate.getForObject(url, Map.class);
+        Map<String, Object> product = unwrapEnvelope(raw);
         if (product == null) {
           log.warn("[D-04] product-service returned null for productId={}", item.productId());
           continue;
         }
-        // product-service response: {id, name, stock, ...} — stock field từ Plan 08-01
+        // product-service response (sau unwrap envelope): {id, name, stock, ...} — Plan 08-01
         Object stockObj = product.get("stock");
         int stock = stockObj == null ? 0 : ((Number) stockObj).intValue();
         if (item.quantity() > stock) {
@@ -391,59 +458,56 @@ public class OrderCrudService {
   }
 
   /**
-   * D-05: Decrement stock sau khi order đã persist thành công.
-   * Gọi GET /api/products/{id} để lấy currentStock → tính newStock → PATCH /api/products/admin/{id}.
-   * Nếu fail → log.error, KHÔNG rollback order (user confirmed MVP acceptable).
+   * Product-service trả ApiResponse envelope { status, message, data: { ... } }.
+   * BUG-FIX (cart-stock-shortage-false-positive): unwrap `data` trước khi đọc field
+   * — nếu không, mọi product.get("stock") trả null → false STOCK_SHORTAGE.
+   *
+   * GIỮ LẠI vì validateStockOrThrow vẫn cần unwrap envelope của product-service (D-11).
+   * Phase 23 D-12 chỉ XÓA stock-deduct REST, NOT stock-validate REST.
    */
-  private void deductStockAfterPersist(List<OrderItemRequest> items) {
-    for (OrderItemRequest item : items) {
-      try {
-        // Fetch current stock
-        String getUrl = "http://api-gateway:8080/api/products/" + item.productId();
-        @SuppressWarnings("unchecked")
-        Map<String, Object> product = restTemplate.getForObject(getUrl, Map.class);
-        if (product == null) {
-          log.error("[D-05] Cannot deduct stock for productId={}: product not found", item.productId());
-          continue;
-        }
-        Object stockObj = product.get("stock");
-        int currentStock = stockObj == null ? 0 : ((Number) stockObj).intValue();
-        int newStock = Math.max(0, currentStock - item.quantity());
-
-        // PATCH /api/products/admin/{id} với stock mới
-        String patchUrl = "http://api-gateway:8080/api/products/admin/" + item.productId();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        Map<String, Object> patchBody = buildStockUpdateBody(product, newStock);
-        HttpEntity<Map<String, Object>> entity = new HttpEntity<>(patchBody, headers);
-        restTemplate.exchange(patchUrl, HttpMethod.PATCH, entity, Void.class);
-        log.info("[D-05] Stock deducted for productId={}: {} → {}", item.productId(), currentStock, newStock);
-      } catch (Exception ex) {
-        log.error("[D-05] Stock deduct failed for productId={} qty={}: {}",
-            item.productId(), item.quantity(), ex.getMessage());
-        // KHÔNG throw — order đã saved, deduct failure là acceptable (MVP)
-      }
-    }
+  @SuppressWarnings("unchecked")
+  private static Map<String, Object> unwrapEnvelope(Map<String, Object> raw) {
+    if (raw == null) return null;
+    Object data = raw.get("data");
+    if (data instanceof Map) return (Map<String, Object>) data;
+    return raw; // fallback: response không phải envelope (legacy/contract test)
   }
 
   /**
-   * Builds PATCH body reusing existing product fields from GET response + overriding stock.
-   * Prevents null-out of name/price/description when PATCH requires full ProductUpsertRequest.
+   * Phase 27 D-11: Lấy customerEmail từ user-service qua REST.
+   * order-service đã có RestTemplate (dùng cho stock validate Phase 23 D-11).
+   *
+   * Strategy (Phase 27 fix bug #5):
+   *  1. Gọi user-service GET /internal/users/{userId}/email TRỰC TIẾP qua docker network
+   *     (KHÔNG qua gateway — gateway yêu cầu JWT mà order-service nội bộ không có).
+   *     Endpoint /internal/** KHÔNG expose ngoài (Phase 25 đã bỏ port mapping user-service).
+   *  2. Nếu không lấy được (timeout/404/exception) → fallback "" + log WARN
+   *     → notification-service sẽ ghi SKIPPED trong dispatch_log (không crash).
+   *
+   * @param order OrderEntity đã save — dùng userId() để fetch
+   * @return email string hoặc "" nếu không lấy được
    */
-  @SuppressWarnings("unchecked")
-  private Map<String, Object> buildStockUpdateBody(Map<String, Object> existingProduct, int newStock) {
-    Map<String, Object> body = new java.util.LinkedHashMap<>();
-    for (Map.Entry<String, Object> entry : existingProduct.entrySet()) {
-      if (entry.getValue() != null) {
-        body.put(entry.getKey(), entry.getValue());
+  private String resolveCustomerEmail(OrderEntity order) {
+    try {
+      String url = "http://user-service:8080/internal/users/" + order.userId() + "/email";
+      @SuppressWarnings("unchecked")
+      Map<String, Object> raw = restTemplate.getForObject(url, Map.class);
+      // user-service wrap response qua ApiResponseAdvice → {status, message, data: {email, fullName}}
+      Map<String, Object> user = unwrapEnvelope(raw);
+      if (user == null) {
+        log.warn("[EMAIL-RESOLVE] user-service returned null for userId={}", order.userId());
+        return "";
       }
+      Object email = user.get("email");
+      if (email == null || email.toString().isBlank()) {
+        log.warn("[EMAIL-RESOLVE] user-service returned blank email for userId={}", order.userId());
+        return "";
+      }
+      return email.toString();
+    } catch (Exception ex) {
+      // user-service không available hoặc endpoint không tồn tại — fallback an toàn
+      log.warn("[EMAIL-RESOLVE] Cannot fetch email for userId={}: {}", order.userId(), ex.getMessage());
+      return "";
     }
-    body.put("stock", newStock);
-    // Remove read-only fields that would cause validation errors
-    body.remove("id");
-    body.remove("createdAt");
-    body.remove("updatedAt");
-    body.remove("deleted");
-    return body;
   }
 }

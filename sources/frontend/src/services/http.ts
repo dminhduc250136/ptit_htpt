@@ -13,6 +13,16 @@
  * return 401 for bad credentials — they must NOT trigger the "session expired" redirect because
  * the caller (login page) handles the 401 itself to show an error banner. Only non-auth 401s
  * (i.e. stale tokens on protected endpoints) should redirect to /login.
+ *
+ * BUG-FIX (login-success-redirect-loop): Khi user đang ở /login hoặc /register mà có
+ * 401 từ endpoint khác (cart/profile/chat...), KHÔNG encode pathname thành returnTo —
+ * nếu không sẽ tạo URL `/login?returnTo=%2Flogin` và sau khi auth thành công login page
+ * sẽ replace về chính nó, gây vòng lặp.
+ *
+ * BUG-FIX (login-success-redirect-loop, regression sau 302e2a1): Khi đã ở /login|/register,
+ * KHÔNG thực hiện hard navigation `window.location.href` nữa — chỉ clearTokens. Trang login
+ * tự xử lý điều hướng sau khi `await authLogin(...)` hoàn tất. Hard nav trước đây đè lên
+ * `router.replace('/')` đang chạy, khiến user bị giữ lại ở /login dù đã đăng nhập đúng.
  */
 
 import { ApiError, type FieldError } from './errors';
@@ -27,6 +37,16 @@ const AUTH_PATHS_NO_REDIRECT = [
   '/api/users/auth/login',
   '/api/users/auth/register',
 ];
+
+// Pathname prefixes mà KHÔNG nên trở thành giá trị returnTo (tránh self-loop sau login).
+const AUTH_PAGE_PATHS = ['/login', '/register'];
+
+function isAuthPagePath(pathname: string): boolean {
+  const lower = pathname.toLowerCase();
+  return AUTH_PAGE_PATHS.some(
+    (p) => lower === p || lower.startsWith(`${p}/`) || lower.startsWith(`${p}?`),
+  );
+}
 
 interface ApiEnvelope<T> {
   timestamp?: string;
@@ -108,24 +128,54 @@ async function request<T>(
     return (parsed as ApiEnvelope<T> | null)?.data as T;
   }
 
-  // Failure envelope (identical keys on service-origin and gateway-origin per Phase 3 D-05..D-07)
-  const err = (parsed ?? {}) as Partial<ApiErrorBody>;
+  // Failure envelope (identical keys on service-origin and gateway-origin per Phase 3 D-05..D-07).
+  // BUG-FIX (add-cart-409-shows-success): Backend wraps the error body inside `data`
+  // (e.g. { timestamp, status, message: "Conflict", data: { code, message, items, ... } }).
+  // Trước đây lấy `parsed` ở root → `err.code` undefined → ApiError fallback 'INTERNAL_ERROR'
+  // và mất `details.items` (STOCK_SHORTAGE). Ưu tiên `parsed.data` nếu có shape error,
+  // fallback root để tương thích trường hợp backend không bọc envelope.
+  const root = (parsed ?? {}) as Partial<ApiErrorBody> & { data?: Partial<ApiErrorBody> };
+  const inner = (root.data && typeof root.data === 'object' ? root.data : undefined) as Partial<ApiErrorBody> | undefined;
+  const err: Partial<ApiErrorBody> = {
+    code: inner?.code ?? root.code,
+    status: inner?.status ?? root.status,
+    message: inner?.message ?? root.message,
+    fieldErrors: inner?.fieldErrors ?? root.fieldErrors,
+    traceId: inner?.traceId ?? root.traceId,
+    path: inner?.path ?? root.path,
+    details: inner ?? root.details,
+  };
+  // Domain-specific: backend trả `domainCode` (vd STOCK_SHORTAGE) trong data — promote
+  // lên `code` để FE switch theo nghiệp vụ thay vì code HTTP chung.
+  const domainCode = (inner as { domainCode?: string } | undefined)?.domainCode;
+  if (domainCode) err.code = domainCode;
 
   // Silent 401: clear tokens and redirect to /login.
   // Exception: auth endpoints (login/register) intentionally return 401 for bad credentials —
   // their callers handle the ApiError to display an error banner. Redirecting here would
   // produce GET /login?returnTo=%2Flogin (infinite loop) because pathname IS /login.
+  //
+  // Phase 25 (gateway JWT edge auth): API Gateway nay tu verify JWT va tra 401 voi
+  // code AUTH_TOKEN_MISSING / AUTH_TOKEN_INVALID / AUTH_TOKEN_EXPIRED. Ca 3 deu duoc
+  // xu ly chung o nhanh nay — clearTokens + redirect /login. Token het han (AUTH_TOKEN_EXPIRED)
+  // khong can UX rieng o MVP: user dang nhap lai la co token moi.
   if (res.status === 401 && !AUTH_PATHS_NO_REDIRECT.includes(path)) {
     clearTokens();
     if (typeof window !== 'undefined') {
-      // Open-redirect hardening (T-04-03): validate pathname is a local relative path.
-      // Reject protocol-relative ('//evil.com') and absolute URLs.
       const pathname = window.location.pathname;
-      if (pathname.startsWith('/') && !pathname.startsWith('//')) {
-        const returnTo = encodeURIComponent(pathname);
-        window.location.href = `/login?returnTo=${returnTo}`;
-      } else {
-        window.location.href = `/login`;
+      // BUG-FIX (login-success-redirect-loop, regression): Nếu user đang ở /login|/register,
+      // CHỈ clearTokens — KHÔNG hard-navigate. Trang login đang chạy `await authLogin(...)`
+      // và sẽ tự `router.replace(...)` sau khi xử lý. Hard nav ở đây sẽ đè lên router.replace,
+      // khiến user kẹt ở /login dù đăng nhập thành công.
+      if (!isAuthPagePath(pathname)) {
+        // Open-redirect hardening (T-04-03): validate pathname is a local relative path.
+        // Reject protocol-relative ('//evil.com') and absolute URLs.
+        if (pathname.startsWith('/') && !pathname.startsWith('//')) {
+          const returnTo = encodeURIComponent(pathname);
+          window.location.href = `/login?returnTo=${returnTo}`;
+        } else {
+          window.location.href = `/login`;
+        }
       }
     }
   }
@@ -141,8 +191,8 @@ async function request<T>(
   );
 }
 
-export const httpGet    = <T>(path: string) => request<T>('GET', path);
+export const httpGet    = <T>(path: string, extraHeaders?: Record<string, string>) => request<T>('GET', path, undefined, extraHeaders);
 export const httpPost   = <T>(path: string, body?: unknown, extraHeaders?: Record<string, string>) => request<T>('POST', path, body, extraHeaders);
 export const httpPut    = <T>(path: string, body?: unknown, extraHeaders?: Record<string, string>) => request<T>('PUT', path, body, extraHeaders);
 export const httpPatch  = <T>(path: string, body?: unknown, extraHeaders?: Record<string, string>) => request<T>('PATCH', path, body, extraHeaders);
-export const httpDelete = <T>(path: string) => request<T>('DELETE', path);
+export const httpDelete = <T>(path: string, extraHeaders?: Record<string, string>) => request<T>('DELETE', path, undefined, extraHeaders);

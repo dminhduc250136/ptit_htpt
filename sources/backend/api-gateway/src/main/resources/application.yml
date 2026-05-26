@@ -109,6 +109,34 @@ spring:
           filters:
             - RewritePath=/api/products/(?<seg>.*), /products/${seg}
 
+        # order-service coupons admin: /api/orders/admin/coupons → /admin/coupons (D-15)
+        - id: order-service-admin-coupons-base
+          uri: http://order-service:8080
+          predicates:
+            - Path=/api/orders/admin/coupons
+          filters:
+            - RewritePath=/api/orders/admin/coupons, /admin/coupons
+        - id: order-service-admin-coupons
+          uri: http://order-service:8080
+          predicates:
+            - Path=/api/orders/admin/coupons/**
+          filters:
+            - RewritePath=/api/orders/admin/coupons/(?<seg>.*), /admin/coupons/${seg}
+
+        # order-service coupons user preview: /api/orders/coupons → /orders/coupons (D-15)
+        - id: order-service-coupons-user-base
+          uri: http://order-service:8080
+          predicates:
+            - Path=/api/orders/coupons
+          filters:
+            - RewritePath=/api/orders/coupons, /orders/coupons
+        - id: order-service-coupons-user
+          uri: http://order-service:8080
+          predicates:
+            - Path=/api/orders/coupons/**
+          filters:
+            - RewritePath=/api/orders/coupons/(?<seg>.*), /orders/coupons/${seg}
+
         # order-service admin: /api/orders/admin → /admin/orders
         - id: order-service-admin-base
           uri: http://order-service:8080
@@ -178,6 +206,35 @@ spring:
             - Path=/api/notifications/**
           filters:
             - RewritePath=/api/notifications/(?<seg>.*), /notifications/${seg}
+
+# Phase 25: edge authentication — gateway verify JWT, strip header client,
+# inject X-User-Id tin cậy từ claim sub. Allow-list config-driven.
+app:
+  jwt:
+    # Cùng JWT_SECRET với user-service. Production BẮT BUỘC override env,
+    # KHÔNG dùng giá trị dev mặc định bên dưới.
+    secret: ${JWT_SECRET:dev-jwt-secret-key-minimum-32-characters-for-hs256-ok}
+  auth:
+    # Endpoint public — bypass JWT. Nếu có Bearer hợp lệ vẫn parse + inject;
+    # Bearer sai/expired vẫn bị 401 (không silently pass).
+    public-endpoints:
+      - { method: POST, pattern: "/api/users/auth/login" }
+      - { method: POST, pattern: "/api/users/auth/register" }
+      # Phase 27 MAIL-02: verify email + forgot/reset password đều public
+      - { method: GET, pattern: "/api/users/auth/verify-email" }
+      - { method: POST, pattern: "/api/users/auth/password/forgot" }
+      - { method: POST, pattern: "/api/users/auth/password/reset" }
+      - { method: GET, pattern: "/api/products" }
+      - { method: GET, pattern: "/api/products/**" }
+      - { method: OPTIONS, pattern: "/**" }
+      - { method: GET, pattern: "/actuator/health" }
+      # Phase 26.1: MoMo IPN/return — bên ngoài không gửi JWT, bảo mật qua HMAC SHA256 (D-14)
+      - { method: POST, pattern: "/api/payments/momo/ipn" }
+      - { method: GET,  pattern: "/api/payments/momo/return" }
+    # Endpoint yêu cầu role ADMIN — reject 403 nếu roles không chứa ADMIN.
+    admin-path-patterns:
+      - "/api/*/admin/**"
+      - "/api/admin/**"
 
 server:
   port: 8080

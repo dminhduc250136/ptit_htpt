@@ -1,0 +1,57 @@
+.form {
+  display: flex;
+  gap: var(--space-2, 8px);
+  padding: var(--space-3, 12px);
+  border-top: 1px solid var(--outline-variant, #cac4d0);
+  background: var(--surface-container-lowest, #ffffff);
+  align-items: flex-end;
+}
+
+.textarea {
+  flex: 1 1 auto;
+  resize: none;
+  border: 1px solid var(--outline-variant, #cac4d0);
+  border-radius: var(--radius-md, 12px);
+  padding: var(--space-2, 8px) var(--space-3, 12px);
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  background: var(--surface, #fef7ff);
+  color: var(--on-surface, #1d1b20);
+  outline: none;
+  transition: border-color 0.15s ease;
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.textarea:focus {
+  border-color: var(--primary, #6750a4);
+}
+
+.textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.send {
+  appearance: none;
+  border: none;
+  background: var(--primary, #6750a4);
+  color: var(--on-primary, #ffffff);
+  border-radius: var(--radius-md, 12px);
+  padding: var(--space-2, 10px) var(--space-4, 16px);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s ease;
+}
+
+.send:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.send:not(:disabled):hover {
+  opacity: 0.9;
+}

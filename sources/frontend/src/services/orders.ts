@@ -18,6 +18,12 @@ import { httpGet, httpPost, httpPatch } from './http';
 
 export type _PathsSurface = _OrdersPaths;
 
+/**
+ * Phase 25 (gateway JWT edge auth): FE KHÔNG còn tự gửi `X-User-Id`.
+ * API Gateway verify Bearer JWT và inject `X-User-Id` tin cậy từ claim `sub`.
+ * Đây là tầng vá thứ 2 cho lỗ hổng `orders-cross-user-leak` — client không thể
+ * giả mạo userId nữa vì gateway strip mọi header tin cậy do client gửi.
+ */
 export interface ListOrdersParams {
   page?: number;
   size?: number;
@@ -34,15 +40,16 @@ export interface ListOrdersParams {
 }
 
 /**
- * Create an order. Per backend CreateOrderCommand (04-05): userId is derived
- * server-side from the X-User-Id header (Phase 5 will move to JWT-claim
- * verification at the gateway). Each item carries its unitPrice snapshot
- * from the cart so the backend can compute totalAmount.
+ * Tạo đơn hàng. userId được derive server-side từ header `X-User-Id` mà
+ * API Gateway inject từ claim `sub` của JWT (Phase 25 — gateway JWT edge auth).
+ * Mỗi item mang unitPrice snapshot từ cart để backend tính totalAmount.
+ *
+ * Phase 20 / COUP-03: body có thể có optional couponCode — BE atomic redeem
+ * trong cùng transaction (Plan 20-03). Nếu BE atomic fail → throw ApiError
+ * với code = COUPON_* (xem couponErrorMessages.ts).
  */
-export function createOrder(body: CreateOrderRequest, userId?: string): Promise<Order> {
-  const headers: Record<string, string> = {};
-  if (userId) headers['X-User-Id'] = userId;
-  return httpPost<Order>(`/api/orders`, body, headers);
+export function createOrder(body: CreateOrderRequest): Promise<Order> {
+  return httpPost<Order>(`/api/orders`, body);
 }
 
 export function listMyOrders(params?: ListOrdersParams): Promise<PaginatedResponse<Order>> {

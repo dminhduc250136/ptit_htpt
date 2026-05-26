@@ -3,7 +3,11 @@ package com.ptit.htpt.inventoryservice.service;
 import com.ptit.htpt.inventoryservice.domain.InventoryDto;
 import com.ptit.htpt.inventoryservice.domain.InventoryEntity;
 import com.ptit.htpt.inventoryservice.domain.InventoryMapper;
+import com.ptit.htpt.inventoryservice.domain.StockLedgerEntity;
+import com.ptit.htpt.inventoryservice.messaging.event.OrderEventEnvelope;
+import com.ptit.htpt.inventoryservice.messaging.exception.PermanentMessageException;
 import com.ptit.htpt.inventoryservice.repository.InventoryRepository;
+import com.ptit.htpt.inventoryservice.repository.StockLedgerRepository;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import java.util.ArrayList;
@@ -11,13 +15,16 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 /**
- * Inventory CRUD service — JPA-backed, schema {@code inventory_svc}.
+ * Inventory CRUD service — JPA-backed.
  *
  * <p>Phase 5 scope-cut: reservation flow removed (record cũ có {@link
  * com.ptit.htpt.inventoryservice.domain InventoryReservation} + reservation paths trong
@@ -25,10 +32,39 @@ import org.springframework.web.server.ResponseStatusException;
  */
 @Service
 public class InventoryCrudService {
-  private final InventoryRepository inventoryRepository;
+  private static final Logger log = LoggerFactory.getLogger(InventoryCrudService.class);
 
-  public InventoryCrudService(InventoryRepository inventoryRepository) {
+  private final InventoryRepository inventoryRepository;
+  private final StockLedgerRepository stockLedgerRepository;
+
+  public InventoryCrudService(InventoryRepository inventoryRepository,
+                              StockLedgerRepository stockLedgerRepository) {
     this.inventoryRepository = inventoryRepository;
+    this.stockLedgerRepository = stockLedgerRepository;
+  }
+
+  /**
+   * D-10: Trừ kho atomic + ghi ledger cho từng item. Gọi từ OrderPlacedListener trong
+   * cùng @Transactional cha (consumer-side). Cho phép quantity âm — log warning audit.
+   *
+   * @throws PermanentMessageException nếu productId không có inventory record (data inconsistency).
+   */
+  @Transactional
+  public void decrementForOrder(String eventId, String orderId, List<OrderEventEnvelope.Item> items) {
+    for (OrderEventEnvelope.Item item : items) {
+      InventoryEntity inv = inventoryRepository.findByProductId(item.productId())
+          .orElseThrow(() -> new PermanentMessageException(
+              "No inventory record for productId=" + item.productId()));
+      int before = inv.quantity();
+      inv.decrementQuantity(item.quantity());
+      if (inv.quantity() < 0) {
+        log.warn("[INV] Negative stock productId={} before={} change={} after={} (audit concurrency)",
+            item.productId(), before, -item.quantity(), inv.quantity());
+      }
+      inventoryRepository.save(inv);
+      stockLedgerRepository.save(StockLedgerEntity.create(
+          eventId, orderId, item.productId(), -item.quantity(), "order.placed"));
+    }
   }
 
   public Map<String, Object> listItems(int page, int size, String sort) {

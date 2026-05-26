@@ -19,9 +19,9 @@ import org.hibernate.annotations.SQLRestriction;
 import org.hibernate.type.SqlTypes;
 
 @Entity
-@Table(name = "orders", schema = "order_svc")
+@Table(name = "orders")
 @SQLRestriction("deleted = false")
-@SQLDelete(sql = "UPDATE order_svc.orders SET deleted = true, updated_at = NOW() WHERE id = ?")
+@SQLDelete(sql = "UPDATE orders SET deleted = true, updated_at = NOW() WHERE id = ?")
 public class OrderEntity {
 
   @Id
@@ -50,6 +50,25 @@ public class OrderEntity {
 
   @Column(name = "payment_method", length = 30)
   private String paymentMethod;
+
+  // Phase 20 / COUP-01 (D-02): snapshot 2 cột coupon trên orders cho display nhanh
+  // (KHÔNG join coupon_redemptions). Bảo toàn lịch sử nếu coupon bị xoá sau này.
+  // Default 0 (DEFAULT 0 trong V5 ALTER) — backward compatible với order cũ.
+  @Column(name = "discount_amount", nullable = false, precision = 15, scale = 2)
+  private BigDecimal discountAmount = BigDecimal.ZERO;
+
+  @Column(name = "coupon_code", length = 64)
+  private String couponCode;
+
+  // Phase 26 / PAY-04 (D-02): payment fields — Phase 26.1 (D-07): rename cột dùng chung mọi gateway.
+  // payment_status default PENDING — backward compatible với COD orders cũ.
+  @Column(name = "payment_status", nullable = false, length = 20)
+  private String paymentStatus = "PENDING";
+
+  // Phase 26.1 / PAY-04 (D-07): renamed từ vnp_transaction_no → payment_transaction_no qua V7 migration.
+  // Dùng chung cho mọi gateway (MoMo, và tương lai multi-gateway nếu cần).
+  @Column(name = "payment_transaction_no", length = 50)
+  private String paymentTransactionNo;
 
   @Column(nullable = false)
   private boolean deleted = false;
@@ -110,6 +129,26 @@ public class OrderEntity {
   public String shippingAddress() { return shippingAddress; }
   public String paymentMethod() { return paymentMethod; }
 
+  // Phase 20 / COUP-01 (D-02): snapshot accessors. Set qua setter trong
+  // OrderCrudService.create sau khi atomic redeem (Plan 20-03).
+  public BigDecimal discountAmount() { return discountAmount; }
+  public String couponCode() { return couponCode; }
+  public void setDiscountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount; }
+  public void setCouponCode(String couponCode) { this.couponCode = couponCode; }
+
+  // Phase 26 / PAY-04 (D-02): payment field accessors.
+  // Phase 26.1 (D-07): vnpTransactionNo → paymentTransactionNo (rename cột + field).
+  public String paymentStatus() { return paymentStatus; }
+  public String paymentTransactionNo() { return paymentTransactionNo; }
+  public void setPaymentStatus(String paymentStatus) {
+    this.paymentStatus = paymentStatus;
+    this.updatedAt = Instant.now();
+  }
+  public void setPaymentTransactionNo(String paymentTransactionNo) {
+    this.paymentTransactionNo = paymentTransactionNo;
+    this.updatedAt = Instant.now();
+  }
+
   public void addItem(OrderItemEntity item) {
     this.items.add(item);
   }
@@ -120,6 +159,16 @@ public class OrderEntity {
 
   public void setPaymentMethod(String paymentMethod) {
     this.paymentMethod = paymentMethod;
+  }
+
+  /**
+   * Phase 20 / Plan 20-03 (D-08, D-12): cho phép OrderCrudService set lại total
+   * sau khi tính discount từ coupon. Bumps updatedAt để trigger optimistic versioning
+   * nếu sau này thêm @Version.
+   */
+  public void setTotal(BigDecimal total) {
+    this.total = total;
+    this.updatedAt = Instant.now();
   }
 
   public boolean deleted() { return deleted; }

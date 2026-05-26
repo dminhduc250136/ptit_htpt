@@ -33,6 +33,8 @@ public final class OrderMapper {
     return new OrderDto(
         e.id(), e.userId(), e.total(), e.status(), e.note(),
         items, shippingAddress, e.paymentMethod(),
+        e.discountAmount(), e.couponCode(),
+        e.paymentStatus(), e.paymentTransactionNo(), null,  // paymentUrl — transient, set thủ công Plan 03
         e.createdAt(), e.updatedAt()
     );
   }
